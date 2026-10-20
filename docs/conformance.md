@@ -33,21 +33,21 @@
 
 | AC | Що перевіряє | Код | Тест | Статус |
 |---|---|---|---|---|
-| AC-LEAVE-01 | Цілий день на одній посаді | — | — | відкладено (чекає реалізації) |
-| AC-LEAVE-02 | Цілий день на двох посадах дає два записи | — | — | відкладено (чекає реалізації) |
-| AC-LEAVE-03 | Виключена посада запису не створює | — | — | відкладено (чекає реалізації) |
-| AC-LEAVE-05 | Кілька дат дають по запису на дату | — | — | відкладено (чекає реалізації) |
+| AC-LEAVE-01 | Цілий день на одній посаді | `src/lib/leave/build.ts` (buildRecords) | `tests/leave-request.test.ts` | реалізовано |
+| AC-LEAVE-02 | Цілий день на двох посадах дає два записи | `src/lib/leave/build.ts` (buildRecords) | `tests/leave-request.test.ts` | реалізовано |
+| AC-LEAVE-03 | Виключена посада запису не створює | `src/lib/leave/build.ts` (buildRecords) | `tests/leave-request.test.ts` | реалізовано |
+| AC-LEAVE-05 | Кілька дат дають по запису на дату | `src/lib/leave/build.ts` (buildRecords) | `tests/leave-request.test.ts` | реалізовано |
 | AC-LEAVE-04 | Години в межах одного блоку | `src/lib/leave/schedule.ts` (minutesInsideBlocks) | `tests/leave-schedule.test.ts` | реалізовано |
 | AC-LEAVE-15 | Заявка через перерву між блоками | `src/lib/leave/schedule.ts` (minutesInsideBlocks) | `tests/leave-schedule.test.ts` | реалізовано |
 | AC-LEAVE-06 | Субота поза розкладом | `src/lib/leave/validate.ts` (validateHours) | `tests/leave-schedule.test.ts` | реалізовано |
 | AC-LEAVE-07 | Початок раніший за розклад | `src/lib/leave/validate.ts` (outsideScheduleMessage) | `tests/leave-schedule.test.ts` | реалізовано |
 | AC-LEAVE-08 | Початок дорівнює кінцю блоку | `src/lib/leave/validate.ts` (endOfWorkingTimeMessage) | `tests/leave-schedule.test.ts` | реалізовано |
 | AC-LEAVE-09 | Кінець раніший за початок | `src/lib/leave/validate.ts` (validateHours) | `tests/leave-schedule.test.ts` | реалізовано |
-| AC-LEAVE-10 | Усі посади виключено | — | — | відкладено (чекає реалізації) |
-| AC-LEAVE-11 | Повернення зі зведення до редагування | — | — | відкладено (чекає реалізації) |
-| AC-LEAVE-12 | Family celebration без спорідненості | — | — | відкладено (чекає реалізації) |
-| AC-LEAVE-13 | Перетин на одній даті | — | — | відкладено (чекає реалізації) |
-| AC-LEAVE-16 | Перетин на одній даті скасовує всю заявку | — | — | відкладено (чекає реалізації) |
+| AC-LEAVE-10 | Усі посади виключено | `src/lib/leave/build.ts` (buildRecords) | `tests/leave-request.test.ts` | реалізовано |
+| AC-LEAVE-11 | Повернення зі зведення до редагування | `src/lib/leave/build.ts` (buildRecords) | `tests/leave-request.test.ts` | реалізовано |
+| AC-LEAVE-12 | Family celebration без спорідненості | `src/lib/leave/build.ts` (RELATIONSHIP_REQUIRED) | `tests/leave-request.test.ts` | реалізовано |
+| AC-LEAVE-13 | Перетин на одній даті | `src/lib/leave/overlap.ts` (findOverlap) | `tests/leave-request.test.ts` | реалізовано |
+| AC-LEAVE-16 | Перетин на одній даті скасовує всю заявку | `src/lib/leave/overlap.ts` (findOverlap) | `tests/leave-request.test.ts` | реалізовано |
 | AC-LEAVE-14 | Список містить лише власні записи | — | — | відкладено (чекає реалізації) |
 | AC-DECIDE-01 | Список обмежено своїми посадами | — | — | відкладено (чекає реалізації) |
 | AC-DECIDE-14 | Порожній список має власне повідомлення | — | — | відкладено (чекає реалізації) |
@@ -86,9 +86,9 @@
 | AC-BALANCE-13 | Працівник і чужі залишки | — | — | відкладено (чекає реалізації) |
 | AC-LEAVE-19 | Розклад із двох блоків у повідомленні | `src/lib/leave/validate.ts` (outsideScheduleMessage) | `tests/leave-schedule.test.ts` | реалізовано |
 | AC-LEAVE-20 | Початок на кінці першого блоку з двох | `src/lib/leave/validate.ts` (validateHours) | `tests/leave-schedule.test.ts` | реалізовано |
-| AC-LEAVE-17 | Коментар зберігається на всіх записах заявки | — | — | відкладено (чекає реалізації) |
-| AC-LEAVE-18 | Коментар довший за 500 символів | — | — | відкладено (чекає реалізації) |
-| AC-DECIDE-22 | Зміна, що перетинає інший запис посади | — | — | відкладено (чекає реалізації) |
+| AC-LEAVE-17 | Коментар зберігається на всіх записах заявки | `src/lib/leave/build.ts` (buildRecords) | `tests/leave-request.test.ts` | реалізовано |
+| AC-LEAVE-18 | Коментар довший за 500 символів | `src/lib/leave/build.ts` (COMMENT_TOO_LONG) | `tests/leave-request.test.ts` | реалізовано |
+| AC-DECIDE-22 | Зміна, що перетинає інший запис посади | `src/lib/leave/overlap.ts` (findOverlap, excludeId) | `tests/leave-request.test.ts` | реалізовано |
 | AC-DECIDE-20 | Коментар видно менеджерові | — | — | відкладено (чекає реалізації) |
 | AC-DECIDE-21 | Спроба змінити тип відпустки | — | — | відкладено (чекає реалізації) |
 | AC-BALANCE-17 | Одне попередження на заявку з кількох дат | — | — | відкладено (чекає реалізації) |

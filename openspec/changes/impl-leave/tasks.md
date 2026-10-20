@@ -17,9 +17,9 @@ Done when: AC-LEAVE-04, AC-LEAVE-06, AC-LEAVE-07, AC-LEAVE-08, AC-LEAVE-09, AC-L
 
 Чисті функції, що з введення працівника роблять записи: по одному на включену посаду на кожну дату, з перевірками «жодної посади», ступеня спорідненості й довжини коментаря.
 
-- [ ] `src/lib/leave/build.ts` — `buildRecords`
-- [ ] `src/lib/leave/overlap.ts` — `overlaps`, перевірка «вся заявка або нічого»
-- [ ] `tests/leave-request.test.ts` — тести з AC ID
+- [x] `src/lib/leave/build.ts` — `buildRecords`
+- [x] `src/lib/leave/overlap.ts` — `overlaps`, перевірка «вся заявка або нічого»
+- [x] `tests/leave-request.test.ts` — тести з AC ID
 
 Done when: AC-LEAVE-01, AC-LEAVE-02, AC-LEAVE-03, AC-LEAVE-05, AC-LEAVE-10, AC-LEAVE-12, AC-LEAVE-13, AC-LEAVE-16, AC-LEAVE-17, AC-LEAVE-18
 
