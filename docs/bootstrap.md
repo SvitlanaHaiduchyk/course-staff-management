@@ -11,87 +11,105 @@
 Docker не потрібен: локально — лише npm run dev проти вашої бази; міграції на одноразовій базі перевіряє CI (db-check).
 -->
 
-Моє репо: <!-- https://github.com/<dev>/<team-slug> --> · Прод-URL: <!-- https://<slug>.vercel.app -->
-Репо вимог PM: <!-- https://github.com/<pm>/<team-slug>-spec --> · Організація Supabase: <!-- назва -->
+Моє репо: <https://github.com/SvitlanaHaiduchyk/course-staff-management> · Прод-URL: <https://course-staff-management.vercel.app>
+Репо вимог PM: <https://github.com/mkozlovskyi-ops/course-staff-management-spec> · Організація Supabase: `course-staff-management`
 
 ## 1. Інструменти й репо
 
-- [ ] Node 24 (`node -v`), Git, GitHub CLI (`gh auth status`); OpenSpec CLI глобально тієї ж версії, що в `package.json`:
-      `npm i -g @fission-ai/openspec@1.14.1` → `openspec --version` = `1.14.1`
-- [ ] Репо створено з шаблону (**Use this template → Create a new repository**): власник — ваш особистий акаунт, назва —
-      `<team-slug>`, **Public** (ruleset на GitHub Free діє лише в публічних репо; PM у нотатці-порівнянні посилається на
-      рядки вашого коду) — <!-- посилання -->
-- [ ] `git clone https://github.com/<dev>/<team-slug>.git` → `npm ci` → `cp .env.example .env.local`
-      (у PowerShell: `Copy-Item .env.example .env.local`)
-- [ ] CodeRabbit (GitHub App) встановлено на це репо (github.com/apps/coderabbitai → Configure → Only select repositories) — <!-- знімок -->
-- [ ] (Якщо PM надіслав список справжніх назв клієнта особистим повідомленням) — локальний `product/denylist.local.txt`
-      (у `.gitignore`; `npm run spec:check` читає його й значень не друкує)
+- [x] Node 24 (`node -v` → `v24.20.0`), Git `2.55.0`, GitHub CLI (`gh auth status` → `SvitlanaHaiduchyk`); OpenSpec CLI
+      глобально тієї ж версії, що в `package.json`: `npm i -g @fission-ai/openspec@1.14.1` → `openspec --version` = `1.14.1`
+- [x] Репо створено з шаблону (**Use this template → Create a new repository**): власник — особистий акаунт, назва —
+      `course-staff-management`, **Public** — <https://github.com/SvitlanaHaiduchyk/course-staff-management>
+- [x] `gh repo clone` → `npm ci` → `Copy-Item .env.example .env.local`
+- [x] CodeRabbit (GitHub App) встановлено на це репо — `docs/img/coderabbit.png`.
+      Перше рев'ю отримано в PR «Оновлення вимог» (Merge Risk 🔵 Low, одне зауваження з відповіддю)
+- [ ] Список справжніх назв клієнта PM ще не надсилав, тому `product/denylist.local.txt` не створювався.
+      `npm run spec:check` показує «слів у denylist: 0» — це очікувано, поки списку немає
 
 ## 2. Supabase: власна база
 
-- [ ] Організацію й проєкт створено у вашому акаунті (один із двох безкоштовних проєктів; регіон — найближчий) — <!-- регіон -->
-- [ ] Authentication: «Allow new users to sign up» **вимкнено**, «Confirm email» **вимкнено**
-      (точні назви й місце перемикачів перевірте в інтерфейсі) — <!-- знімки docs/img/auth-signups.png, docs/img/auth-email.png -->
-- [ ] (Після розділу 4, коли є прод-URL) Authentication → URL Configuration: Site URL = прод-URL Vercel; Redirect URLs
-      `http://localhost:3000/**`, `https://*-<slug>.vercel.app/**` — <!-- знімок -->
-- [ ] `.env.local`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`
-      (Project Settings → API Keys; точну назву розділу перевірте в інтерфейсі) і `DEMO_USER_PASSWORD` (≥ 8 символів).
-      Значення не комітимо й не вставляємо в чат — <!-- лише назви -->
+- [x] Організацію й проєкт створено у власному акаунті (один із двох безкоштовних слотів; проєкт WS5 на паузі,
+      тож слот вільний) — регіон `eu-west-1`
+- [x] Authentication: «Allow new users to sign up» **вимкнено**, «Confirm email» **вимкнено** —
+      `docs/img/auth-signups.png`, `docs/img/auth-email.png`.
+      Чому обидва: публічний ключ лежить у JS-бандлі, тож із увімкненою реєстрацією будь-хто завів би собі акаунт;
+      вбудована пошта Supabase шле 2 листи/год і лише членам проєкту, тому користувачів створює скрипт
+- [x] Authentication → URL Configuration: Site URL = прод-URL Vercel; Redirect URLs `http://localhost:3000/**`,
+      `https://*-test11-af77.vercel.app/**` — `docs/img/auth-urls.png`
+- [x] `.env.local`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`,
+      `DEMO_USER_PASSWORD`. Файл у `.gitignore`; значення не комітяться й не вставляються в чат з агентом
+      (`.claude/settings.json` забороняє читати `.env*`)
 
 ## 3. GitHub: environment `production` і секрети
 
-- [ ] Settings → Environments → `production` (якщо перший прогін CI вже створив його автоматично — відкрийте наявний;
-      `Production`, яке створює Vercel для своїх деплоїв, — те саме середовище: регістр у назвах GitHub не розрізняє):
-      **Deployment branches** = Selected branches → `main` — <!-- знімок -->
-- [ ] Секрет environment `SUPABASE_DB_URL` = рядок **Session pooler** (порт **5432**, не 6543) з Supabase → **Connect**;
-      пароль у рядку percent-encoded — <!-- лише назва секрету -->
-- [ ] Запасний шлях (лише якщо `--db-url` не працює): секрети environment `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`,
-      `SUPABASE_PROJECT_ID` (README, «Міграції в прод: запасний шлях») — <!-- не потрібно / назви -->
-- [ ] (Необов'язково) секрет репо `SPEC_DENYLIST` — ті самі справжні назви через кому, для CI
+- [x] Settings → Environments → `production`: **Deployment branches** = Selected branches → `main` —
+      `docs/img/github-environment.png`.
+      Середовище створив автоматично перший прогін CI; обмеження гілок додано через `gh api`
+- [x] Секрет environment `SUPABASE_DB_URL` = рядок **Session pooler** (порт **5432**, хост `*.pooler.supabase.com`,
+      користувач `postgres.<ref>`) з Supabase → **Connect**. Пароль бази без спецсимволів, тож percent-encode не потрібен.
+      Перевірено: `gh secret list --env production` показує секрет, Repository secrets — порожні
+- [x] Запасний шлях не потрібен: `--db-url` працює (див. розділ 5)
+- [ ] Секрет репо `SPEC_DENYLIST` — не створювався: списку назв від PM ще немає
 
 ## 4. Vercel
 
-- [ ] Add New → Project → імпорт вашого репо, Node 24.x — <!-- прод-URL -->
-- [ ] Змінні Production і Preview — лише `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`;
-      `SUPABASE_SECRET_KEY` — **ніколи** — <!-- знімок (лише назви) -->
-- [ ] Settings → Deployment Protection → **Require Log In** вимкнено → Save (інакше PM і викладач не відкриють ваші preview;
-      точну назву перемикача перевірте в інтерфейсі) — <!-- знімок -->
-- [ ] Після змінних — редеплой; прод-URL відкривається — <!-- посилання -->
+- [x] Add New → Project → імпорт репо, Framework `Next.js`, Node 24.x з `engines` —
+      <https://course-staff-management.vercel.app>.
+      Marketplace-інтеграцію Supabase **не** підключали: вона створила б окрему організацію й зайняла другий слот
+- [x] Змінні Production і Preview — лише `NEXT_PUBLIC_SUPABASE_URL` і `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`;
+      `SUPABASE_SECRET_KEY` у Vercel немає — `docs/img/vercel-env.png` (у кадрі лише назви, значення приховані)
+- [x] Settings → Deployment Protection → **Require Log In** вимкнено → проєкт у статусі **Unprotected** —
+      `docs/img/vercel-protection.png`.
+      Це безпечно лише за трьох умов, і всі три виконані: секретного ключа у Vercel немає (preview не обійде RLS),
+      RLS і явні GRANT на кожній таблиці, дані лише синтетичні (`*@example.test`)
+- [x] Прод-URL відкривається без входу у Vercel: анонімний запит на `/login` повертає `200` і сторінку застосунку
+      («Вхід», «Пароль», «Увійти»), а не заглушку Vercel
 
 ## 5. База й перший зелений CI
 
-- [ ] Actions → CI → **Run workflow** (гілка `main`, `include_seed` ✓) → job `db-deploy` застосував першу міграцію й сид — <!-- посилання на run -->
-- [ ] `npm run users:demo` (синтетичні користувачі з `supabase/demo-users.json`) → `npm run dev` → `http://localhost:3000` →
-      вхід як `admin@example.test` працює локально й на прод-URL
-- [ ] CI на `main` зелений: `spec`, `app`, `conformance`, `db-check`, `db-deploy` — <!-- посилання на run -->
+- [x] Actions → CI → **Run workflow** (гілка `main`, `include_seed` ✓) → job `db-deploy` застосував першу міграцію й сид —
+      [run 39309530080](https://github.com/SvitlanaHaiduchyk/course-staff-management/actions/runs/39309530080).
+      У лозі: `Connecting to remote database…` → `Applying migration 20261012000000_profiles_and_roles.sql…` →
+      `Seeding data from supabase/seed.sql…` → `Finished supabase db push.`
+      `include_seed` більше не вмикаємо: сид у хмарі виконується один раз
+- [x] `npm run users:demo` створив синтетичних користувачів із `supabase/demo-users.json` → `npm run dev` →
+      `http://localhost:3000` → вхід як `admin@example.test` працює локально й на прод-URL
+- [x] CI на `main` зелений: `spec`, `app`, `conformance`, `db-check`, `db-deploy` — усі п'ять у тому ж прогоні
+      [39309530080](https://github.com/SvitlanaHaiduchyk/course-staff-management/actions/runs/39309530080)
 
 ## 6. Ruleset `solo-main` (лише після зеленого CI на `main`)
 
-- [ ] Settings → Rules → Rulesets → **New ruleset → Import a ruleset** → `solo-main.json` з курсового репо
-      (`materials/rulesets/solo-main.json`) або вручну: target — гілка за замовчуванням (`main`); Restrict deletions;
-      Block force pushes; Require a pull request — **0 approvals** (колег у вашому репо немає); Require status checks
-      (джерело GitHub Actions, без «up to date»): `spec`, `app`, `conformance`, `db-check`; Allowed merge methods —
-      **Squash** і **Merge**; Bypass list — **порожній** (навіть для власника); Enforcement — Active
-      (точні назви полів перевірте в інтерфейсі) — <!-- знімок docs/img/ruleset.png -->
+- [x] Створено з `materials/rulesets/solo-main.json` курсового репо через `gh api … /rulesets` —
+      `docs/img/ruleset.png`. Перевірено `gh api`:
+      enforcement `active`; target `~DEFAULT_BRANCH`; bypass actors — **0**, тобто обійти не може й власник;
+      правила `deletion`, `non_fast_forward`, `pull_request`, `required_status_checks`;
+      перевірки `spec`, `app`, `conformance`, `db-check` (джерело GitHub Actions, без «up to date»);
+      методи злиття **Squash** і **Merge**, без Rebase; required approvals — **0** (свій PR GitHub схвалити не дає)
 
 ## 7. Перший PR (перевірка ruleset-у)
 
-- [ ] `git switch -c setup/bootstrap` → цей файл із доказами розділів 1–6 → push → `gh pr create --web` (тип «Реалізація»)
-      → окремим коментарем `@coderabbitai review` — <!-- посилання на PR (наступним PR) -->
-- [ ] Поки перевірки не зелені, кнопка merge заблокована; push у `main` напряму відхиляється — <!-- знімок -->
-- [ ] Vercel створив preview для PR — <!-- посилання на preview (наступним PR) -->
-- [ ] **Squash and merge** → прод-деплой Vercel пройшов — <!-- посилання -->
-- [ ] (З першою задачею, що має міграцію) `db-check` зелений, після merge `db-deploy` застосував її у вашу базу — <!-- посилання на run -->
+- [ ] `git switch -c setup/bootstrap` → цей файл із доказами розділів 1–6 → push → PR «Реалізація»
+      → окремим коментарем `@coderabbitai review` — <!-- посилання допишемо наступним PR -->
+- [ ] Поки перевірки не зелені, кнопка merge заблокована; push у `main` напряму відхиляється
+- [ ] Vercel створив preview для PR — <!-- посилання наступним PR -->
+- [ ] **Squash and merge** → прод-деплой Vercel пройшов
+- [ ] (З першою задачею, що має міграцію) `db-check` зелений, після merge `db-deploy` застосував її у вашу базу
 
 ## 8. Вимоги PM і специфікація
 
-- [ ] Адресу репо вимог PM узято з чату команди; на зустрічі команди (дні 0–2, до кінця 15.10, організує PM; якщо
-      команда не зібралася — діра в чат команди до обіду 16.10) — перший раунд питань до брифу
-- [ ] PM написав у чаті команди «вимоги оновлено» (у курсі перші вимоги — до кінця 16.10) → у Claude Code чи Cursor
-      `/requirements-sync <pm>/<team-slug>-spec` → PR «Оновлення вимог» злито; шапка `docs/conformance.md` показує
-      адресу, джерело (issues чи docs) і дату знімка — <!-- посилання на PR -->
-- [ ] Читання вимог: скіл `spec-clarify` → питання — issues «Питання до вимог» у репо PM через вебформу → журнал
-      `docs/spec-reading.md` — <!-- посилання на issues -->
-- [ ] Переклад у специфікацію (гілка `spec/add-<зріз>`): `/opsx:propose add-<зріз>` → `npx openspec validate add-<зріз> --strict`
-      → скіл `spec-review` → `npx openspec archive add-<зріз> -y` → `/conformance` → PR «Специфікація» злито;
-      `npm run ac:coverage` без «вимогу PM ще не перекладено» — <!-- посилання на PR -->
+- [x] Адресу репо вимог PM узято з оголошення викладача: `mkozlovskyi-ops/course-staff-management-spec`.
+      Issues «Вимога» в репо PM немає, вимоги лежать файлами в `docs/` — джерело знімка `docs`
+- [x] `/requirements-sync mkozlovskyi-ops/course-staff-management-spec` → PR «Оновлення вимог»
+      [#1](https://github.com/SvitlanaHaiduchyk/course-staff-management/pull/1); шапка `docs/conformance.md` показує
+      адресу, джерело `docs` і дату знімка `2026-10-19` (коміт PM `031e169`). Знімок містить `product.md` і три вимоги,
+      51 AC: `AC-LEAVE-01…16`, `AC-DECIDE-01…19`, `AC-BALANCE-01…16`
+- [x] Читання вимог: спершу вручну, потім прохід за таксономією (11 категорій) → журнал `docs/spec-reading.md`.
+      П'ять питань у репо PM, усі з відповіддю «Decision: A»:
+      коментарі в [#4](https://github.com/mkozlovskyi-ops/course-staff-management-spec/issues/4#issuecomment-6285545648)
+      і [#2](https://github.com/mkozlovskyi-ops/course-staff-management-spec/issues/2#issuecomment-6285547451),
+      власні issues [#5](https://github.com/mkozlovskyi-ops/course-staff-management-spec/issues/5),
+      [#6](https://github.com/mkozlovskyi-ops/course-staff-management-spec/issues/6),
+      [#7](https://github.com/mkozlovskyi-ops/course-staff-management-spec/issues/7).
+      #7 PM прийняв як помилку у формулюванні вимоги; знахідку дало рев'ю CodeRabbit у PR #1 і перевірено вручну
+      на всіх чотирьох критеріях балансу
+- [ ] Переклад у специфікацію (гілка `spec/add-<зріз>`) — наступний крок
