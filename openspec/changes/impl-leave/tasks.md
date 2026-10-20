@@ -6,10 +6,10 @@
 
 Міграція з ролями `employee` / `manager` / `admin` і таблицями `divisions`, `positions`, `position_managers`, `schedule_blocks`, `leave_requests`, `leave_records` — з RLS, явними `grant` і політикою на кожну операцію. Чисті функції `src/lib/leave/`: розклад дня, перевірка годин, хвилини всередині блоків.
 
-- [ ] Міграція `*_leave_schema.sql`: ролі, шість таблиць, RLS, `grant`, політики
-- [ ] `src/lib/leave/schedule.ts` — `scheduleFor`, `minutesInsideBlocks`
-- [ ] `src/lib/leave/validate.ts` — `validateHours` з текстами повідомлень PM
-- [ ] `tests/leave-schedule.test.ts` — тести з AC ID на початку назв
+- [x] Міграція `*_leave_schema.sql`: ролі, шість таблиць, RLS, `grant`, політики
+- [x] `src/lib/leave/schedule.ts` — `scheduleFor`, `minutesInsideBlocks`
+- [x] `src/lib/leave/validate.ts` — `validateHours` з текстами повідомлень PM
+- [x] `tests/leave-schedule.test.ts` — тести з AC ID на початку назв
 
 Done when: AC-LEAVE-04, AC-LEAVE-06, AC-LEAVE-07, AC-LEAVE-08, AC-LEAVE-09, AC-LEAVE-15, AC-LEAVE-19, AC-LEAVE-20
 
