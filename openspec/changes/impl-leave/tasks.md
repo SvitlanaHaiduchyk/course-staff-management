@@ -27,10 +27,10 @@ Done when: AC-LEAVE-01, AC-LEAVE-02, AC-LEAVE-03, AC-LEAVE-05, AC-LEAVE-10, AC-L
 
 Функція Postgres `submit_leave_request` для атомарності, серверна дія поверх неї, сторінка зі списком власних записів.
 
-- [ ] Міграція `*_submit_leave_request.sql` — функція `security invoker`
-- [ ] `src/app/requests/actions.ts` — `submitLeaveRequest`
-- [ ] `src/app/requests/page.tsx` — «My requests»
-- [ ] `supabase/demo-users.json` — тестові працівники, посади й розклади
+- [x] Міграція `*_submit_leave_request.sql` — функція `security invoker`
+- [x] `src/app/requests/actions.ts` — `submitLeaveRequest`
+- [x] `src/app/requests/page.tsx` — «My requests»
+- [x] `supabase/demo-users.json` — тестові працівники, посади й розклади
 
 Done when: AC-LEAVE-11, AC-LEAVE-14
 
