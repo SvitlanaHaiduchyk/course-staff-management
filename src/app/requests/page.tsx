@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { scheduleSummary } from "@/lib/leave/format";
+import { positionKindLabel, scheduleSummary } from "@/lib/leave/format";
 import { createClient } from "@/lib/supabase/server";
 
 import { submitLeaveRequest } from "./actions";
@@ -82,7 +82,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
                     <span>
                       {p.divisions?.name ?? "—"} / {p.job_title}{" "}
                       <span className="text-zinc-500">
-                        ({p.kind === "main" ? "основна" : "додаткова"})
+                        ({positionKindLabel(p.kind)})
                       </span>
                     </span>
                     <span data-testid="schedule" className="text-xs text-zinc-500">
