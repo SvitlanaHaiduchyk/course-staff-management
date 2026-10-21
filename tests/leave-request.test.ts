@@ -55,6 +55,7 @@ describe("створення записів із заявки", () => {
     expect(result).toEqual({
       ok: true,
       records: [{ positionId: "pos-main", date: MONDAY, startsAt: "08:30", endsAt: "15:30" }],
+      skipped: [],
     });
   });
 
@@ -128,7 +129,27 @@ describe("створення записів із заявки", () => {
   it("AC-LEAVE-06: дата без розкладу не створює заявки", () => {
     const result = buildRecords(sick([{ date: SATURDAY, positions: [wholeDay(main.id)] }]), [main]);
 
+    // Єдина обрана дата неробоча, тож прийнятих дат не лишилось і заявки немає.
     expect(result).toEqual({ ok: false, message: "You have no working hours on this day" });
+  });
+
+  it("AC-LEAVE-21: неробоча дата відпадає, решта дат заявки лишаються", () => {
+    const friday = "2026-11-06";
+    const result = buildRecords(
+      sick([
+        { date: friday, positions: [wholeDay(main.id)] },
+        { date: SATURDAY, positions: [wholeDay(main.id)] },
+      ]),
+      [main],
+    );
+
+    // Субота відпадає з повідомленням, але п'ятниця дає запис:
+    // «усе або нічого» діє лише на прийняті дати (припущення PM, знімок 2026-10-21).
+    expect(result).toEqual({
+      ok: true,
+      records: [{ positionId: "pos-main", date: friday, startsAt: "08:30", endsAt: "15:30" }],
+      skipped: [{ date: SATURDAY, message: "You have no working hours on this day" }],
+    });
   });
 });
 

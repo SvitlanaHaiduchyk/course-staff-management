@@ -15,7 +15,7 @@ import {
   scheduleFor,
   wholeDayRange,
 } from "./schedule";
-import { validateHours } from "./validate";
+import { NO_WORKING_HOURS, validateHours } from "./validate";
 
 export type LeaveType = "sick" | "personal" | "unpaid" | "family_celebration";
 
@@ -58,8 +58,19 @@ export type DraftRecord = {
   readonly endsAt: string;
 };
 
+/** Дата, яку відхилено, але яка не скасувала решти заявки (AC-LEAVE-21). */
+export type SkippedDate = {
+  readonly date: string;
+  readonly message: string;
+};
+
 export type BuildResult =
-  | { readonly ok: true; readonly records: readonly DraftRecord[] }
+  | {
+      readonly ok: true;
+      readonly records: readonly DraftRecord[];
+      /** Дати без робочих годин: працівник бачить по повідомленню на кожну. */
+      readonly skipped: readonly SkippedDate[];
+    }
   | { readonly ok: false; readonly message: string };
 
 /** AC-LEAVE-10: на дату не включено жодної посади. */
@@ -100,6 +111,7 @@ export function buildRecords(input: RequestInput, positions: readonly Position[]
 
   const byId = new Map(positions.map((p) => [p.id, p]));
   const records: DraftRecord[] = [];
+  const skipped: SkippedDate[] = [];
 
   for (const day of input.dates) {
     const included = day.positions.filter((p) => p.included);
@@ -107,18 +119,25 @@ export function buildRecords(input: RequestInput, positions: readonly Position[]
     // AC-LEAVE-10: жодної включеної посади на цю дату.
     if (included.length === 0) return fail(CHOOSE_AT_LEAST_ONE_POSITION);
 
-    for (const choice of included) {
+    const planned = included.map((choice) => {
       const position = byId.get(choice.positionId);
       if (!position) {
         throw new TypeError(`Невідома посада "${choice.positionId}" у заявці`);
       }
+      return { choice, position, blocks: scheduleFor(position.blocks, day.date) };
+    });
 
-      const blocks = scheduleFor(position.blocks, day.date);
+    // AC-LEAVE-21: дата без робочих годин лише відпадає, решта дат заявки лишаються
+    // (припущення PM, знімок 2026-10-21). «Усе або нічого» діє на прийняті дати.
+    if (planned.every((p) => p.blocks.length === 0)) {
+      skipped.push({ date: day.date, message: NO_WORKING_HOURS });
+      continue;
+    }
 
+    for (const { choice, position, blocks } of planned) {
       // AC-LEAVE-01, AC-LEAVE-02: «цілий день» — усі блоки розкладу посади на цю дату.
       const range = choice.wholeDay ? wholeDayRange(blocks) : (choice.hours ?? null);
 
-      // Цілий день без жодного блоку — та сама відмова, що й для годин (AC-LEAVE-06).
       const check = validateHours(blocks, range ?? { startsAt: "00:00", endsAt: "00:01" });
       if (!check.ok) return fail(check.message);
       if (!range) return fail(CHOOSE_AT_LEAST_ONE_POSITION);
@@ -132,5 +151,8 @@ export function buildRecords(input: RequestInput, positions: readonly Position[]
     }
   }
 
-  return { ok: true, records };
+  // AC-LEAVE-06: не лишилось жодної прийнятої дати — заявки немає.
+  if (records.length === 0) return fail(NO_WORKING_HOURS);
+
+  return { ok: true, records, skipped };
 }
