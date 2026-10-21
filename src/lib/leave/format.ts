@@ -22,6 +22,32 @@ export type ScheduleBlockRow = {
 const hhmm = (time: string) => time.slice(0, 5);
 
 /**
+ * Назва ролі доступу для показу користувачеві.
+ *
+ * Ідентифікатори `employee`, `manager`, `admin` задає `requirements/product.md`;
+ * тут лише підпис для інтерфейсу. Роль визначає доступ (наприклад, `AC-DECIDE-09`:
+ * без ролі менеджера чи адміністратора рішення не зберігається), тож показуємо її
+ * людським словом, а не ідентифікатором із бази.
+ */
+export function roleLabel(role: string | null | undefined): string {
+  switch (role) {
+    case "employee":
+      return "Працівник";
+    case "manager":
+      return "Менеджер";
+    case "admin":
+      return "Адміністратор";
+    default:
+      return "профіль не знайдено";
+  }
+}
+
+/** Тип посади: основна чи додаткова (`positions.kind`, глосарій `product.md`). */
+export function positionKindLabel(kind: string): string {
+  return kind === "main" ? "основна" : "додаткова";
+}
+
+/**
  * Тижневий розклад посади одним рядком:
  * `Пн 08:30–15:30 · Вт 08:30–12:00, 12:30–15:30`.
  *

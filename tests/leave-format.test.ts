@@ -5,7 +5,12 @@
 
 import { describe, expect, it } from "vitest";
 
-import { type ScheduleBlockRow, scheduleSummary } from "../src/lib/leave/format";
+import {
+  type ScheduleBlockRow,
+  positionKindLabel,
+  roleLabel,
+  scheduleSummary,
+} from "../src/lib/leave/format";
 
 const block = (weekday: number, starts: string, ends: string): ScheduleBlockRow => ({
   weekday,
@@ -36,5 +41,25 @@ describe("розклад рядком", () => {
 
   it("порожній розклад дає порожній рядок", () => {
     expect(scheduleSummary([])).toBe("");
+  });
+});
+
+describe("підписи ролі й типу посади", () => {
+  it("показує три ролі продукту людським словом", () => {
+    // Ідентифікатори — з requirements/product.md, розділ «Users and roles».
+    expect(roleLabel("employee")).toBe("Працівник");
+    expect(roleLabel("manager")).toBe("Менеджер");
+    expect(roleLabel("admin")).toBe("Адміністратор");
+  });
+
+  it("невідому або відсутню роль не вигадує", () => {
+    expect(roleLabel(null)).toBe("профіль не знайдено");
+    expect(roleLabel(undefined)).toBe("профіль не знайдено");
+    expect(roleLabel("member")).toBe("профіль не знайдено");
+  });
+
+  it("розрізняє основну й додаткову посаду", () => {
+    expect(positionKindLabel("main")).toBe("основна");
+    expect(positionKindLabel("additional")).toBe("додаткова");
   });
 });
