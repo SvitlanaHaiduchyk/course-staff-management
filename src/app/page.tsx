@@ -48,23 +48,27 @@ export default async function Home() {
         <dt className="text-zinc-500">Ім&apos;я</dt>
         <dd data-testid="user-name">{profile?.full_name ?? "—"}</dd>
 
-        <dt className="text-zinc-500">Посади</dt>
-        <dd data-testid="positions">
-          {hasPositions ? (
-            <ul className="flex flex-col gap-1">
-              {positions!.map((p) => (
-                <li key={p.id}>
-                  {p.divisions?.name ?? "—"} / {p.job_title}{" "}
-                  <span className="text-zinc-500">({positionKindLabel(p.kind)})</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <span className="text-zinc-500">
-              посад ще немає — їх створює адміністратор (зріз WS10)
-            </span>
-          )}
-        </dd>
+        {/*
+          Рядок посад показуємо лише тим, у кого вони є. За глосарієм product.md
+          працівник — це «a person who works at the school and has at least one position»,
+          тож порожній список буває хіба в адміністратора без посади: йому цей рядок
+          нічого не каже. Працівникові без посад пояснення дає форма заявки.
+        */}
+        {hasPositions ? (
+          <>
+            <dt className="text-zinc-500">Посади</dt>
+            <dd data-testid="positions">
+              <ul className="flex flex-col gap-1">
+                {positions!.map((p) => (
+                  <li key={p.id}>
+                    {p.divisions?.name ?? "—"} / {p.job_title}{" "}
+                    <span className="text-zinc-500">({positionKindLabel(p.kind)})</span>
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </>
+        ) : null}
 
         <dt className="text-zinc-500">Доступ</dt>
         <dd data-testid="user-role">{roleLabel(profile?.role)}</dd>
