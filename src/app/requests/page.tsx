@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { scheduleSummary } from "@/lib/leave/format";
 import { createClient } from "@/lib/supabase/server";
 
 import { submitLeaveRequest } from "./actions";
@@ -20,37 +21,6 @@ const STATUS_LABELS: Record<string, string> = {
   returned: "Returned for revision",
   cancelled: "Cancelled",
 };
-
-const hhmm = (time: string) => time.slice(0, 5);
-
-/** Дні тижня: 1 — понеділок, 7 — неділя (`schedule_blocks.weekday`). */
-const WEEKDAYS = ["", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
-
-type Block = { weekday: number; starts_at: string; ends_at: string };
-
-/**
- * Тижневий розклад посади рядком: «Пн 08:30–15:30 · Вт 08:30–12:00, 12:30–15:30».
- *
- * Основний сценарій вимоги, крок 2: портал показує посади з розкладом на цей день
- * тижня **разом із робочими годинами кожної посади**. Без цього працівник не бачить,
- * які дати взагалі можна обрати й у які години вкластися.
- */
-function scheduleSummary(blocks: readonly Block[]): string {
-  const byDay = new Map<number, Block[]>();
-  for (const b of blocks) {
-    byDay.set(b.weekday, [...(byDay.get(b.weekday) ?? []), b]);
-  }
-  return [...byDay.entries()]
-    .sort(([a], [b]) => a - b)
-    .map(([weekday, dayBlocks]) => {
-      const hours = dayBlocks
-        .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
-        .map((b) => `${hhmm(b.starts_at)}–${hhmm(b.ends_at)}`)
-        .join(", ");
-      return `${WEEKDAYS[weekday]} ${hours}`;
-    })
-    .join(" · ");
-}
 
 export default async function RequestsPage({ searchParams }: PageProps<"/requests">) {
   const { error, notice } = await searchParams;
@@ -214,7 +184,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
                 <tr key={r.id} className="border-b border-zinc-200 dark:border-zinc-800">
                   <td className="py-2">{r.on_date}</td>
                   <td>
-                    {hhmm(r.starts_at)}–{hhmm(r.ends_at)}
+                    {r.starts_at.slice(0, 5)}–{r.ends_at.slice(0, 5)}
                   </td>
                   <td>{r.positions?.job_title ?? "—"}</td>
                   <td>
