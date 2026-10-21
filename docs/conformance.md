@@ -48,7 +48,7 @@
 | AC-LEAVE-12 | Family celebration без спорідненості | `src/lib/leave/build.ts` (RELATIONSHIP_REQUIRED) | `tests/leave-request.test.ts` | реалізовано |
 | AC-LEAVE-13 | Перетин на одній даті | `src/lib/leave/overlap.ts` (findOverlap) | `tests/leave-request.test.ts` | реалізовано |
 | AC-LEAVE-16 | Перетин на одній даті скасовує всю заявку | `src/lib/leave/overlap.ts` (findOverlap) | `tests/leave-request.test.ts` | реалізовано |
-| AC-LEAVE-14 | Список містить лише власні записи | — | — | відкладено (чекає реалізації) |
+| AC-LEAVE-14 | Список містить лише власні записи | `src/app/requests/page.tsx` | — | відкладено (сторінку й політику RLS зроблено, але перевірити «рівно 2 записи, лише власні» можна лише e2e-тестом проти бази: модульний тест RLS не виконує) |
 | AC-DECIDE-01 | Список обмежено своїми посадами | — | — | відкладено (чекає реалізації) |
 | AC-DECIDE-14 | Порожній список має власне повідомлення | — | — | відкладено (чекає реалізації) |
 | AC-DECIDE-02 | Погодження одного запису із двох | — | — | відкладено (чекає реалізації) |

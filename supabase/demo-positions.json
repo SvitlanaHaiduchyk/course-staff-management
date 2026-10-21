@@ -1,0 +1,57 @@
+{
+  "comment": "Тестові відділи, посади з розкладом і відповідальні менеджери. Дані синтетичні; числа взято з прикладів вимоги requirements/01-leave-request.md, щоб їх можна було звірити з AC вручну. Застосовує scripts/create-demo-positions.mjs (npm run positions:demo) після npm run users:demo.",
+  "divisions": ["Elementary school", "High school"],
+  "positions": [
+    {
+      "employee": "teacher1@example.test",
+      "kind": "main",
+      "division": "Elementary school",
+      "job_title": "Teacher",
+      "managers": ["manager1@example.test"],
+      "schedule": [
+        { "weekday": 1, "starts_at": "08:30", "ends_at": "15:30" },
+        { "weekday": 2, "starts_at": "08:30", "ends_at": "12:00" },
+        { "weekday": 2, "starts_at": "12:30", "ends_at": "15:30" },
+        { "weekday": 3, "starts_at": "08:30", "ends_at": "15:30" },
+        { "weekday": 4, "starts_at": "08:30", "ends_at": "15:30" },
+        { "weekday": 5, "starts_at": "08:30", "ends_at": "15:30" }
+      ]
+    },
+    {
+      "employee": "teacher1@example.test",
+      "kind": "additional",
+      "division": "High school",
+      "job_title": "Math teacher",
+      "managers": ["manager2@example.test"],
+      "schedule": [{ "weekday": 1, "starts_at": "15:45", "ends_at": "17:00" }]
+    },
+    {
+      "employee": "teacher2@example.test",
+      "kind": "main",
+      "division": "Elementary school",
+      "job_title": "Teacher",
+      "managers": ["manager1@example.test"],
+      "schedule": [
+        { "weekday": 1, "starts_at": "08:30", "ends_at": "15:30" },
+        { "weekday": 2, "starts_at": "08:30", "ends_at": "15:30" },
+        { "weekday": 3, "starts_at": "08:30", "ends_at": "15:30" },
+        { "weekday": 4, "starts_at": "08:30", "ends_at": "15:30" },
+        { "weekday": 5, "starts_at": "08:30", "ends_at": "15:30" }
+      ]
+    },
+    {
+      "employee": "manager1@example.test",
+      "kind": "main",
+      "division": "Elementary school",
+      "job_title": "Elementary school manager",
+      "managers": ["manager1@example.test"],
+      "schedule": [
+        { "weekday": 1, "starts_at": "08:00", "ends_at": "16:00" },
+        { "weekday": 2, "starts_at": "08:00", "ends_at": "16:00" },
+        { "weekday": 3, "starts_at": "08:00", "ends_at": "16:00" },
+        { "weekday": 4, "starts_at": "08:00", "ends_at": "16:00" },
+        { "weekday": 5, "starts_at": "08:00", "ends_at": "16:00" }
+      ]
+    }
+  ]
+}
