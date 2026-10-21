@@ -23,6 +23,35 @@ const STATUS_LABELS: Record<string, string> = {
 
 const hhmm = (time: string) => time.slice(0, 5);
 
+/** Дні тижня: 1 — понеділок, 7 — неділя (`schedule_blocks.weekday`). */
+const WEEKDAYS = ["", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
+
+type Block = { weekday: number; starts_at: string; ends_at: string };
+
+/**
+ * Тижневий розклад посади рядком: «Пн 08:30–15:30 · Вт 08:30–12:00, 12:30–15:30».
+ *
+ * Основний сценарій вимоги, крок 2: портал показує посади з розкладом на цей день
+ * тижня **разом із робочими годинами кожної посади**. Без цього працівник не бачить,
+ * які дати взагалі можна обрати й у які години вкластися.
+ */
+function scheduleSummary(blocks: readonly Block[]): string {
+  const byDay = new Map<number, Block[]>();
+  for (const b of blocks) {
+    byDay.set(b.weekday, [...(byDay.get(b.weekday) ?? []), b]);
+  }
+  return [...byDay.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([weekday, dayBlocks]) => {
+      const hours = dayBlocks
+        .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
+        .map((b) => `${hhmm(b.starts_at)}–${hhmm(b.ends_at)}`)
+        .join(", ");
+      return `${WEEKDAYS[weekday]} ${hours}`;
+    })
+    .join(" · ");
+}
+
 export default async function RequestsPage({ searchParams }: PageProps<"/requests">) {
   const { error, notice } = await searchParams;
   const supabase = await createClient();
@@ -36,7 +65,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
   // RLS: працівник бачить лише власні посади (AC-LEAVE-02, AC-LEAVE-03).
   const { data: positions } = await supabase
     .from("positions")
-    .select("id, kind, job_title, divisions(name)")
+    .select("id, kind, job_title, divisions(name), schedule_blocks(weekday, starts_at, ends_at)")
     .eq("employee_id", claims.sub)
     .order("kind");
 
@@ -71,11 +100,26 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
             <fieldset className="flex flex-col gap-2 text-sm">
               <legend className="mb-1 font-medium">Посади</legend>
               {positions.map((p) => (
-                <label key={p.id} className="flex items-center gap-2">
-                  <input type="checkbox" name="position" value={p.id} defaultChecked />
-                  {p.divisions?.name ?? "—"} / {p.job_title}
-                  <span className="text-zinc-500">
-                    ({p.kind === "main" ? "основна" : "додаткова"})
+                <label key={p.id} className="flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    name="position"
+                    value={p.id}
+                    defaultChecked
+                    className="mt-1"
+                  />
+                  <span className="flex flex-col">
+                    <span>
+                      {p.divisions?.name ?? "—"} / {p.job_title}{" "}
+                      <span className="text-zinc-500">
+                        ({p.kind === "main" ? "основна" : "додаткова"})
+                      </span>
+                    </span>
+                    <span data-testid="schedule" className="text-xs text-zinc-500">
+                      {p.schedule_blocks?.length
+                        ? scheduleSummary(p.schedule_blocks)
+                        : "розкладу немає"}
+                    </span>
                   </span>
                 </label>
               ))}
@@ -89,6 +133,10 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
                 required
                 className="rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
               />
+              <span className="text-xs text-zinc-500">
+                Обирайте день, що є в розкладі вище. Дата без робочих годин відпаде з
+                повідомленням, а решта дат заявки лишаться.
+              </span>
             </label>
 
             <label className="flex flex-col gap-1 text-sm">
