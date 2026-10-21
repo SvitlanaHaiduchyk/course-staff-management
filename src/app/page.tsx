@@ -30,6 +30,12 @@ export default async function Home() {
         <dt className="text-zinc-500">Роль</dt>
         <dd data-testid="user-role">{profile?.role ?? "профіль не знайдено"}</dd>
       </dl>
+      <a
+        href="/requests"
+        className="self-start rounded border border-zinc-300 px-4 py-2 text-sm dark:border-zinc-700"
+      >
+        Мої заявки на відпустку
+      </a>
       <form action={signOut}>
         <button
           type="submit"
