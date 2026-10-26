@@ -30,7 +30,7 @@
       "kind": "main",
       "division": "Elementary school",
       "job_title": "Teacher",
-      "managers": ["manager1@example.test"],
+      "managers": ["manager1@example.test", "manager2@example.test"],
       "schedule": [
         { "weekday": 1, "starts_at": "08:30", "ends_at": "15:30" },
         { "weekday": 2, "starts_at": "08:30", "ends_at": "15:30" },

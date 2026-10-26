@@ -115,20 +115,22 @@ describe("хто може змінити статус запису", () => {
     // manager2 веде лише додаткову посаду teacher1; це запис основної.
     const id = await seedRecord("teacher1@example.test", "teacher1@example.test:main", MONDAY);
 
-    await expect(
-      leave.asUser(
-        leave.users["manager2@example.test"],
-        "update public.leave_records set status = 'approved' where id = $1",
-        [id],
-      ),
-    ).rejects.toThrow();
+    // Відколи зріз рішень дав authenticated колонковий grant update (status),
+    // запит уже не падає на правах: політика просто не віддає цей рядок, і
+    // update не зачіпає жодного. AC вимагає саме «the status does not change».
+    await leave.asUser(
+      leave.users["manager2@example.test"],
+      "update public.leave_records set status = 'approved' where id = $1",
+      [id],
+    );
 
     expect(await statusOf(id)).toBe("awaiting");
   });
 
-  it("адміністратор теж не може змінити статус із застосунку", async () => {
-    // Рішення менеджера — зріз leave-decision, його ще немає. Поки колонкового
-    // GRANT на status немає ні в кого з authenticated, і це навмисно.
+  it("статус не змінити повз історію рішень, навіть адміністратору", async () => {
+    // Зріз leave-decision дозволив адміністратору вирішувати (AC-DECIDE-10), але
+    // лише через public.decide_leave_record: прямий update без рядка історії
+    // валить відкладений constraint trigger на commit (AC-DECIDE-15).
     const id = await seedRecord("teacher1@example.test", "teacher1@example.test:main", MONDAY);
 
     await expect(

@@ -112,6 +112,16 @@ export default async function Home() {
         <Link href="/requests" className={buttonVariants({ variant: "outline" })}>
           Мої заявки на відпустку
         </Link>
+        {/*
+          Посилання показуємо лише менеджеру й адміністратору — це UX, а не захист.
+          Саму сторінку й дію захищають перевірка ролі в них і політики бази
+          (openspec/changes/impl-leave-decision/design.md, розділ «Auth»).
+        */}
+        {profile?.role === "manager" || profile?.role === "admin" ? (
+          <Link href="/decisions" className={buttonVariants({ variant: "outline" })}>
+            Awaiting decision
+          </Link>
+        ) : null}
         <form action={signOut}>
           <Button type="submit" variant="ghost">
             Вийти

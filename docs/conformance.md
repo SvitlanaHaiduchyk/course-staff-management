@@ -49,25 +49,25 @@
 | AC-LEAVE-13 | Перетин на одній даті | `src/lib/leave/overlap.ts` (findOverlap) · `submit_leave_request` | `tests/leave-request.test.ts` · `tests/db/submit-request.test.ts` | реалізовано |
 | AC-LEAVE-16 | Перетин на одній даті скасовує всю заявку | `src/lib/leave/overlap.ts` (findOverlap) · `submit_leave_request` (ADR 0001) | `tests/leave-request.test.ts` · `tests/db/submit-request.test.ts` | реалізовано |
 | AC-LEAVE-14 | Список містить лише власні записи | `supabase/migrations/20261020203434_leave_schema.sql` (політика leave_records_select) + `src/app/requests/page.tsx` | `tests/db/rls.test.ts` | реалізовано |
-| AC-DECIDE-01 | Список обмежено своїми посадами | `supabase/migrations/20261020203434_leave_schema.sql` (політика leave_records_select) | — | відкладено (політика вже віддає менеджеру лише записи його посад — тест у tests/db/rls.test.ts; бракує самого списку «Awaiting decision» — зріз leave-decision) |
-| AC-DECIDE-14 | Порожній список має власне повідомлення | — | — | відкладено (чекає реалізації) |
-| AC-DECIDE-02 | Погодження одного запису із двох | — | — | відкладено (чекає реалізації) |
-| AC-DECIDE-03 | Відхилення запису | — | — | відкладено (чекає реалізації) |
-| AC-DECIDE-11 | Вирішений запис переходить в історію | — | — | відкладено (чекає реалізації) |
-| AC-DECIDE-04 | Повернення без коментаря | — | — | відкладено (чекає реалізації) |
-| AC-DECIDE-05 | Повернення з коментарем | — | — | відкладено (чекає реалізації) |
+| AC-DECIDE-01 | Список обмежено своїми посадами | `supabase/migrations/20261026201058_leave_decisions.sql` (leave_records_select, decides_record) · `src/app/decisions/` | `tests/db/decisions.test.ts` · `tests/leave-decision.test.ts` | реалізовано |
+| AC-DECIDE-14 | Порожній список має власне повідомлення | `src/lib/leave/decision.ts` (NO_RECORDS_AWAITING) · `src/app/decisions/` | `tests/leave-decision.test.ts` | реалізовано |
+| AC-DECIDE-02 | Погодження одного запису із двох | `supabase/migrations/20261026201058_leave_decisions.sql` (decide_leave_record) · `src/app/decisions/` | `tests/db/decisions.test.ts` · `tests/leave-decision.test.ts` | реалізовано |
+| AC-DECIDE-03 | Відхилення запису | `supabase/migrations/20261026201058_leave_decisions.sql` (decide_leave_record) · `src/app/decisions/` | `tests/db/decisions.test.ts` · `tests/leave-decision.test.ts` | реалізовано |
+| AC-DECIDE-11 | Вирішений запис переходить в історію | `supabase/migrations/20261026201058_leave_decisions.sql` (leave_decisions) · `src/app/decisions/` | `tests/db/decisions.test.ts` | реалізовано |
+| AC-DECIDE-04 | Повернення без коментаря | `supabase/migrations/20261026201058_leave_decisions.sql` (leave_decisions_return_needs_comment_check) · `src/lib/leave/decision.ts` (RETURN_NEEDS_COMMENT) | `tests/db/decisions.test.ts` · `tests/leave-decision.test.ts` | реалізовано |
+| AC-DECIDE-05 | Повернення з коментарем | `supabase/migrations/20261026201058_leave_decisions.sql` (decide_leave_record) · `src/app/decisions/` | `tests/db/decisions.test.ts` · `tests/leave-decision.test.ts` | реалізовано |
 | AC-DECIDE-06 | Виправлення годин і повторне подання | — | — | відкладено (чекає реалізації) |
-| AC-DECIDE-07 | Другий менеджер тієї самої посади | — | — | відкладено (чекає реалізації) |
-| AC-DECIDE-08 | Менеджер чужої посади | `supabase/migrations/20261020203434_leave_schema.sql` (колонковий grant update) | `tests/db/rls.test.ts` | реалізовано |
-| AC-DECIDE-09 | Працівник погоджує власний запис | `supabase/migrations/20261020203434_leave_schema.sql` (with check політики update) | `tests/db/rls.test.ts` | реалізовано |
-| AC-DECIDE-10 | Адміністратор погоджує запис чужої посади | — | — | відкладено (чекає реалізації) |
-| AC-DECIDE-18 | Менеджер власної посади й власний запис | — | — | відкладено (чекає реалізації — зріз рішень менеджера; статус наразі не може змінити ніхто з authenticated, тест у tests/db/rls.test.ts) |
-| AC-DECIDE-19 | Адміністратор вирішує запис менеджера | — | — | відкладено (чекає реалізації) |
+| AC-DECIDE-07 | Другий менеджер тієї самої посади | `supabase/migrations/20261026201058_leave_decisions.sql` (leave_records_update_decision) · `src/lib/leave/decision.ts` (alreadyDecidedMessage) | `tests/db/decisions.test.ts` · `tests/leave-decision.test.ts` | реалізовано |
+| AC-DECIDE-08 | Менеджер чужої посади | `supabase/migrations/20261026201058_leave_decisions.sql` (private.decides_record) · `src/lib/leave/decision.ts` (canDecide) | `tests/db/decisions.test.ts` · `tests/leave-decision.test.ts` | реалізовано |
+| AC-DECIDE-09 | Працівник погоджує власний запис | `supabase/migrations/20261026201058_leave_decisions.sql` (private.decides_record) · `src/lib/leave/decision.ts` (canDecide) | `tests/db/decisions.test.ts` · `tests/leave-decision.test.ts` | реалізовано |
+| AC-DECIDE-10 | Адміністратор погоджує запис чужої посади | `supabase/migrations/20261026201058_leave_decisions.sql` (private.decides_record) · `src/lib/leave/decision.ts` (canDecide) | `tests/db/decisions.test.ts` · `tests/leave-decision.test.ts` | реалізовано |
+| AC-DECIDE-18 | Менеджер власної посади й власний запис | `supabase/migrations/20261026201058_leave_decisions.sql` (private.decides_record) · `src/lib/leave/decision.ts` (OWN_RECORD_NEEDS_ADMIN) | `tests/db/decisions.test.ts` · `tests/leave-decision.test.ts` | реалізовано |
+| AC-DECIDE-19 | Адміністратор вирішує запис менеджера | `supabase/migrations/20261026201058_leave_decisions.sql` (private.decides_record) · `src/lib/leave/decision.ts` (canDecide) | `tests/db/decisions.test.ts` · `tests/leave-decision.test.ts` | реалізовано |
 | AC-DECIDE-12 | Спроба змінити погоджений запис | `supabase/migrations/20261020203434_leave_schema.sql` (політика leave_records_update_own_awaiting) | — | відкладено (база вже не дає змінити погоджений запис — тест у tests/db/rls.test.ts; бракує повідомлення «This record is already approved and cannot be changed», бо екран рішень — зріз leave-decision) |
 | AC-DECIDE-16 | Зміна годин до рішення | — | — | відкладено (чекає реалізації) |
 | AC-DECIDE-13 | Скасування запису, що чекає рішення | — | — | відкладено (чекає реалізації) |
 | AC-DECIDE-17 | Скасування поверненого запису | — | — | відкладено (чекає реалізації) |
-| AC-DECIDE-15 | Рядок історії після погодження | — | — | відкладено (чекає реалізації) |
+| AC-DECIDE-15 | Рядок історії після погодження | `supabase/migrations/20261026201058_leave_decisions.sql` (leave_decisions, require_decision_trail) · `src/app/decisions/` | `tests/db/decisions.test.ts` | реалізовано |
 | AC-BALANCE-01 | Залишки на початку навчального року | — | — | відкладено (чекає реалізації) |
 | AC-BALANCE-02 | Цілий день єдиної посади | — | — | відкладено (чекає реалізації) |
 | AC-BALANCE-05 | Цілий день двох посад рахується як один день | — | — | відкладено (чекає реалізації) |
@@ -89,14 +89,14 @@
 | AC-LEAVE-17 | Коментар зберігається на всіх записах заявки | `src/lib/leave/build.ts` (buildRecords) | `tests/leave-request.test.ts` | реалізовано |
 | AC-LEAVE-18 | Коментар довший за 500 символів | `src/lib/leave/build.ts` (COMMENT_TOO_LONG) | `tests/leave-request.test.ts` | реалізовано |
 | AC-DECIDE-22 | Зміна, що перетинає інший запис посади | `src/lib/leave/overlap.ts` (findOverlap, excludeId) | `tests/leave-request.test.ts` | реалізовано |
-| AC-DECIDE-20 | Коментар видно менеджерові | — | — | відкладено (чекає реалізації) |
+| AC-DECIDE-20 | Коментар видно менеджерові | `supabase/migrations/20261026201058_leave_decisions.sql` (leave_requests_select_managed) · `src/app/decisions/` | `tests/db/decisions.test.ts` | реалізовано |
 | AC-DECIDE-21 | Спроба змінити тип відпустки | — | — | відкладено (чекає реалізації) |
 | AC-BALANCE-17 | Одне попередження на заявку з кількох дат | — | — | відкладено (чекає реалізації) |
 | AC-BALANCE-18 | Поділений запис лишається одним записом | — | — | відкладено (чекає реалізації) |
 | AC-BALANCE-19 | Нульовий залишок | — | — | відкладено (чекає реалізації) |
 | AC-BALANCE-20 | Менеджер додаткової посади бачить повний баланс | — | — | відкладено (чекає реалізації) |
 | AC-LEAVE-21 | Неробоча дата відпадає, решта дат лишаються | `src/lib/leave/build.ts` (buildRecords) | `tests/leave-request.test.ts` | реалізовано |
-| AC-DECIDE-23 | Відхилення з коментарем | — | — | відкладено (чекає реалізації) |
-| AC-DECIDE-24 | Погодження з коментарем | — | — | відкладено (чекає реалізації) |
+| AC-DECIDE-23 | Відхилення з коментарем | `supabase/migrations/20261026201058_leave_decisions.sql` (decide_leave_record) · `src/app/decisions/` | `tests/db/decisions.test.ts` · `tests/leave-decision.test.ts` | реалізовано |
+| AC-DECIDE-24 | Погодження з коментарем | `supabase/migrations/20261026201058_leave_decisions.sql` (decide_leave_record) · `src/app/decisions/` | `tests/db/decisions.test.ts` · `tests/leave-decision.test.ts` | реалізовано |
 | AC-BALANCE-21 | Пізнє погодження за минулий навчальний рік | — | — | відкладено (чекає реалізації) |
 | AC-BALANCE-22 | Заявка через межу навчальних років | — | — | відкладено (чекає реалізації) |

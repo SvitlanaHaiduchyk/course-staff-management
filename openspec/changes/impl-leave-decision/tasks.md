@@ -6,12 +6,12 @@
 
 Міграція з таблицею `leave_decisions`, хелпером `private.decides_record`, колонковим `grant update (status)`, окремою політикою `update` на рішення і функцією `public.decide_leave_record`. Сторінка `/decisions` зі списками «Awaiting decision» і «History», серверна дія з `getClaims()` і перевіркою ролі до запису.
 
-- [ ] Міграція `*_leave_decisions.sql`: таблиця, RLS, `grant`, політики, `private.decides_record`, `public.decide_leave_record`
-- [ ] `src/lib/leave/decision.ts` — чисті правила: які рішення можливі, коли коментар обов'язковий, тексти повідомлень PM
-- [ ] `src/app/decisions/page.tsx` і `actions.ts` — список, діалог підтвердження, дія `decide` з `getClaims()`
-- [ ] Посилання на `/decisions` у шапці — лише для ролей `manager` і `admin` (UX, не захист)
-- [ ] `tests/db/decisions.test.ts` — відмовні AC на рівні бази (PGlite, `asUser`)
-- [ ] `tests/leave-decision.test.ts` — правила й тексти повідомлень
+- [x] Міграція `*_leave_decisions.sql`: таблиця, RLS, `grant`, політики, `private.decides_record`, `public.decide_leave_record`
+- [x] `src/lib/leave/decision.ts` — чисті правила: які рішення можливі, коли коментар обов'язковий, тексти повідомлень PM
+- [x] `src/app/decisions/page.tsx` і `actions.ts` — список, діалог підтвердження, дія `decide` з `getClaims()`
+- [x] Посилання на `/decisions` у шапці — лише для ролей `manager` і `admin` (UX, не захист)
+- [x] `tests/db/decisions.test.ts` — відмовні AC на рівні бази (PGlite, `asUser`)
+- [x] `tests/leave-decision.test.ts` — правила й тексти повідомлень
 
 Done when: AC-DECIDE-01, AC-DECIDE-02, AC-DECIDE-03, AC-DECIDE-04, AC-DECIDE-05, AC-DECIDE-07, AC-DECIDE-08, AC-DECIDE-09, AC-DECIDE-10, AC-DECIDE-11, AC-DECIDE-14, AC-DECIDE-15, AC-DECIDE-18, AC-DECIDE-19, AC-DECIDE-20, AC-DECIDE-23, AC-DECIDE-24
 
