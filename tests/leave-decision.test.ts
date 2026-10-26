@@ -39,6 +39,10 @@ describe("хто може вирішувати", () => {
     expect(canDecide({ role: "manager", isOwner: true, managesPosition: true })).toBe(false);
   });
 
+  it("саме лише «веде посаду» без ролі manager права не дає", () => {
+    expect(canDecide({ role: "employee", isOwner: false, managesPosition: true })).toBe(false);
+  });
+
   it("AC-DECIDE-10: адміністратор може, навіть не керуючи посадою", () => {
     expect(canDecide({ role: "admin", isOwner: false, managesPosition: false })).toBe(true);
   });

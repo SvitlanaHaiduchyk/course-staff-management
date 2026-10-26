@@ -61,7 +61,10 @@ as $$
       and (
         (select private.current_app_role()) = 'admin'
         or (
-          req.employee_id <> (select auth.uid())
+          -- Роль обов'язкова: самого рядка в position_managers замало. Інакше
+          -- людина з роллю employee, яку туди вписали, вирішувала б записи.
+          (select private.current_app_role()) = 'manager'
+          and req.employee_id <> (select auth.uid())
           and exists (
             select 1 from public.position_managers as pm
             where pm.position_id = rec.position_id
@@ -105,6 +108,20 @@ create policy leave_decisions_insert_decider
   with check (
     decided_by = (select auth.uid())
     and (select private.decides_record(record_id))
+  );
+
+-- Основний сценарій, крок 2: менеджер бачить, ЧИЙ це запис. Політика
+-- profiles_select_own_or_admin зі зрізу 1 віддає лише власний профіль, тож у
+-- списку стояло б «—» замість імені. Окрема політика відкриває менеджеру
+-- профілі тих, чиї посади він веде, — і нікого більше.
+create policy profiles_select_managed_employees
+  on public.profiles for select to authenticated
+  using (
+    exists (
+      select 1 from public.positions as pos
+      where pos.employee_id = public.profiles.id
+        and (select private.manages_position(pos.id))
+    )
   );
 
 -- AC-DECIDE-20: менеджер має побачити тип відпустки й коментар працівника, а їх
