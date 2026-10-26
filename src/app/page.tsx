@@ -1,5 +1,8 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { positionKindLabel, roleLabel, scheduleSummary } from "@/lib/leave/format";
 import { createClient } from "@/lib/supabase/server";
 
@@ -41,75 +44,80 @@ export default async function Home() {
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-16">
       <h1 className="text-2xl font-semibold">Personal Information</h1>
 
-      <dl className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-3 text-sm">
-        <dt className="text-zinc-500">Email</dt>
-        <dd data-testid="user-email">{profile?.email ?? claims.email ?? "—"}</dd>
+      <Card>
+        <CardContent>
+          <dl className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-3 text-sm">
+            <dt className="text-muted-foreground">Email</dt>
+            <dd data-testid="user-email">{profile?.email ?? claims.email ?? "—"}</dd>
 
-        <dt className="text-zinc-500">Ім&apos;я</dt>
-        <dd data-testid="user-name">{profile?.full_name ?? "—"}</dd>
+            <dt className="text-muted-foreground">Ім&apos;я</dt>
+            <dd data-testid="user-name">{profile?.full_name ?? "—"}</dd>
 
-        {/*
-          Рядок посад показуємо лише тим, у кого вони є. За глосарієм product.md
-          працівник — це «a person who works at the school and has at least one position»,
-          тож порожній список буває хіба в адміністратора без посади: йому цей рядок
-          нічого не каже. Працівникові без посад пояснення дає форма заявки.
-        */}
-        {hasPositions ? (
-          <>
-            <dt className="text-zinc-500">Посади</dt>
-            <dd data-testid="positions">
-              <ul className="flex flex-col gap-1">
-                {positions!.map((p) => (
-                  <li key={p.id}>
-                    {p.divisions?.name ?? "—"} / {p.job_title}{" "}
-                    <span className="text-zinc-500">({positionKindLabel(p.kind)})</span>
-                  </li>
-                ))}
-              </ul>
-            </dd>
-          </>
-        ) : null}
+            {/*
+              Рядок посад показуємо лише тим, у кого вони є. За глосарієм product.md
+              працівник — це «a person who works at the school and has at least one position»,
+              тож порожній список буває хіба в адміністратора без посади.
+            */}
+            {hasPositions ? (
+              <>
+                <dt className="text-muted-foreground">Посади</dt>
+                <dd data-testid="positions">
+                  <ul className="flex flex-col gap-1">
+                    {positions!.map((p) => (
+                      <li key={p.id}>
+                        {p.divisions?.name ?? "—"} / {p.job_title}{" "}
+                        <span className="text-muted-foreground">
+                          ({positionKindLabel(p.kind)})
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </dd>
+              </>
+            ) : null}
 
-        <dt className="text-zinc-500">Доступ</dt>
-        <dd data-testid="user-role">{roleLabel(profile?.role)}</dd>
-      </dl>
+            <dt className="text-muted-foreground">Доступ</dt>
+            <dd data-testid="user-role">{roleLabel(profile?.role)}</dd>
+          </dl>
+        </CardContent>
+      </Card>
 
       {hasPositions ? (
-        <section className="flex flex-col gap-2">
-          <h2 className="text-lg font-medium">Мій розклад</h2>
-          <dl
-            data-testid="schedule"
-            className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm"
-          >
-            {positions!.map((p) => (
-              <div key={p.id} className="contents">
-                <dt className="text-zinc-500">{p.job_title}</dt>
-                <dd>
-                  {p.schedule_blocks?.length
-                    ? scheduleSummary(p.schedule_blocks)
-                    : "розкладу немає"}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </section>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Мій розклад</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <dl
+              data-testid="schedule"
+              className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm"
+            >
+              {positions!.map((p) => (
+                <div key={p.id} className="contents">
+                  <dt className="text-muted-foreground">{p.job_title}</dt>
+                  <dd className="tabular-nums">
+                    {p.schedule_blocks?.length
+                      ? scheduleSummary(p.schedule_blocks)
+                      : "розкладу немає"}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </CardContent>
+        </Card>
       ) : null}
 
-      <a
-        href="/requests"
-        className="self-start rounded border border-zinc-300 px-4 py-2 text-sm dark:border-zinc-700"
-      >
-        Мої заявки на відпустку
-      </a>
-
-      <form action={signOut}>
-        <button
-          type="submit"
-          className="rounded border border-zinc-300 px-4 py-2 text-sm dark:border-zinc-700"
-        >
-          Вийти
-        </button>
-      </form>
+      <div className="flex gap-3">
+        {/* Button базується на @base-ui/react: замість asChild — buttonVariants на посиланні. */}
+        <Link href="/requests" className={buttonVariants({ variant: "outline" })}>
+          Мої заявки на відпустку
+        </Link>
+        <form action={signOut}>
+          <Button type="submit" variant="ghost">
+            Вийти
+          </Button>
+        </form>
+      </div>
     </main>
   );
 }

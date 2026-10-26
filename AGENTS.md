@@ -61,6 +61,17 @@ OpenSpec 1.14.1 (devDependency + глобальний CLI тієї ж версі
   розширюють разом із цим кроком), нові перевірки — окремим workflow у `.github/workflows/`. Jobs `spec`, `app`,
   `conformance`, `db-check`, `db-deploy` у `ci.yml` не перейменовуй і не видаляй: на їхніх назвах тримається ruleset.
 
+## Дизайн-система
+
+- Правила вигляду — DESIGN.md. Кольори — лише семантичні утиліти з токенів (bg-primary, text-muted-foreground,
+  border-input…); жодних hex, bg-[#…], сирих палітр (zinc-500, bg-white) і кольорів в inline style.
+- Компоненти — лише з @/components/ui (shadcn/ui, змінюються в цій теці). Нових кольорів у компонентах не вигадуй.
+- Новий токен: DESIGN.md → :root і темна тема в src/app/globals.css → --color-<назва> у @theme inline.
+- Темна тема — за системою (@media prefers-color-scheme), а не через клас .dark: класу ніхто не ставить.
+- Статус і тип відпустки — завжди текстом; колір лише на додачу (вимога PM, …spec#14).
+- Попередження не дорівнює помилці: попередження про перевищення залишку не зупиняє заявку (…spec#17).
+- Перевірка: npm run check:design (CI: .github/workflows/architecture.yml).
+
 ## Процес і ролі
 
 - **PM** пише вимоги людською мовою за шаблоном у своєму репо `<pm>/<team-slug>-spec` — issues «Продукт» і «Вимога»
