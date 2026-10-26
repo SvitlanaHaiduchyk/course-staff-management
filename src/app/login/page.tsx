@@ -19,7 +19,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 px-6 py-16">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Вхід</CardTitle>
+          <CardTitle as="h1" className="text-2xl">Вхід</CardTitle>
         </CardHeader>
         <CardContent>
           <form action={login} className="flex flex-col gap-4">

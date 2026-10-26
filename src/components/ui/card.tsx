@@ -32,9 +32,15 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+// `as` дає заголовку картки справжню семантику: за замовчуванням це div, але сторінки
+// передають h1 чи h2, щоб читач з екранним диктором чув структуру сторінки (DESIGN.md, §7).
+function CardTitle({
+  className,
+  as: Comp = "div",
+  ...props
+}: React.ComponentProps<"div"> & { as?: React.ElementType }) {
   return (
-    <div
+    <Comp
       data-slot="card-title"
       className={cn(
         "font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm",
