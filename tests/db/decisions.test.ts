@@ -89,6 +89,39 @@ describe("менеджер вирішує записи своїх посад", (
     expect(await statusOf(second)).toBe("awaiting");
   });
 
+  it("AC-DECIDE-01: менеджер бачить, чий це запис", async () => {
+    // Основний сценарій, крок 2. Політика profiles зі зрізу 1 віддавала лише
+    // власний профіль — у списку стояло б «—» замість імені працівника.
+    await seedRecord("teacher1@example.test", "teacher1@example.test:main");
+
+    const seen = await leave.asUser<{ full_name: string; email: string }>(
+      leave.users["manager1@example.test"],
+      `select p.full_name, p.email
+         from public.leave_records as rec
+         join public.positions as pos on pos.id = rec.position_id
+         join public.profiles as p on p.id = pos.employee_id`,
+    );
+
+    expect(seen).toHaveLength(1);
+    expect(seen[0].email).toBe("teacher1@example.test");
+    expect(seen[0].full_name).toBeTruthy();
+  });
+
+  it("менеджер не бачить профілів поза своїми посадами", async () => {
+    // manager2 веде додаткову посаду teacher1 і основну teacher2, тож бачить
+    // їх і себе. Адміністратор і manager1 — поза його посадами.
+    const seen = await leave.asUser<{ email: string }>(
+      leave.users["manager2@example.test"],
+      "select email from public.profiles order by email",
+    );
+
+    expect(seen.map((r) => r.email)).toEqual([
+      "manager2@example.test",
+      "teacher1@example.test",
+      "teacher2@example.test",
+    ]);
+  });
+
   it("AC-DECIDE-11: із трьох записів погоджений іде в History, двоє лишаються", async () => {
     const ids = [
       await seedRecord("teacher1@example.test", "teacher1@example.test:main"),
@@ -217,6 +250,25 @@ describe("кому вирішувати не можна", () => {
 
     expect(await statusOf(id)).toBe("awaiting");
     expect(await decisionCount()).toBe(0);
+  });
+
+  it("рядок у position_managers без ролі manager права не дає", async () => {
+    // CodeRabbit на PR #25: саме лише членство в position_managers не має
+    // робити людину тим, хто вирішує. Роль перевіряє private.decides_record.
+    const id = await seedRecord("teacher1@example.test", "teacher1@example.test:main");
+    await leave.asService(
+      "insert into public.position_managers (position_id, manager_id) values ($1, $2)",
+      [leave.positions["teacher1@example.test:main"], leave.users["teacher2@example.test"]],
+    );
+
+    await expect(decide("teacher2@example.test", id, "approved")).rejects.toThrow();
+
+    expect(await statusOf(id)).toBe("awaiting");
+    expect(await decisionCount()).toBe(0);
+
+    await leave.asService("delete from public.position_managers where manager_id = $1", [
+      leave.users["teacher2@example.test"],
+    ]);
   });
 
   it("AC-DECIDE-18: менеджер не вирішує власний запис", async () => {

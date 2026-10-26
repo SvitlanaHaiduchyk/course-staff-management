@@ -100,7 +100,9 @@ export function canDecide(viewer: Viewer): boolean {
   if (viewer.role === "admin") {
     return true; // AC-DECIDE-10, AC-DECIDE-19
   }
-  return viewer.managesPosition && !viewer.isOwner; // AC-DECIDE-01, AC-DECIDE-18
+  // Роль обов'язкова: саме лише «веде цю посаду» права не дає — те саме
+  // правило тримає private.decides_record у базі.
+  return viewer.role === "manager" && viewer.managesPosition && !viewer.isOwner;
 }
 
 /** Результат перевірки перед зверненням до бази. */
