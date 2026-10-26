@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -60,7 +61,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
     .from("positions")
     .select("id, kind, job_title, divisions(name), schedule_blocks(weekday, starts_at, ends_at)")
     .eq("employee_id", claims.sub)
-    .order("kind");
+    .order("kind", { ascending: false }); // main перед additional
 
   // AC-LEAVE-14: лише власні записи. Фільтра за працівником тут немає свідомо —
   // чужі записи відсікає політика leave_records_select_own_managed_or_admin.
@@ -94,7 +95,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Нова заявка</CardTitle>
+          <CardTitle as="h2" className="text-lg">Нова заявка</CardTitle>
         </CardHeader>
         <CardContent>
           {positions && positions.length > 0 ? (
@@ -103,12 +104,20 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
                 <legend className="mb-1 text-sm font-medium">Посади</legend>
                 {positions.map((p) => (
                   <Label key={p.id} className="flex items-start gap-2 font-normal">
+                    {/*
+                      Нативний checkbox, а не Checkbox з @/components/ui: той побудований на
+                      @base-ui/react, клієнтський, і подає значення через прихований input.
+                      Форма ж серверна (form action), а дія читає formData.getAll("position") —
+                      саме на цьому тримаються AC-LEAVE-02 і AC-LEAVE-03. Заміна потребує
+                      перевірки подання, тож іде окремою задачею.
+                      Колір — семантичний токен, check:design проходить.
+                    */}
                     <input
                       type="checkbox"
                       name="position"
                       value={p.id}
                       defaultChecked
-                      className="mt-1 accent-primary"
+                      className="accent-primary mt-1"
                     />
                     <span className="flex flex-col">
                       <span>
@@ -143,6 +152,11 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
 
               <div className="flex flex-col gap-2">
                 <Label htmlFor="leaveType">Тип відпустки</Label>
+                {/*
+                  Нативний select із тієї ж причини, що й checkbox вище: Select із
+                  @/components/ui клієнтський (@base-ui/react), а форма серверна.
+                  Класи — лише семантичні токени.
+                */}
                 <select
                   id="leaveType"
                   name="leaveType"
@@ -167,12 +181,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
 
               <div className="flex flex-col gap-2">
                 <Label htmlFor="comment">Коментар (до 500 символів)</Label>
-                <textarea
-                  id="comment"
-                  name="comment"
-                  maxLength={500}
-                  rows={2}
-                  className="border-input bg-background ring-offset-background focus-visible:ring-ring rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                <Textarea id="comment" name="comment" maxLength={500} rows={2}
                 />
               </div>
 
@@ -190,7 +199,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Мої записи</CardTitle>
+          <CardTitle as="h2" className="text-lg">Мої записи</CardTitle>
         </CardHeader>
         <CardContent>
           {records && records.length > 0 ? (

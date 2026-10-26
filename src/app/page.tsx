@@ -36,7 +36,7 @@ export default async function Home() {
     .from("positions")
     .select("id, kind, job_title, divisions(name), schedule_blocks(weekday, starts_at, ends_at)")
     .eq("employee_id", claims.sub)
-    .order("kind");
+    .order("kind", { ascending: false }); // main перед additional
 
   const hasPositions = Boolean(positions && positions.length > 0);
 
@@ -85,7 +85,7 @@ export default async function Home() {
       {hasPositions ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Мій розклад</CardTitle>
+            <CardTitle as="h2" className="text-lg">Мій розклад</CardTitle>
           </CardHeader>
           <CardContent>
             <dl
