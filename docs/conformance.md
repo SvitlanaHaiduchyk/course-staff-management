@@ -45,9 +45,9 @@
 | AC-LEAVE-09 | Кінець раніший за початок | `src/lib/leave/validate.ts` (validateHours) | `tests/leave-schedule.test.ts` | реалізовано |
 | AC-LEAVE-10 | Усі посади виключено | `src/lib/leave/build.ts` (buildRecords) | `tests/leave-request.test.ts` | реалізовано |
 | AC-LEAVE-11 | Повернення зі зведення до редагування | `src/lib/leave/build.ts` (buildRecords) | `tests/leave-request.test.ts` | реалізовано |
-| AC-LEAVE-12 | Family celebration без спорідненості | `src/lib/leave/build.ts` (RELATIONSHIP_REQUIRED) | `tests/leave-request.test.ts` | реалізовано |
-| AC-LEAVE-13 | Перетин на одній даті | `src/lib/leave/overlap.ts` (findOverlap) | `tests/leave-request.test.ts` | реалізовано |
-| AC-LEAVE-16 | Перетин на одній даті скасовує всю заявку | `src/lib/leave/overlap.ts` (findOverlap) | `tests/leave-request.test.ts` | реалізовано |
+| AC-LEAVE-12 | Family celebration без спорідненості | `src/lib/leave/build.ts` (RELATIONSHIP_REQUIRED) · `leave_requests_relationship_check` | `tests/leave-request.test.ts` · `tests/db/submit-request.test.ts` | реалізовано |
+| AC-LEAVE-13 | Перетин на одній даті | `src/lib/leave/overlap.ts` (findOverlap) · `submit_leave_request` | `tests/leave-request.test.ts` · `tests/db/submit-request.test.ts` | реалізовано |
+| AC-LEAVE-16 | Перетин на одній даті скасовує всю заявку | `src/lib/leave/overlap.ts` (findOverlap) · `submit_leave_request` (ADR 0001) | `tests/leave-request.test.ts` · `tests/db/submit-request.test.ts` | реалізовано |
 | AC-LEAVE-14 | Список містить лише власні записи | `supabase/migrations/20261020203434_leave_schema.sql` (політика leave_records_select) + `src/app/requests/page.tsx` | `tests/db/rls.test.ts` | реалізовано |
 | AC-DECIDE-01 | Список обмежено своїми посадами | `supabase/migrations/20261020203434_leave_schema.sql` (політика leave_records_select) | — | відкладено (політика вже віддає менеджеру лише записи його посад — тест у tests/db/rls.test.ts; бракує самого списку «Awaiting decision» — зріз leave-decision) |
 | AC-DECIDE-14 | Порожній список має власне повідомлення | — | — | відкладено (чекає реалізації) |
