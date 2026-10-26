@@ -19,17 +19,17 @@ Done when: AC-DECIDE-01, AC-DECIDE-02, AC-DECIDE-03, AC-DECIDE-04, AC-DECIDE-05,
 
 Міграція, що розширює політику оновлення власного запису на `cancelled` і повторне подання, і функція `public.update_record_hours` з перевіркою перетину без самого себе. Сторінка «My requests» показує статус, коментар менеджера й дає три дії.
 
-- [ ] Міграція `*_record_hours_and_cancel.sql`: `drop policy` + нова `leave_records_update_own_pending`, `public.update_record_hours`
-- [ ] `src/lib/leave/overlap.ts` — `findOverlap` з `excludeId` уже є; додати правила «що можна змінити» з текстами PM
-- [ ] `src/app/requests/page.tsx` і `actions.ts` — статус, коментар менеджера, зміна годин, скасування, повторне подання
-- [ ] `tests/db/record-edit.test.ts` — відмовні AC на рівні бази
-- [ ] `tests/leave-decision.test.ts` — доповнити правилами працівника
+- [x] Міграція `*_record_hours_and_cancel.sql`: `drop policy` + нова `leave_records_update_own_pending`, `public.update_record_hours`
+- [x] `src/lib/leave/overlap.ts` — `findOverlap` з `excludeId` уже є; додати правила «що можна змінити» з текстами PM
+- [x] `src/app/requests/page.tsx` і `actions.ts` — статус, коментар менеджера, зміна годин, скасування, повторне подання
+- [x] `tests/db/record-edit.test.ts` — відмовні AC на рівні бази
+- [x] `tests/leave-decision.test.ts` — доповнити правилами працівника
 
 Done when: AC-DECIDE-06, AC-DECIDE-12, AC-DECIDE-13, AC-DECIDE-16, AC-DECIDE-17, AC-DECIDE-21, AC-DECIDE-22
 
 ## 3. ADR і прод
 
-- [ ] ADR про те, де живе перевірка прав на рішення (роль із `profiles` + хелпер у `private`, а не роль із токена)
+- [x] ADR про те, де живе перевірка прав на рішення (роль із `profiles` + хелпер у `private`, а не роль із токена)
 - [ ] `/conformance` і `npm run ac:coverage` — рядки 24 AC зрізу оновлено в тих самих PR, що й код
 - [ ] Після merge — `db-deploy` зелений, зріз працює на прод-URL
 - [ ] Скріни за ролями (працівник, менеджер, адміністратор) у `docs/img/`

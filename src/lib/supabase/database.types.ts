@@ -1,7 +1,8 @@
 // Типи схеми бази. Оновлюйте разом із міграцією: готовий файл — у Summary прогону job db-check у CI
 // (supabase gen types typescript --local на одноразовій базі); або npm run db:types після npx supabase link на ваш проєкт. Ця версія написана вручну
 // й описує міграції 20261012000000_profiles_and_roles.sql, 20261020203434_leave_schema.sql
-// 20261021080359_submit_leave_request.sql і 20261026201058_leave_decisions.sql.
+// 20261021080359_submit_leave_request.sql і 20261026201058_leave_decisions.sql
+// і 20261026202444_record_hours_and_cancel.sql.
 
 export type Json =
   | string
@@ -310,6 +311,15 @@ export type Database = {
           p_record_id: string;
           p_decision: string;
           p_comment: string | null;
+        };
+        Returns: undefined;
+      };
+      update_record_hours: {
+        Args: {
+          p_record_id: string;
+          p_starts_at: string;
+          p_ends_at: string;
+          p_resubmit: boolean;
         };
         Returns: undefined;
       };
