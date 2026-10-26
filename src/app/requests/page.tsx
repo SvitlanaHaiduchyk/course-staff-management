@@ -16,9 +16,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { positionKindLabel, scheduleSummary } from "@/lib/leave/format";
+import { canCancel, canEditHours, canResubmit } from "@/lib/leave/record-edit";
 import { createClient } from "@/lib/supabase/server";
 
-import { submitLeaveRequest } from "./actions";
+import { cancelRecord, changeRecordHours, submitLeaveRequest } from "./actions";
 
 /** Типи відпустки з глосарію `requirements/product.md`. Кольором не позначаємо — лише текстом. */
 const LEAVE_TYPE_LABELS: Record<string, string> = {
@@ -71,6 +72,21 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
       "id, on_date, starts_at, ends_at, status, positions(job_title), leave_requests(leave_type, comment)",
     )
     .order("on_date", { ascending: false });
+
+  // AC-DECIDE-03, AC-DECIDE-05, AC-DECIDE-23, AC-DECIDE-24: працівник бачить
+  // коментар менеджера. Показуємо коментар ОСТАННЬОГО рішення по запису.
+  // RLS: політика leave_decisions_select_visible_records віддає лише свої.
+  const { data: decisions } = await supabase
+    .from("leave_decisions")
+    .select("record_id, comment, decision, decided_at")
+    .order("decided_at", { ascending: false });
+
+  const lastDecision = new Map<string, { comment: string | null; decision: string }>();
+  for (const d of decisions ?? []) {
+    if (!lastDecision.has(d.record_id)) {
+      lastDecision.set(d.record_id, { comment: d.comment, decision: d.decision });
+    }
+  }
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-12">
@@ -211,6 +227,8 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
                   <TableHead>Посада</TableHead>
                   <TableHead>Тип</TableHead>
                   <TableHead>Статус</TableHead>
+                  <TableHead>Коментар менеджера</TableHead>
+                  <TableHead>Дії</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody data-testid="records">
@@ -228,6 +246,67 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
                       <Badge className={STATUS_CLASSES[r.status] ?? ""}>
                         {STATUS_LABELS[r.status] ?? r.status}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {lastDecision.get(r.id)?.comment ?? "—"}
+                    </TableCell>
+                    <TableCell>
+                      {/*
+                        Кнопки показуємо за статусом — це UX. Саму відмову дає дія
+                        й політика leave_records_update_own_pending: запис у статусі
+                        «Approved» не зміниться й прямим запитом (AC-DECIDE-12).
+                      */}
+                      {canEditHours(r.status) ? (
+                        <form
+                          action={changeRecordHours}
+                          className="flex flex-wrap items-end gap-2"
+                        >
+                          <input type="hidden" name="recordId" value={r.id} />
+                          {canResubmit(r.status) ? (
+                            <input type="hidden" name="resubmit" value="1" />
+                          ) : null}
+                          <div className="flex flex-col gap-1">
+                            <Label htmlFor={`from-${r.id}`} className="text-xs">
+                              З
+                            </Label>
+                            <Input
+                              id={`from-${r.id}`}
+                              name="startsAt"
+                              type="time"
+                              required
+                              defaultValue={r.starts_at.slice(0, 5)}
+                              className="w-28"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <Label htmlFor={`to-${r.id}`} className="text-xs">
+                              До
+                            </Label>
+                            <Input
+                              id={`to-${r.id}`}
+                              name="endsAt"
+                              type="time"
+                              required
+                              defaultValue={r.ends_at.slice(0, 5)}
+                              className="w-28"
+                            />
+                          </div>
+                          <Button type="submit" variant="outline" size="sm">
+                            {canResubmit(r.status) ? "Подати знову" : "Зберегти години"}
+                          </Button>
+                        </form>
+                      ) : null}
+                      {canCancel(r.status) ? (
+                        <form action={cancelRecord} className="mt-2">
+                          <input type="hidden" name="recordId" value={r.id} />
+                          <Button type="submit" variant="ghost" size="sm">
+                            Скасувати запис
+                          </Button>
+                        </form>
+                      ) : null}
+                      {!canEditHours(r.status) && !canCancel(r.status) ? (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      ) : null}
                     </TableCell>
                   </TableRow>
                 ))}
