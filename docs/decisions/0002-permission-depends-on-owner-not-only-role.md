@@ -63,6 +63,14 @@ create policy ... for update to authenticated
 
 ## Як перевіряємо
 
-- **Тести прав напряму в таблицю** — `tests/db/decisions.test.ts`, блок «прямий запит повз функцію»: атака надсилає зміну статусу й рядок історії одним запитом, щоб тригер не завадив, і єдиним, що лишається на заваді, є політики. Мутація `private.decides_record → select true` валить `AC-DECIDE-09` і `AC-DECIDE-18`; прибрати `status = 'awaiting'` з `using` — валить `AC-DECIDE-07`; прибрати тригер — валить `AC-DECIDE-15`. Вивід усіх трьох — в описі PR.
+- **Тести прав напряму в таблицю** — `tests/db/decisions.test.ts`, блок «прямий запит повз функцію»: атака надсилає зміну статусу й рядок історії одним запитом, щоб тригер не завадив, і єдиним, що лишається на заваді, є політики.
+- **Мутаційна перевірка в CI** — кожне порушення вносили окремою міграцією в PR [#28](https://github.com/SvitlanaHaiduchyk/course-staff-management/pull/28) і чекали на **червоний** прогін, перш ніж скасувати:
+
+  | Що зламали | Червоний прогін | Який тест упав |
+  |---|---|---|
+  | `private.decides_record` → `select true` | [runs/40445373376](https://github.com/SvitlanaHaiduchyk/course-staff-management/actions/runs/40445373376) | `AC-DECIDE-09`, `AC-DECIDE-18` |
+  | `status = 'awaiting'` з `using` політики `leave_records_update_decision` | [runs/40445714289](https://github.com/SvitlanaHaiduchyk/course-staff-management/actions/runs/40445714289) | `AC-DECIDE-07` |
+
+  Прикметно, що в обох прогонах `db-check`, `spec` і `conformance` лишилися **зеленими** — червонів лише `app`. Тобто схема й матриця мутацію не помічають: її ловлять саме тести прав. Локально так само перевірено мутації тригера історії (`AC-DECIDE-15`), `using` політики власника (`AC-DECIDE-12`, `AC-DECIDE-17`) і `rec.id <> p_record_id` (`AC-DECIDE-16`, `AC-DECIDE-06`) — вивід у описах PR #25 і #27.
 - **Тести правила** — `tests/leave-decision.test.ts`: `canDecide` на шести комбінаціях ролі й власника.
 - **Правило в CI** — job «Секретний ключ лише на сервері» (`.github/workflows/architecture.yml`, `npm run check:boundary`) охороняє варіант **B** із [ADR 0001](0001-atomic-request-via-db-function.md): якщо хтось спробує обійти політики admin-клієнтом, прогін почервоніє.
