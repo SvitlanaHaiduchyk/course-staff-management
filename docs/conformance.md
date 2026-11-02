@@ -68,20 +68,20 @@
 | AC-DECIDE-13 | Скасування запису, що чекає рішення | `supabase/migrations/20261026202444_record_hours_and_cancel.sql` (leave_records_update_own_pending) · `src/app/requests/` | `tests/db/record-edit.test.ts` · `tests/leave-record-edit.test.ts` | реалізовано |
 | AC-DECIDE-17 | Скасування поверненого запису | `supabase/migrations/20261026202444_record_hours_and_cancel.sql` (leave_records_update_own_pending) · `src/lib/leave/record-edit.ts` (canResubmit) | `tests/db/record-edit.test.ts` · `tests/leave-record-edit.test.ts` | реалізовано |
 | AC-DECIDE-15 | Рядок історії після погодження | `supabase/migrations/20261026201058_leave_decisions.sql` (leave_decisions, require_decision_trail) · `src/app/decisions/` | `tests/db/decisions.test.ts` | реалізовано |
-| AC-BALANCE-01 | Залишки на початку навчального року | — | — | відкладено (чекає реалізації) |
-| AC-BALANCE-02 | Цілий день єдиної посади | — | — | відкладено (чекає реалізації) |
-| AC-BALANCE-05 | Цілий день двох посад рахується як один день | — | — | відкладено (чекає реалізації) |
-| AC-BALANCE-03 | Години на єдиній посаді | — | — | відкладено (чекає реалізації) |
-| AC-BALANCE-06 | Цілий день лише додаткової посади | — | — | відкладено (чекає реалізації) |
+| AC-BALANCE-01 | Залишки на початку навчального року | `src/lib/leave/balance.ts` | `tests/leave-balance.test.ts` | відкладено (арифметику й тексти реалізовано й покрито тестами; бракує схеми, погодження з поділом і екрана — задачі 2–4 impl-leave-balance) |
+| AC-BALANCE-02 | Цілий день єдиної посади | `src/lib/leave/balance.ts` | `tests/leave-balance.test.ts` | відкладено (арифметику й тексти реалізовано й покрито тестами; бракує схеми, погодження з поділом і екрана — задачі 2–4 impl-leave-balance) |
+| AC-BALANCE-05 | Цілий день двох посад рахується як один день | `src/lib/leave/balance.ts` | `tests/leave-balance.test.ts` | відкладено (арифметику й тексти реалізовано й покрито тестами; бракує схеми, погодження з поділом і екрана — задачі 2–4 impl-leave-balance) |
+| AC-BALANCE-03 | Години на єдиній посаді | `src/lib/leave/balance.ts` | `tests/leave-balance.test.ts` | відкладено (арифметику й тексти реалізовано й покрито тестами; бракує схеми, погодження з поділом і екрана — задачі 2–4 impl-leave-balance) |
+| AC-BALANCE-06 | Цілий день лише додаткової посади | `src/lib/leave/balance.ts` | `tests/leave-balance.test.ts` | відкладено (арифметику й тексти реалізовано й покрито тестами; бракує схеми, погодження з поділом і екрана — задачі 2–4 impl-leave-balance) |
 | AC-BALANCE-04 | Запис, що чекає рішення, балансу не чіпає | — | — | відкладено (чекає реалізації) |
 | AC-BALANCE-07 | Відхилений запис балансу не чіпає | — | — | відкладено (чекає реалізації) |
-| AC-BALANCE-11 | Перенесення 5.00 днів | — | — | відкладено (чекає реалізації) |
-| AC-BALANCE-08 | Перевищення цілим днем | — | — | відкладено (чекає реалізації) |
-| AC-BALANCE-15 | Перевищення часткою дня | — | — | відкладено (чекає реалізації) |
-| AC-BALANCE-09 | Попередження на цілий день | — | — | відкладено (чекає реалізації) |
-| AC-BALANCE-14 | Залишок береться на момент рішення | — | — | відкладено (чекає реалізації) |
-| AC-BALANCE-10 | Поділ 0.50 і 0.50 | — | — | відкладено (чекає реалізації) |
-| AC-BALANCE-16 | Спроба погодити без поділу | — | — | відкладено (чекає реалізації) |
+| AC-BALANCE-11 | Перенесення 5.00 днів | `src/lib/leave/balance.ts` | `tests/leave-balance.test.ts` | відкладено (арифметику й тексти реалізовано й покрито тестами; бракує схеми, погодження з поділом і екрана — задачі 2–4 impl-leave-balance) |
+| AC-BALANCE-08 | Перевищення цілим днем | `src/lib/leave/balance.ts` | `tests/leave-balance.test.ts` | відкладено (арифметику й тексти реалізовано й покрито тестами; бракує схеми, погодження з поділом і екрана — задачі 2–4 impl-leave-balance) |
+| AC-BALANCE-15 | Перевищення часткою дня | `src/lib/leave/balance.ts` | `tests/leave-balance.test.ts` | відкладено (арифметику й тексти реалізовано й покрито тестами; бракує схеми, погодження з поділом і екрана — задачі 2–4 impl-leave-balance) |
+| AC-BALANCE-09 | Попередження на цілий день | `src/lib/leave/balance.ts` | `tests/leave-balance.test.ts` | відкладено (арифметику й тексти реалізовано й покрито тестами; бракує схеми, погодження з поділом і екрана — задачі 2–4 impl-leave-balance) |
+| AC-BALANCE-14 | Залишок береться на момент рішення | `src/lib/leave/balance.ts` | `tests/leave-balance.test.ts` | відкладено (арифметику й тексти реалізовано й покрито тестами; бракує схеми, погодження з поділом і екрана — задачі 2–4 impl-leave-balance) |
+| AC-BALANCE-10 | Поділ 0.50 і 0.50 | `src/lib/leave/balance.ts` | `tests/leave-balance.test.ts` | відкладено (арифметику й тексти реалізовано й покрито тестами; бракує схеми, погодження з поділом і екрана — задачі 2–4 impl-leave-balance) |
+| AC-BALANCE-16 | Спроба погодити без поділу | `src/lib/leave/balance.ts` | `tests/leave-balance.test.ts` | відкладено (арифметику й тексти реалізовано й покрито тестами; бракує схеми, погодження з поділом і екрана — задачі 2–4 impl-leave-balance) |
 | AC-BALANCE-12 | Менеджер чужих посад | — | — | відкладено (чекає реалізації) |
 | AC-BALANCE-13 | Працівник і чужі залишки | — | — | відкладено (чекає реалізації) |
 | AC-LEAVE-19 | Розклад із двох блоків у повідомленні | `src/lib/leave/validate.ts` (outsideScheduleMessage) | `tests/leave-schedule.test.ts` | реалізовано |
@@ -91,12 +91,12 @@
 | AC-DECIDE-22 | Зміна, що перетинає інший запис посади | `supabase/migrations/20261026202444_record_hours_and_cancel.sql` (update_record_hours) · `src/lib/leave/overlap.ts` (findOverlap, excludeId) | `tests/db/record-edit.test.ts` | реалізовано |
 | AC-DECIDE-20 | Коментар видно менеджерові | `supabase/migrations/20261026201058_leave_decisions.sql` (leave_requests_select_managed) · `src/app/decisions/` | `tests/db/decisions.test.ts` | реалізовано |
 | AC-DECIDE-21 | Спроба змінити тип відпустки | колонкові `grant` без `leave_requests.update` · `src/lib/leave/record-edit.ts` (ONLY_HOURS_CAN_CHANGE) | `tests/db/record-edit.test.ts` · `tests/leave-record-edit.test.ts` | реалізовано |
-| AC-BALANCE-17 | Одне попередження на заявку з кількох дат | — | — | відкладено (чекає реалізації) |
-| AC-BALANCE-18 | Поділений запис лишається одним записом | — | — | відкладено (чекає реалізації) |
-| AC-BALANCE-19 | Нульовий залишок | — | — | відкладено (чекає реалізації) |
-| AC-BALANCE-20 | Менеджер додаткової посади бачить повний баланс | — | — | відкладено (чекає реалізації) |
+| AC-BALANCE-17 | Одне попередження на заявку з кількох дат | `src/lib/leave/balance.ts` | `tests/leave-balance.test.ts` | відкладено (арифметику й тексти реалізовано й покрито тестами; бракує схеми, погодження з поділом і екрана — задачі 2–4 impl-leave-balance) |
+| AC-BALANCE-18 | Поділений запис лишається одним записом | `src/lib/leave/balance.ts` | `tests/leave-balance.test.ts` | відкладено (арифметику й тексти реалізовано й покрито тестами; бракує схеми, погодження з поділом і екрана — задачі 2–4 impl-leave-balance) |
+| AC-BALANCE-19 | Нульовий залишок | `src/lib/leave/balance.ts` | `tests/leave-balance.test.ts` | відкладено (арифметику й тексти реалізовано й покрито тестами; бракує схеми, погодження з поділом і екрана — задачі 2–4 impl-leave-balance) |
+| AC-BALANCE-20 | Менеджер додаткової посади бачить повний баланс | `src/lib/leave/balance.ts` | `tests/leave-balance.test.ts` | відкладено (арифметику й тексти реалізовано й покрито тестами; бракує схеми, погодження з поділом і екрана — задачі 2–4 impl-leave-balance) |
 | AC-LEAVE-21 | Неробоча дата відпадає, решта дат лишаються | `src/lib/leave/build.ts` (buildRecords) | `tests/leave-request.test.ts` | реалізовано |
 | AC-DECIDE-23 | Відхилення з коментарем | `supabase/migrations/20261026201058_leave_decisions.sql` (decide_leave_record) · `src/app/decisions/` | `tests/db/decisions.test.ts` · `tests/leave-decision.test.ts` | реалізовано |
 | AC-DECIDE-24 | Погодження з коментарем | `supabase/migrations/20261026201058_leave_decisions.sql` (decide_leave_record) · `src/app/decisions/` | `tests/db/decisions.test.ts` · `tests/leave-decision.test.ts` | реалізовано |
-| AC-BALANCE-21 | Пізнє погодження за минулий навчальний рік | — | — | відкладено (чекає реалізації) |
-| AC-BALANCE-22 | Заявка через межу навчальних років | — | — | відкладено (чекає реалізації) |
+| AC-BALANCE-21 | Пізнє погодження за минулий навчальний рік | `src/lib/leave/balance.ts` | `tests/leave-balance.test.ts` | відкладено (арифметику й тексти реалізовано й покрито тестами; бракує схеми, погодження з поділом і екрана — задачі 2–4 impl-leave-balance) |
+| AC-BALANCE-22 | Заявка через межу навчальних років | `src/lib/leave/balance.ts` | `tests/leave-balance.test.ts` | відкладено (арифметику й тексти реалізовано й покрито тестами; бракує схеми, погодження з поділом і екрана — задачі 2–4 impl-leave-balance) |
