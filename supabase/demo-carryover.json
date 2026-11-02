@@ -1,0 +1,8 @@
+{
+  "comment": "Перенесені з попереднього навчального року дні. Єдина частина балансу, яка не виводиться з погоджених записів: на старті першого року її вносить розробник як тестові дані (припущення PM у requirements/03-leave-balance.md). school_year — рік ПОЧАТКУ: 2026 означає 2026–2027. Застосовує scripts/create-demo-carryover.mjs (npm run carryover:demo) після npm run users:demo.",
+  "carryover": [
+    { "employee": "teacher1@example.test", "leave_type": "sick", "school_year": 2026, "days": 5.0 },
+    { "employee": "teacher1@example.test", "leave_type": "personal", "school_year": 2026, "days": 2.5 },
+    { "employee": "teacher2@example.test", "leave_type": "sick", "school_year": 2026, "days": 0.0 }
+  ]
+}
