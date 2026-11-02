@@ -136,7 +136,7 @@ describe("навчальний рік запису", () => {
     expect(pick(second, "personal")?.used).toBe("1.00");
   });
 
-  it("AC-BALANCE-04, AC-BALANCE-07: непогоджений запис балансу не чіпає", async () => {
+  it("AC-BALANCE-04: непогоджений запис балансу не чіпає", async () => {
     const [req] = await leave.asService<{ id: string }>(
       `insert into public.leave_requests (employee_id, leave_type)
        values ($1, 'personal') returning id`,
