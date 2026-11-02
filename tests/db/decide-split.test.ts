@@ -340,7 +340,7 @@ describe("числа підставити не можна", () => {
           "update public.leave_records set days_on_type = 0.00 where id = $1",
           [id],
         ),
-      ).rejects.toThrow();
+      ).rejects.toThrow("permission denied for table leave_records");
     }
 
     expect((await daysOf(id)).on_type).toBe("1.00");

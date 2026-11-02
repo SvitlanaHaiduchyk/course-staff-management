@@ -237,7 +237,7 @@ describe("кому вирішувати не можна", () => {
     // manager2 веде лише додаткову посаду teacher1; це запис основної.
     const id = await seedRecord("teacher1@example.test", "teacher1@example.test:main");
 
-    await expect(decide("manager2@example.test", id, "approved")).rejects.toThrow();
+    await expect(decide("manager2@example.test", id, "approved")).rejects.toThrow("You cannot decide on this record");
 
     expect(await statusOf(id)).toBe("awaiting");
     expect(await decisionCount()).toBe(0);
@@ -246,7 +246,7 @@ describe("кому вирішувати не можна", () => {
   it("AC-DECIDE-09: працівник не погодить власний запис", async () => {
     const id = await seedRecord("teacher1@example.test", "teacher1@example.test:main");
 
-    await expect(decide("teacher1@example.test", id, "approved")).rejects.toThrow();
+    await expect(decide("teacher1@example.test", id, "approved")).rejects.toThrow("Your own record is decided by an administrator");
 
     expect(await statusOf(id)).toBe("awaiting");
     expect(await decisionCount()).toBe(0);
@@ -261,7 +261,7 @@ describe("кому вирішувати не можна", () => {
       [leave.positions["teacher1@example.test:main"], leave.users["teacher2@example.test"]],
     );
 
-    await expect(decide("teacher2@example.test", id, "approved")).rejects.toThrow();
+    await expect(decide("teacher2@example.test", id, "approved")).rejects.toThrow("You cannot decide on this record");
 
     expect(await statusOf(id)).toBe("awaiting");
     expect(await decisionCount()).toBe(0);
@@ -293,7 +293,7 @@ describe("кому вирішувати не можна", () => {
          values ($1, $2, 'approved')`,
         [id, leave.users["manager1@example.test"]],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/violates row-level security policy for table "leave_decisions"/);
 
     expect(await decisionCount()).toBe(0);
   });
@@ -302,7 +302,7 @@ describe("кому вирішувати не можна", () => {
     const id = await seedRecord("teacher1@example.test", "teacher1@example.test:main");
     await decide("manager1@example.test", id, "approved");
 
-    await expect(leave.asAnon("select id from public.leave_decisions")).rejects.toThrow();
+    await expect(leave.asAnon("select id from public.leave_decisions")).rejects.toThrow("permission denied for table leave_decisions");
   });
 });
 
@@ -372,14 +372,14 @@ describe("історія рішень", () => {
         "update public.leave_decisions set decision = 'rejected' where record_id = $1",
         [id],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow("permission denied for table leave_decisions");
     await expect(
       leave.asUser(
         leave.users["manager1@example.test"],
         "delete from public.leave_decisions where record_id = $1",
         [id],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow("permission denied for table leave_decisions");
 
     expect(await decisionCount()).toBe(1);
   });
@@ -413,7 +413,7 @@ describe("прямий запит повз функцію", () => {
   it("AC-DECIDE-09: працівник не змінить статус власного запису напряму", async () => {
     const id = await seedRecord("teacher1@example.test", "teacher1@example.test:main");
 
-    await expect(decideDirectly("teacher1@example.test", id)).rejects.toThrow();
+    await expect(decideDirectly("teacher1@example.test", id)).rejects.toThrow(/violates row-level security policy for table "leave_records"/);
 
     expect(await statusOf(id)).toBe("awaiting");
     expect(await decisionCount()).toBe(0);
@@ -422,7 +422,7 @@ describe("прямий запит повз функцію", () => {
   it("AC-DECIDE-18: менеджер не змінить статус власного запису напряму", async () => {
     const id = await seedRecord("manager1@example.test", "manager1@example.test:main");
 
-    await expect(decideDirectly("manager1@example.test", id)).rejects.toThrow();
+    await expect(decideDirectly("manager1@example.test", id)).rejects.toThrow(/violates row-level security policy for table "leave_records"/);
 
     expect(await statusOf(id)).toBe("awaiting");
     expect(await decisionCount()).toBe(0);
@@ -463,7 +463,7 @@ describe("прямий запит повз функцію", () => {
         "update public.leave_records set status = 'approved' where id = $1",
         [id],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow("A decision must be recorded in the history");
 
     expect(await statusOf(id)).toBe("awaiting");
     expect(await decisionCount()).toBe(0);

@@ -30,13 +30,6 @@ export function toMinutes(time: string): number {
   return Number(match[1]) * 60 + Number(match[2]);
 }
 
-/** Зворотне перетворення: 510 → "08:30". */
-export function toTime(minutes: number): string {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-}
-
 /**
  * День тижня дати за ISO (1 — понеділок, 7 — неділя).
  * Дата — рядок `YYYY-MM-DD` у київському часі; усі дати продукту такі (припущення PM).

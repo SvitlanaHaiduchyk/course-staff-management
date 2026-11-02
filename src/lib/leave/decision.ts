@@ -14,15 +14,9 @@
 export const DECISIONS = ["approved", "rejected", "returned"] as const;
 export type Decision = (typeof DECISIONS)[number];
 
-/** П'ять статусів запису; перелік остаточний (припущення PM). */
-export const STATUSES = [
-  "awaiting",
-  "approved",
-  "rejected",
-  "returned",
-  "cancelled",
-] as const;
-export type RecordStatus = (typeof STATUSES)[number];
+// П'ять статусів запису — їх перелік і тип живуть в overlap.ts (RecordStatus),
+// де з'явилися першим. Тут була друга копія без жодного споживача: її знайшов
+// fallow audit. Підписи статусів дає statusLabel нижче.
 
 export function isDecision(value: string): value is Decision {
   return (DECISIONS as readonly string[]).includes(value);
