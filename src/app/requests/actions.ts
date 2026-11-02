@@ -3,12 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import {
-  type DateChoice,
-  type LeaveType,
-  type Position,
-  buildRecords,
-} from "@/lib/leave/build";
+import { isLeaveType } from "@/lib/leave/balance";
+import { type DateChoice, type Position, buildRecords } from "@/lib/leave/build";
 import {
   APPROVED_CANNOT_CHANGE,
   canCancel,
@@ -17,12 +13,6 @@ import {
 import { type ScheduleBlock, scheduleFor } from "@/lib/leave/schedule";
 import { validateHours } from "@/lib/leave/validate";
 import { createClient } from "@/lib/supabase/server";
-
-const LEAVE_TYPES: readonly LeaveType[] = ["sick", "personal", "unpaid", "family_celebration"];
-
-function isLeaveType(value: string): value is LeaveType {
-  return (LEAVE_TYPES as readonly string[]).includes(value);
-}
 
 /**
  * Подання заявки на відпустку.

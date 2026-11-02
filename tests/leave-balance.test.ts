@@ -22,6 +22,7 @@ import {
   schoolYearOf,
   splitLabel,
   suggestedSplit,
+  sharesForDate,
   sumShares,
   workingMinutesOn,
 } from "@/lib/leave/balance";
@@ -92,6 +93,42 @@ describe("частка дня", () => {
     // 0.355 дня: 213 хв із 600. Half up дає 0.36, «до парного» дало б 0.36 теж,
     // тож беремо випадок, де вони різняться: 0.125 → 0.13, а не 0.12.
     expect(dayShare(75, 600)).toBe(13);
+  });
+});
+
+describe("частки кількох записів однієї дати", () => {
+  it("AC-BALANCE-05: дві посади на одну дату дають рівно 1.00", () => {
+    expect(sharesForDate([420, 75], 495)).toEqual([85, 15]);
+    expect(sumShares(sharesForDate([420, 75], 495))).toBe(100);
+  });
+
+  it("три посади, що покривають дату, теж дають рівно 1.00", () => {
+    // Незалежне округлення дало б 33 + 33 + 33 = 99: саме через цей випадок
+    // частку дати округлюємо один раз, а не кожен запис окремо.
+    const shares = sharesForDate([165, 165, 165], 495);
+
+    expect(sumShares(shares)).toBe(100);
+    expect(shares.filter((s) => s === 34)).toHaveLength(1);
+  });
+
+  it("для одного запису збігається з dayShare", () => {
+    expect(sharesForDate([150], 420)).toEqual([dayShare(150, 420)]);
+    expect(sharesForDate([75], 495)).toEqual([dayShare(75, 495)]);
+  });
+
+  it("AC-BALANCE-06: неповне покриття дати 1.00 не дає", () => {
+    expect(sumShares(sharesForDate([75], 495))).toBe(15);
+  });
+
+  it("порядок записів на результат не впливає", () => {
+    const a = sumShares(sharesForDate([165, 165, 165], 495));
+    const b = sumShares(sharesForDate([165, 165, 165].reverse(), 495));
+
+    expect(a).toBe(b);
+  });
+
+  it("дата без робочих хвилин дає нулі", () => {
+    expect(sharesForDate([60, 30], 0)).toEqual([0, 0]);
   });
 });
 
