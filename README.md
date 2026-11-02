@@ -1,4 +1,15 @@
-# Шаблон проєкту розробника: Next.js + Supabase + OpenSpec
+<https://course-staff-management.vercel.app>
+
+# Портал відсутностей персоналу школи
+
+Реалізація продукту команди `leave-portal`: працівник подає заявку на відпустку за своїм розкладом, відповідальний менеджер вирішує по кожному запису, і обидва бачать залишки днів за типами відпустки.
+
+- **Прод:** <https://course-staff-management.vercel.app> · здоров'я: [`/api/health`](https://course-staff-management.vercel.app/api/health)
+- **Вимоги PM:** [`mkozlovskyi-ops/course-staff-management-spec`](https://github.com/mkozlovskyi-ops/course-staff-management-spec) · знімок — у шапці [`docs/conformance.md`](docs/conformance.md)
+- **Матриця відповідності:** [`docs/conformance.md`](docs/conformance.md) — 67 AC трьох вимог, усі реалізовані
+- **Тестові акаунти:** `accounts.zip` у корені (пароль курсу); адреси — лише `*@example.test`
+
+## Шаблон проєкту розробника: Next.js + Supabase + OpenSpec
 
 Стартовий репозиторій для вебзастосунку «з нуля». Кожен розробник команди створює з шаблону **власне** репо й робить у
 ньому **свою** реалізацію продукту команди: власні Supabase і Vercel, задачі → гілки → PR → CodeRabbit → merge.

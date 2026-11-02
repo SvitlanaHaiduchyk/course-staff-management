@@ -6,7 +6,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "./database.types";
 
 // Сторінки, доступні без входу.
-const PUBLIC_PATHS = ["/login", "/auth"];
+// /api/health — публічна перевірка здоров'я проду (D0): без неї proxy віддав би 307 на /login,
+// і ні smoke, ні перевірка курсу не побачили б відповіді.
+const PUBLIC_PATHS = ["/login", "/auth", "/api/health"];
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });

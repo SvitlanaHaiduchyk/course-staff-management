@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { cpSync, existsSync, mkdtempSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import { fixtures, runScript } from "./run-script";
 
 // Кожен випадок — tests/fixtures/migration-order/<випадок>/{main,pr}. Тест збирає тимчасовий git-репозиторій:
@@ -13,6 +13,12 @@ const git = (cwd: string, ...args: string[]) =>
     ["-c", "user.name=test", "-c", "user.email=test@example.test", "-c", "commit.gpgsign=false", ...args],
     { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
   );
+
+// Кожен випадок піднімає справжній git-репозиторій на диску: три коміти, ref і гілка.
+// На типовому таймауті 5 с це миготить, коли вся добірка йде паралельно, — тест падав
+// щоразу на іншому випадку з «Test timed out in 5000ms». Повільний не означає хибний,
+// тож даємо час, а не прибираємо перевірку.
+vi.setConfig({ testTimeout: 30_000 });
 
 const temps: string[] = [];
 
