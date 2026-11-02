@@ -17,7 +17,8 @@
     "users:demo": "node --env-file=.env.local scripts/create-demo-users.mjs",
     "positions:demo": "node --env-file=.env.local scripts/create-demo-positions.mjs",
     "check:design": "node scripts/check-design-tokens.mjs",
-    "check:boundary": "node scripts/check-server-boundary.mjs"
+    "check:boundary": "node scripts/check-server-boundary.mjs",
+    "carryover:demo": "node --env-file=.env.local scripts/create-demo-carryover.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

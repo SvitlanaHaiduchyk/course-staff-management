@@ -17,10 +17,10 @@ Done when: AC-BALANCE-02, AC-BALANCE-03, AC-BALANCE-05, AC-BALANCE-06, AC-BALANC
 
 Міграція з таблицею `leave_carryover`, колонками `days_on_type` / `days_unpaid` на `leave_records`, хелпером `private.manages_employee` і трьома політиками `select`, без яких менеджер не порахує повного балансу (`AC-BALANCE-20`).
 
-- [ ] Міграція `*_leave_balance.sql`: таблиця, колонки, RLS, `grant`, `private.manages_employee`, політики на `leave_records`, `positions`, `schedule_blocks`
-- [ ] `public.employee_balance(p_employee_id uuid, p_school_year smallint)` — `security invoker`
-- [ ] `supabase/demo-carryover.json` і `scripts/create-demo-carryover.mjs` (`npm run carryover:demo`)
-- [ ] `tests/db/balance-access.test.ts` — відмовні AC на рівні бази
+- [x] Міграція `*_leave_balance.sql`: таблиця, колонки, RLS, `grant`, `private.manages_employee`, політики на `leave_records`, `positions`, `schedule_blocks`
+- [x] `public.employee_balance(p_employee_id uuid, p_school_year smallint)` — `security invoker`
+- [x] `supabase/demo-carryover.json` і `scripts/create-demo-carryover.mjs` (`npm run carryover:demo`)
+- [x] `tests/db/balance-access.test.ts` — відмовні AC на рівні бази
 
 Done when: AC-BALANCE-11, AC-BALANCE-12, AC-BALANCE-13, AC-BALANCE-20, AC-BALANCE-21
 
