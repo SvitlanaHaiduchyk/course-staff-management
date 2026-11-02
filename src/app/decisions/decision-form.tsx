@@ -25,10 +25,13 @@ export function DecisionForm({
   recordId,
   decision,
   summary,
+  withSplit = false,
 }: {
   recordId: string;
   decision: Decision;
   summary: string;
+  /** Запис перевищує залишок: погоджуємо лише з поділом (AC-BALANCE-16). */
+  withSplit?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const needsComment = commentRequired(decision);
@@ -46,8 +49,11 @@ export function DecisionForm({
         <form action={decideRecord}>
           <input type="hidden" name="recordId" value={recordId} />
           <input type="hidden" name="decision" value={decision} />
+          {withSplit ? <input type="hidden" name="withSplit" value="1" /> : null}
           <DialogHeader>
-            <DialogTitle>{decisionLabel(decision)}</DialogTitle>
+            <DialogTitle>
+              {withSplit ? `${decisionLabel(decision)} with split` : decisionLabel(decision)}
+            </DialogTitle>
             <DialogDescription>{summary}</DialogDescription>
           </DialogHeader>
 

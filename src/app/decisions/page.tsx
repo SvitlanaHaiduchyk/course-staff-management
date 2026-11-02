@@ -13,7 +13,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  dayShare,
+  exceedsBalance,
+  managerSplitWarning,
+  schoolYearOf,
+  suggestedSplit,
+} from "@/lib/leave/balance";
 import { DECISIONS, NO_RECORDS_AWAITING, statusLabel } from "@/lib/leave/decision";
+import { minutesInsideBlocks, scheduleFor } from "@/lib/leave/schedule";
 import { positionKindLabel } from "@/lib/leave/format";
 import { createClient } from "@/lib/supabase/server";
 
@@ -74,7 +82,8 @@ export default async function DecisionsPage({
     .from("leave_records")
     .select(
       `id, on_date, starts_at, ends_at, status, position_id,
-       positions(kind, job_title, profiles(full_name, email)),
+       positions(kind, job_title, employee_id, profiles(full_name, email),
+                 schedule_blocks(weekday, starts_at, ends_at)),
        leave_requests(leave_type, comment, employee_id)`,
     )
     .eq("status", "awaiting")
@@ -94,6 +103,68 @@ export default async function DecisionsPage({
   // кнопок на них не показуємо. Відмову з текстом PM дає дія й база.
   const decidable = (awaiting ?? []).filter(
     (r) => role === "admin" || r.leave_requests?.employee_id !== claims.sub,
+  );
+
+  // AC-BALANCE-09, AC-BALANCE-14: попередження з підказаним поділом, за
+  // залишком на МОМЕНТ, коли менеджер відкриває список.
+  //
+  // Знаменник частки дня — усі робочі хвилини працівника за всіма посадами,
+  // і їх віддає функція `working_minutes_on`: читати чужі розклади менеджер
+  // не може, а одне число — може.
+  const employees = [...new Set(decidable.map((r) => r.positions?.employee_id ?? ""))].filter(
+    Boolean,
+  );
+  const balances = new Map<string, Map<string, number>>();
+  await Promise.all(
+    employees.map(async (employeeId) => {
+      const { data: rows } = await supabase.rpc("employee_balance", {
+        p_employee_id: employeeId,
+        p_school_year: schoolYearOf(new Date().toISOString().slice(0, 10)),
+      });
+      balances.set(
+        employeeId,
+        new Map(
+          (rows ?? []).map((b) => [
+            b.leave_type,
+            Math.round((18 + Number(b.carried_over) - Number(b.used)) * 100),
+          ]),
+        ),
+      );
+    }),
+  );
+
+  const warnings = new Map<string, string>();
+  await Promise.all(
+    decidable.map(async (record) => {
+      const type = record.leave_requests?.leave_type ?? "";
+      if (type !== "sick" && type !== "personal") return;
+
+      const employeeId = record.positions?.employee_id;
+      const remaining = employeeId ? balances.get(employeeId)?.get(type) : undefined;
+      if (remaining === undefined) return;
+
+      const { data: working } = await supabase.rpc("working_minutes_on", {
+        p_employee_id: employeeId!,
+        p_date: record.on_date,
+      });
+      const blocks = scheduleFor(
+        (record.positions?.schedule_blocks ?? []).map((b) => ({
+          weekday: b.weekday,
+          startsAt: b.starts_at.slice(0, 5),
+          endsAt: b.ends_at.slice(0, 5),
+        })),
+        record.on_date,
+      );
+      const minutes = minutesInsideBlocks(blocks, {
+        startsAt: record.starts_at.slice(0, 5),
+        endsAt: record.ends_at.slice(0, 5),
+      });
+      const share = dayShare(minutes, Number(working ?? 0));
+
+      if (exceedsBalance(remaining, share)) {
+        warnings.set(record.id, managerSplitWarning(type, Math.max(remaining, 0), suggestedSplit(remaining, share)));
+      }
+    }),
   );
 
   return (
@@ -145,6 +216,15 @@ export default async function DecisionsPage({
                         <div className="text-xs text-muted-foreground">
                           {position?.profiles?.email ?? ""}
                         </div>
+                        {/* AC-BALANCE-20: менеджер будь-якої посади бачить повний баланс. */}
+                        {position?.employee_id ? (
+                          <Link
+                            href={`/balances/${position.employee_id}`}
+                            className="text-xs underline underline-offset-4"
+                          >
+                            Залишки
+                          </Link>
+                        ) : null}
                       </TableCell>
                       <TableCell>
                         <div>{position?.job_title ?? "—"}</div>
@@ -164,15 +244,28 @@ export default async function DecisionsPage({
                         ) : null}
                       </TableCell>
                       <TableCell>
-                        <div className="flex justify-end gap-2">
-                          {DECISIONS.map((decision) => (
-                            <DecisionForm
-                              key={decision}
-                              recordId={record.id}
-                              decision={decision}
-                              summary={summary}
-                            />
-                          ))}
+                        <div className="flex flex-col items-end gap-2">
+                          {/*
+                            Попередження НЕ зупиняє рішення — воно каже, що
+                            погодити можна лише з поділом (AC-BALANCE-16).
+                            Тому Alert варіанта default, а не destructive.
+                          */}
+                          {warnings.has(record.id) ? (
+                            <Alert data-testid="split-warning">
+                              <AlertDescription>{warnings.get(record.id)}</AlertDescription>
+                            </Alert>
+                          ) : null}
+                          <div className="flex justify-end gap-2">
+                            {DECISIONS.map((decision) => (
+                              <DecisionForm
+                                key={decision}
+                                recordId={record.id}
+                                decision={decision}
+                                summary={summary}
+                                withSplit={decision === "approved" && warnings.has(record.id)}
+                              />
+                            ))}
+                          </div>
                         </div>
                       </TableCell>
                     </TableRow>

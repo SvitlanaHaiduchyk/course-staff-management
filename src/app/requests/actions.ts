@@ -3,14 +3,22 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { isLeaveType } from "@/lib/leave/balance";
+import {
+  type PositionSchedule,
+  isLeaveType,
+  overBalanceWarning,
+  schoolYearOf,
+  sharesForDate,
+  sumShares,
+  workingMinutesOn,
+} from "@/lib/leave/balance";
 import { type DateChoice, type Position, buildRecords } from "@/lib/leave/build";
 import {
   APPROVED_CANNOT_CHANGE,
   canCancel,
   checkHoursEdit,
 } from "@/lib/leave/record-edit";
-import { type ScheduleBlock, scheduleFor } from "@/lib/leave/schedule";
+import { type ScheduleBlock, minutesInsideBlocks, scheduleFor } from "@/lib/leave/schedule";
 import { validateHours } from "@/lib/leave/validate";
 import { createClient } from "@/lib/supabase/server";
 
@@ -27,7 +35,8 @@ export async function submitLeaveRequest(formData: FormData) {
 
   // getClaims() перевіряє JWT. getSession() для авторизації на сервері не використовуємо.
   const { data: claimsData } = await supabase.auth.getClaims();
-  if (!claimsData?.claims) {
+  const claims = claimsData?.claims;
+  if (!claims) {
     redirect("/login");
   }
 
@@ -94,10 +103,92 @@ export async function submitLeaveRequest(formData: FormData) {
   }
 
   revalidatePath("/requests");
+  revalidatePath("/balances");
 
-  // AC-LEAVE-21: дати без робочих годин лише відпали — показуємо по повідомленню на кожну.
-  const skipped = built.skipped.map((s) => `${s.date}: ${s.message}`).join("; ");
-  redirect(skipped ? "/requests?notice=" + encodeURIComponent(skipped) : "/requests");
+  const notices: string[] = [];
+
+  // AC-LEAVE-21: дати без робочих годин лише відпали — повідомлення на кожну.
+  for (const s of built.skipped) {
+    notices.push(`${s.date}: ${s.message}`);
+  }
+
+  // AC-BALANCE-08, AC-BALANCE-15, AC-BALANCE-17: ОДНЕ попередження на всю
+  // заявку, за її сумарною часткою й залишком на момент подання. Заявку воно
+  // не зупиняє — тому показуємо як notice, а не error.
+  const warning = await overBalanceNotice(supabase, claims.sub, leaveType, built.records);
+  if (warning) notices.push(warning);
+
+  const notice = notices.join("; ");
+  redirect(notice ? "/requests?notice=" + encodeURIComponent(notice) : "/requests");
+}
+
+/**
+ * Попередження про перевищення залишку — або `null`, якщо заявка в межах.
+ *
+ * Знаменник частки дня — усі робочі хвилини працівника на дату за розкладами
+ * **всіх** його посад, тож позиції читаємо повністю, а не лише включені в
+ * заявку (AC-BALANCE-06).
+ *
+ * Межа: заявку через межу навчальних років (AC-BALANCE-22) порівнюємо із
+ * залишком року найранішої дати. PM вимагає одне попередження на заявку й не
+ * описує випадку, коли роки різні.
+ */
+async function overBalanceNotice(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  employeeId: string,
+  leaveType: string,
+  records: readonly { positionId: string; date: string; startsAt: string; endsAt: string }[],
+): Promise<string | null> {
+  if (records.length === 0) return null;
+
+  // Типи без ліміту не перевищуються ніколи.
+  if (leaveType !== "sick" && leaveType !== "personal") return null;
+
+  // RLS: працівник бачить усі власні посади та їхні розклади.
+  const { data: rows } = await supabase
+    .from("positions")
+    .select("id, schedule_blocks(weekday, starts_at, ends_at)")
+    .eq("employee_id", employeeId);
+
+  const all: PositionSchedule[] = (rows ?? []).map((row) => ({
+    positionId: row.id,
+    blocks: (row.schedule_blocks ?? []).map(
+      (b): ScheduleBlock => ({
+        weekday: b.weekday,
+        startsAt: b.starts_at.slice(0, 5),
+        endsAt: b.ends_at.slice(0, 5),
+      }),
+    ),
+  }));
+
+  const byDate = new Map<string, number[]>();
+  for (const record of records) {
+    const position = all.find((p) => p.positionId === record.positionId);
+    const blocks = position ? scheduleFor(position.blocks, record.date) : [];
+    const minutes = minutesInsideBlocks(blocks, {
+      startsAt: record.startsAt,
+      endsAt: record.endsAt,
+    });
+    byDate.set(record.date, [...(byDate.get(record.date) ?? []), minutes]);
+  }
+
+  let requested = 0;
+  for (const [date, minutes] of byDate) {
+    requested += sumShares(sharesForDate(minutes, workingMinutesOn(all, date)));
+  }
+
+  const earliest = [...byDate.keys()].sort()[0];
+  const { data: balance } = await supabase.rpc("employee_balance", {
+    p_employee_id: employeeId,
+    p_school_year: schoolYearOf(earliest),
+  });
+
+  const row = (balance ?? []).find((b) => b.leave_type === leaveType);
+  const remaining = Math.round((18 + Number(row?.carried_over ?? 0) - Number(row?.used ?? 0)) * 100);
+
+  return requested > remaining
+    ? overBalanceWarning(leaveType, Math.max(remaining, 0), requested)
+    : null;
 }
 
 /**

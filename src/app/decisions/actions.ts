@@ -38,6 +38,8 @@ export async function decideRecord(formData: FormData) {
   const recordId = String(formData.get("recordId") ?? "");
   const decision = String(formData.get("decision") ?? "");
   const comment = String(formData.get("comment") ?? "").trim() || null;
+  // AC-BALANCE-16: поділ — свідомий вибір менеджера, а не мовчазна згода.
+  const withSplit = formData.get("withSplit") === "1";
 
   if (!recordId) {
     fail("Record not found");
@@ -91,6 +93,7 @@ export async function decideRecord(formData: FormData) {
     p_record_id: recordId,
     p_decision: decision,
     p_comment: comment,
+    p_with_split: withSplit,
   });
 
   if (error) {
@@ -100,5 +103,6 @@ export async function decideRecord(formData: FormData) {
 
   revalidatePath("/decisions");
   revalidatePath("/requests");
+  revalidatePath("/balances");
   back("notice=" + encodeURIComponent("Decision saved"));
 }

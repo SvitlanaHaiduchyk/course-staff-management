@@ -112,6 +112,9 @@ export default async function Home() {
         <Link href="/requests" className={buttonVariants({ variant: "outline" })}>
           Мої заявки на відпустку
         </Link>
+        <Link href="/balances" className={buttonVariants({ variant: "outline" })}>
+          My balances
+        </Link>
         {/*
           Посилання показуємо лише менеджеру й адміністратору — це UX, а не захист.
           Саму сторінку й дію захищають перевірка ролі в них і політики бази
