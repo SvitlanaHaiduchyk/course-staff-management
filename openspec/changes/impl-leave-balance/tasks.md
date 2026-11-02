@@ -29,7 +29,7 @@ Done when: AC-BALANCE-11, AC-BALANCE-12, AC-BALANCE-13, AC-BALANCE-20, AC-BALANC
 Нова міграція `create or replace` для `public.decide_leave_record`: четвертий параметр `p_days_unpaid`, розрахунок частки й залишку на момент рішення, відмова в погодженні понад залишок без поділу. Екран рішень показує попередження й підказаний поділ.
 
 - [x] Міграція `*_decide_with_split.sql`: нова версія `decide_leave_record`, запис `days_on_type` і `days_unpaid`
-- [ ] `src/app/decisions/` — попередження з підказаним поділом, погодження з поділом
+- [x] `src/app/decisions/` — попередження з підказаним поділом, погодження з поділом
 - [x] `tests/db/decide-split.test.ts` — поділ, нульовий залишок, відмова без поділу
 
 Done when: AC-BALANCE-04, AC-BALANCE-07, AC-BALANCE-09, AC-BALANCE-10, AC-BALANCE-14, AC-BALANCE-16, AC-BALANCE-19
@@ -38,16 +38,16 @@ Done when: AC-BALANCE-04, AC-BALANCE-07, AC-BALANCE-09, AC-BALANCE-10, AC-BALANC
 
 Сторінки `/balances` і `/balances/[employeeId]`, попередження при поданні заявки (одне на заявку) і показ поділу на погодженому записі.
 
-- [ ] `src/app/balances/` — таблиця залишків за чотирма типами
-- [ ] `src/app/requests/` — попередження `Alert` варіанта `default` при поданні; поділ на записі
-- [ ] посилання в навігації
-- [ ] `tests/leave-balance.test.ts` — доповнити текстами попереджень
+- [x] `src/app/balances/` — таблиця залишків за чотирма типами
+- [x] `src/app/requests/` — попередження `Alert` варіанта `default` при поданні; поділ на записі
+- [x] посилання в навігації
+- [x] `tests/leave-balance.test.ts` — доповнити текстами попереджень
 
 Done when: AC-BALANCE-01, AC-BALANCE-08, AC-BALANCE-15, AC-BALANCE-17, AC-BALANCE-18
 
 ## 5. Завершення зрізу
 
-- [ ] `/conformance` і `npm run ac:coverage` — рядки 22 AC оновлено в тих самих PR, що й код
+- [x] `/conformance` і `npm run ac:coverage` — рядки 22 AC оновлено в тих самих PR, що й код
 - [ ] ADR, якщо рішення «зберігаємо частку, а не перераховуємо» виявиться спірним у рев'ю
 - [ ] Після merge — `db-deploy` зелений, зріз працює на прод-URL
 - [ ] `npx openspec archive impl-leave-balance -y` в останньому PR зрізу

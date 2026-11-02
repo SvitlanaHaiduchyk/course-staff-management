@@ -16,6 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { positionKindLabel, scheduleSummary } from "@/lib/leave/format";
+import { formatDays, splitLabel } from "@/lib/leave/balance";
 import { canCancel, canEditHours, canResubmit } from "@/lib/leave/record-edit";
 import { createClient } from "@/lib/supabase/server";
 
@@ -69,7 +70,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
   const { data: records } = await supabase
     .from("leave_records")
     .select(
-      "id, on_date, starts_at, ends_at, status, positions(job_title), leave_requests(leave_type, comment)",
+      "id, on_date, starts_at, ends_at, status, days_on_type, days_unpaid, positions(job_title), leave_requests(leave_type, comment)",
     )
     .order("on_date", { ascending: false });
 
@@ -227,7 +228,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
                   <TableHead>Посада</TableHead>
                   <TableHead>Тип</TableHead>
                   <TableHead>Статус</TableHead>
-                  <TableHead>Коментар менеджера</TableHead>
+                  <TableHead>Списано й коментар</TableHead>
                   <TableHead>Дії</TableHead>
                 </TableRow>
               </TableHeader>
@@ -248,6 +249,27 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
+                      {/*
+                        AC-BALANCE-18: поділений запис лишається ОДНИМ записом
+                        зі своїм типом — поділ показуємо на ньому, а не окремим
+                        рядком. Показуємо лише коли частина справді пішла в
+                        «Unpaid leave».
+                      */}
+                      {r.days_unpaid !== null && Number(r.days_unpaid) > 0 ? (
+                        <div data-testid="split" className="tabular-nums text-foreground">
+                          {splitLabel(
+                            (r.leave_requests?.leave_type ?? "personal") as "personal",
+                            {
+                              onType: Math.round(Number(r.days_on_type ?? 0) * 100),
+                              unpaid: Math.round(Number(r.days_unpaid) * 100),
+                            },
+                          )}
+                        </div>
+                      ) : r.days_on_type !== null ? (
+                        <div className="tabular-nums text-foreground">
+                          {formatDays(Math.round(Number(r.days_on_type) * 100))} дня
+                        </div>
+                      ) : null}
                       {lastDecision.get(r.id)?.comment ?? "—"}
                     </TableCell>
                     <TableCell>
