@@ -1,3 +1,8 @@
+// fallow-ignore-file unused-file
+// Причина: компонент дизайн-системи. DESIGN.md (розділ 5) передбачає його у формі заявки,
+// але форма серверна (form action), а цей Checkbox клієнтський і подає значення через
+// прихований input — на цьому тримаються AC-LEAVE-02 і AC-LEAVE-03, тож там узято нативний
+// (пояснення — у src/app/requests/page.tsx). Повернеться, коли форма стане клієнтською (WS10).
 "use client"
 
 import { Checkbox as CheckboxPrimitive } from "@base-ui/react/checkbox"

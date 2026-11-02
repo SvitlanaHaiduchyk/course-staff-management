@@ -1,3 +1,6 @@
+// fallow-ignore-file unused-file
+// Причина: та сама, що й у checkbox.tsx — DESIGN.md (розділ 5) віддає Select типу відпустки,
+// але серверна форма читає formData, тож нативний <select> лишається до WS10.
 "use client"
 
 import * as React from "react"
