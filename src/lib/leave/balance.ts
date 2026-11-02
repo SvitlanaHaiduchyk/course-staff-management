@@ -13,14 +13,31 @@
  * Тексти повідомлень — дослівно з AC PM, англійською, як він їх написав.
  */
 
+import { type LeaveType } from "./build";
 import { type ScheduleBlock, scheduleFor, totalMinutes } from "./schedule";
 
 /** Соті частки дня. 100 — цілий день, 36 — 0.36 дня. */
 export type Hundredths = number;
 
-/** Типи відпустки з глосарію `requirements/product.md`. */
-export const LEAVE_TYPES = ["sick", "personal", "unpaid", "family_celebration"] as const;
-export type LeaveType = (typeof LEAVE_TYPES)[number];
+/**
+ * Типи відпустки з глосарію `requirements/product.md`.
+ *
+ * Сам тип `LeaveType` живе в `build.ts` — там він з'явився першим, у зрізі
+ * подання заявки. Тут лише перелік значень для перевірок і для того, щоб
+ * `GRANTED` і `LEAVE_TYPE_LABELS` не могли забути новий тип: `Record<LeaveType, …>`
+ * не скомпілюється без нього.
+ */
+export const LEAVE_TYPES: readonly LeaveType[] = [
+  "sick",
+  "personal",
+  "unpaid",
+  "family_celebration",
+];
+
+/** Чи рядок — відомий тип відпустки. */
+export function isLeaveType(value: string): value is LeaveType {
+  return (LEAVE_TYPES as readonly string[]).includes(value);
+}
 
 /** Підписи типів — дослівно як у вимогах PM. */
 export const LEAVE_TYPE_LABELS: Record<LeaveType, string> = {
@@ -96,6 +113,59 @@ export function dayShare(recordMinutes: number, workingMinutes: number): Hundred
   const share = Math.floor((200 * recordMinutes + workingMinutes) / (2 * workingMinutes));
   // Одна дата ніколи не більша за 1.00 дня (припущення PM).
   return Math.min(share, 100);
+}
+
+/**
+ * Частки кількох записів однієї дати, що в сумі дають рівно частку всієї дати.
+ *
+ * Чому не просто `dayShare` на кожен запис окремо: припущення PM каже, що
+ * записи, які разом покривають усі робочі хвилини дати, рахуються як 1.00 дня,
+ * а «одна дата ніколи не більша за 1.00». Незалежне округлення це ламає —
+ * три посади по 165 хвилин із 495 дають 0.33 + 0.33 + 0.33 = **0.99**.
+ * (Знайшло рев'ю CodeRabbit на PR #31; два записи 420 + 75 з 495, на яких
+ * тримався попередній тест, випадково сходилися.)
+ *
+ * Тому округлюємо **частку дати** один раз, а між записами розподіляємо за
+ * найбільшим залишком: кожен отримує свою цілу частину, а решту сотих
+ * добирають ті, у кого найбільший дробовий залишок. Для одного запису це
+ * те саме, що `dayShare`.
+ */
+export function sharesForDate(
+  recordMinutes: readonly number[],
+  workingMinutes: number,
+): Hundredths[] {
+  if (workingMinutes <= 0 || recordMinutes.length === 0) {
+    return recordMinutes.map(() => 0);
+  }
+
+  const target = dayShare(
+    recordMinutes.reduce((a, b) => a + b, 0),
+    workingMinutes,
+  );
+
+  // Ціла частина й залишок — без дії з комою: 100·r = floor·w + rem.
+  const parts = recordMinutes.map((minutes, index) => ({
+    index,
+    whole: Math.floor((100 * minutes) / workingMinutes),
+    remainder: (100 * minutes) % workingMinutes,
+  }));
+
+  const shares = parts.map((p) => p.whole);
+  let leftover = target - shares.reduce((a, b) => a + b, 0);
+
+  // Більший залишок — раніше; за рівних залишків виграє менший індекс,
+  // щоб результат не залежав від порядку сортування.
+  const byRemainder = [...parts].sort(
+    (a, b) => b.remainder - a.remainder || a.index - b.index,
+  );
+
+  for (const part of byRemainder) {
+    if (leftover <= 0) break;
+    shares[part.index] += 1;
+    leftover -= 1;
+  }
+
+  return shares;
 }
 
 /** Сума часток. Баланс — сума **округлених** часток, а не округлена сума. */
