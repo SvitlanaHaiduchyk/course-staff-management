@@ -28,9 +28,9 @@ Done when: AC-BALANCE-11, AC-BALANCE-12, AC-BALANCE-13, AC-BALANCE-20, AC-BALANC
 
 Нова міграція `create or replace` для `public.decide_leave_record`: четвертий параметр `p_days_unpaid`, розрахунок частки й залишку на момент рішення, відмова в погодженні понад залишок без поділу. Екран рішень показує попередження й підказаний поділ.
 
-- [ ] Міграція `*_decide_with_split.sql`: нова версія `decide_leave_record`, запис `days_on_type` і `days_unpaid`
+- [x] Міграція `*_decide_with_split.sql`: нова версія `decide_leave_record`, запис `days_on_type` і `days_unpaid`
 - [ ] `src/app/decisions/` — попередження з підказаним поділом, погодження з поділом
-- [ ] `tests/db/decide-split.test.ts` — поділ, нульовий залишок, відмова без поділу
+- [x] `tests/db/decide-split.test.ts` — поділ, нульовий залишок, відмова без поділу
 
 Done when: AC-BALANCE-04, AC-BALANCE-07, AC-BALANCE-09, AC-BALANCE-10, AC-BALANCE-14, AC-BALANCE-16, AC-BALANCE-19
 
