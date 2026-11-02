@@ -92,7 +92,7 @@ describe("хто які записи бачить", () => {
     await seedRecord("teacher1@example.test", "teacher1@example.test:main", MONDAY);
 
     // anon не має навіть GRANT SELECT — запит має впасти, а не повернути порожнє.
-    await expect(leave.asAnon("select id from public.leave_records")).rejects.toThrow();
+    await expect(leave.asAnon("select id from public.leave_records")).rejects.toThrow("permission denied for table leave_records");
   });
 });
 
@@ -106,7 +106,7 @@ describe("хто може змінити статус запису", () => {
         "update public.leave_records set status = 'approved' where id = $1",
         [id],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/violates row-level security policy for table "leave_records"/);
 
     expect(await statusOf(id)).toBe("awaiting");
   });
@@ -139,7 +139,7 @@ describe("хто може змінити статус запису", () => {
         "update public.leave_records set status = 'rejected' where id = $1",
         [id],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow("A decision must be recorded in the history");
 
     expect(await statusOf(id)).toBe("awaiting");
   });
@@ -211,7 +211,7 @@ describe("самопідвищення ролі", () => {
         "update public.profiles set role = 'admin' where id = $1",
         [leave.users["teacher1@example.test"]],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow("permission denied for table profiles");
 
     const [row] = await leave.asService<{ role: string }>(
       "select role from public.profiles where id = $1",

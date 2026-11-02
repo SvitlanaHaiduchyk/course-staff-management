@@ -208,7 +208,7 @@ describe("обмеження на частку дня", () => {
          values ($1, $2, '2026-11-02', '08:30', '15:30', 'approved', 0.60, 0.60)`,
         [req.id, leave.positions["teacher1@example.test:main"]],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/violates check constraint "leave_records_days_total_check"/);
 
     const [{ count }] = await leave.asService<{ count: string }>(
       "select count(*)::text as count from public.leave_records",
@@ -230,7 +230,7 @@ describe("обмеження на частку дня", () => {
          values ($1, $2, '2026-11-02', '08:30', '15:30', 'approved', -0.50, 0.00)`,
         [req.id, leave.positions["teacher1@example.test:main"]],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/violates check constraint "leave_records_days_nonnegative_check"/);
   });
 });
 
@@ -294,7 +294,7 @@ describe("хто чиї залишки бачить", () => {
   });
 
   it("анонімний відвідувач перенесень не бачить", async () => {
-    await expect(leave.asAnon("select days from public.leave_carryover")).rejects.toThrow();
+    await expect(leave.asAnon("select days from public.leave_carryover")).rejects.toThrow("permission denied for table leave_carryover");
   });
 
   it("перенесення не змінити з застосунку", async () => {
@@ -311,7 +311,7 @@ describe("хто чиї залишки бачить", () => {
         "update public.leave_carryover set days = 99.00 where employee_id = $1",
         [leave.users["teacher1@example.test"]],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow("permission denied for table leave_carryover");
 
     const [row] = await leave.asService<{ days: string }>(
       "select days::text from public.leave_carryover where employee_id = $1",

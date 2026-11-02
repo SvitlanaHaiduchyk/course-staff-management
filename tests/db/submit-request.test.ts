@@ -140,7 +140,7 @@ describe("submit_leave_request", () => {
         [{ position: "teacher1@example.test:main", date: MONDAY, from: "08:30", to: "15:30" }],
         "family_celebration",
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/violates check constraint "leave_requests_relationship_check"/);
 
     expect(await counts()).toEqual({ requests: 0, records: 0 });
   });
@@ -161,7 +161,7 @@ describe("submit_leave_request", () => {
           ]),
         ],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/violates row-level security policy for table "leave_records"/);
 
     expect(await counts()).toEqual({ requests: 0, records: 0 });
   });

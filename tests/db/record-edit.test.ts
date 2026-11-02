@@ -177,7 +177,7 @@ describe("скасування й повторне подання", () => {
       "update public.leave_records set status = 'awaiting' where id = $1",
       [id],
     );
-    await expect(changeHours("teacher1@example.test", id, "09:00", "12:00", true)).rejects.toThrow();
+    await expect(changeHours("teacher1@example.test", id, "09:00", "12:00", true)).rejects.toThrow("Only a record awaiting a decision can be changed");
 
     expect((await recordRow(id)).status).toBe("cancelled");
   });
@@ -218,7 +218,7 @@ describe("чого змінити не можна взагалі", () => {
           where id = (select request_id from public.leave_records where id = $1)`,
         [id],
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow("permission denied for table leave_requests");
 
     const [row] = await leave.asService<{ leave_type: string }>(
       `select leave_type from public.leave_requests
@@ -235,7 +235,7 @@ describe("чого змінити не можна взагалі", () => {
       "update public.leave_records set on_date = '2026-11-03' where id = $1",
       "update public.leave_records set position_id = position_id where id = $1",
     ]) {
-      await expect(leave.asUser(leave.users["teacher1@example.test"], sql, [id])).rejects.toThrow();
+      await expect(leave.asUser(leave.users["teacher1@example.test"], sql, [id])).rejects.toThrow("permission denied for table leave_records");
     }
 
     const [row] = await leave.asService<{ on_date: string }>(
