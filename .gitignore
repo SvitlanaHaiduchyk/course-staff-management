@@ -47,3 +47,7 @@ next-env.d.ts
 
 # Тестові акаунти D0: у git лише зашифрований accounts.zip
 accounts.txt
+
+# Звіти Stryker (npm run mutation:ts)
+/reports
+/.stryker-tmp
