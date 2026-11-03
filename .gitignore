@@ -51,3 +51,8 @@ accounts.txt
 # Звіти Stryker (npm run mutation:ts)
 /reports
 /.stryker-tmp
+
+# UAT: живі cookie сесій і результати прогонів
+/playwright/.auth
+/test-results
+/playwright-report

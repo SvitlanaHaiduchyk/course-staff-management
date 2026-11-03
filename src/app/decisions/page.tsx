@@ -82,7 +82,8 @@ export default async function DecisionsPage({
     .from("leave_records")
     .select(
       `id, on_date, starts_at, ends_at, status, position_id,
-       positions(kind, job_title, employee_id, profiles(full_name, email),
+       positions(kind, job_title, employee_id,
+                 profiles!positions_employee_id_fkey(full_name, email),
                  schedule_blocks(weekday, starts_at, ends_at)),
        leave_requests(leave_type, comment, employee_id)`,
     )
@@ -94,7 +95,8 @@ export default async function DecisionsPage({
     .from("leave_decisions")
     .select(
       `id, decision, comment, decided_at,
-       leave_records(on_date, starts_at, ends_at, positions(job_title, profiles(full_name)))`,
+       leave_records(on_date, starts_at, ends_at,
+                     positions(job_title, profiles!positions_employee_id_fkey(full_name)))`,
     )
     .eq("decided_by", claims.sub)
     .order("decided_at", { ascending: false });

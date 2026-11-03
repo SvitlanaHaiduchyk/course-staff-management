@@ -65,7 +65,11 @@ export function DecisionForm({
               id={`comment-${recordId}-${decision}`}
               name="comment"
               maxLength={500}
-              required={needsComment}
+              // Без required: інакше браузер блокує порожню форму СВОЇМ повідомленням,
+              // і текст PM «Tell the employee what to fix» (AC-DECIDE-04) не з'являється.
+              // Порожній коментар має дійти до сервера — там і база, і дія відмовлять
+              // дослівним текстом критерію.
+              aria-required={needsComment}
               placeholder={
                 needsComment ? "Tell the employee what to fix" : "Видно працівнику в «My requests»"
               }

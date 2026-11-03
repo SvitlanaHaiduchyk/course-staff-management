@@ -1,0 +1,102 @@
+{
+  "kind": "uat",
+  "generatedAt": "2026-11-03T10:46:46.356Z",
+  "baseURL": "https://course-staff-management.vercel.app",
+  "deployedSha": "8bbc7ecf5e16632d5411c8ef7f35a6cc492f50a5",
+  "testsCommit": "8bbc7ecf5e16632d5411c8ef7f35a6cc492f50a5",
+  "reviewer": {
+    "model": "claude-haiku-5-5",
+    "disputes": "claude-sonnet-5-5"
+  },
+  "note": "Відео й траси не в git (test-results/ локально, артефакт CI). check-recordings конвеєра WS9 вимагає відео на диску — для нього цей manifest треба доповнити.",
+  "results": [
+    {
+      "id": "AC-BALANCE-13",
+      "proof": "AC-BALANCE-13",
+      "title": "AC-BALANCE-13: працівник відкриває чужі залишки за прямим посиланням — чисел не бачить",
+      "screenshot": "docs/qa/uat/2026-11-03",
+      "video": "test-results/artifacts/balances-forbidden-AC-BALA-48372-осиланням-—-чисел-не-бачить-chromium/video.webm",
+      "trace": "test-results/artifacts/balances-forbidden-AC-BALA-48372-осиланням-—-чисел-не-бачить-chromium/trace.zip",
+      "asserted": false,
+      "vision": {
+        "met": false,
+        "readable": false,
+        "notes": "Жодного кадру я не побачив, тому нічого не можу підтвердити чи спростувати щодо частини «Тоді». Щоб продовжити, потрібно дозволити читання цих трьох файлів (або запустити рецензію з повним шляхом без короткого імені DEVELO~1) і повторити перевірку. Я не обходив обмеження альтернативними шляхами."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [],
+      "verdict": "FAIL",
+      "factoryGate": "FAIL",
+      "rule": "R1: перевірка впала — FAIL завжди, агент не перекриває",
+      "playwrightMs": 536,
+      "reviewCostUsd": 0.00195,
+      "reviewWallMs": 10518
+    },
+    {
+      "id": "AC-DECIDE-04",
+      "proof": "AC-DECIDE-04",
+      "title": "AC-DECIDE-04: менеджер повертає запис без коментаря — статус не змінюється, видно «Tell the employee what to fix»",
+      "screenshot": "docs/qa/uat/2026-11-03",
+      "video": "test-results/artifacts/decisions-return-no-commen-942cb-l-the-employee-what-to-fix»-chromium/video.webm",
+      "trace": "test-results/artifacts/decisions-return-no-commen-942cb-l-the-employee-what-to-fix»-chromium/trace.zip",
+      "asserted": false,
+      "vision": {
+        "met": false,
+        "readable": false,
+        "notes": "Жоден із трьох файлів не вдалося прочитати, тому я не бачив ні критерію, ні кадрів. Я не намагався обійти перевірку шляху (наприклад, іншою формою шляху), бо дозвіл був відхилений автоматично і повторювати його не можна. Щоб завершити рецензію, потрібно або погодити читання цих файлів вручну, або перезапустити перевірку з шляхом без короткого імені DEVELO~1."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [],
+      "verdict": "FAIL",
+      "factoryGate": "FAIL",
+      "rule": "R1: перевірка впала — FAIL завжди, агент не перекриває",
+      "playwrightMs": 7043,
+      "reviewCostUsd": 0.00197,
+      "reviewWallMs": 9661
+    },
+    {
+      "id": "AC-DECIDE-14",
+      "proof": "AC-DECIDE-14",
+      "title": "AC-DECIDE-14: менеджер без записів на розгляді бачить «No records awaiting decision»",
+      "screenshot": "docs/qa/uat/2026-11-03/frames/AC-DECIDE-14-then-1.png",
+      "video": "test-results/artifacts/decisions-empty-AC-DECIDE--62fd7--records-awaiting-decision»-chromium/video.webm",
+      "trace": "test-results/artifacts/decisions-empty-AC-DECIDE--62fd7--records-awaiting-decision»-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": false,
+        "readable": false,
+        "notes": "Я не прочитав жодного файлу, тому не можу оцінити критерій. Щоб повторити перевірку, потрібен дозвіл на читання цієї теки або повний шлях без скорочених імен 8.3."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-sonnet-5-5": "NEEDS-HUMAN"
+      },
+      "escalated": true,
+      "quotesVerified": [],
+      "verdict": "NEEDS-HUMAN",
+      "factoryGate": "NOT-EARNED",
+      "rule": "R3: перевірки пройшли, агент не погоджується — вирішує людина",
+      "playwrightMs": 4529,
+      "reviewCostUsd": 0.03428,
+      "reviewWallMs": 20984
+    }
+  ],
+  "negativeControls": [],
+  "cleanup": {
+    "at": "2026-11-03T10:46:21.921Z",
+    "deleted": [],
+    "remaining": [],
+    "leftoverRequests": 0
+  }
+}
