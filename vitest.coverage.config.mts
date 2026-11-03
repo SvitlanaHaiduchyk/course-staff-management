@@ -16,7 +16,7 @@ import base from "./vitest.config.mjs";
 //   leave/decision 78 %, leave/schedule 83 %, leave/build і leave/overlap — гілки 81 % і 83 %.
 // Сторінки й server actions тут свідомо відсутні: їх доводять тести бази на PGlite і UAT,
 // а не Vitest, тож поріг на загальний відсоток не ставимо.
-const FLOORED: string[] = ["health", "leave/balance", "leave/format", "leave/record-edit", "leave/validate"];
+const FLOORED: string[] = ["health", "leave/balance", "leave/format", "leave/record-edit", "leave/validate", "leave/week"];
 // Фігурні дужки glob розкриваються лише з комою всередині, тож один файл пишемо без них.
 const FLOORED_GLOB = FLOORED.length === 1 ? `src/lib/${FLOORED[0]}.ts` : `src/lib/{${FLOORED.join(",")}}.ts`;
 

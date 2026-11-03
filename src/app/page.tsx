@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
+import { ProfileCard } from "@/components/profile-card";
+import { ScheduleCard } from "@/components/schedule-card";
+import { type ScheduleLeave } from "@/components/schedule-week";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { positionKindLabel, roleLabel, scheduleSummary } from "@/lib/leave/format";
-import { createClient } from "@/lib/supabase/server";
+import { resolveMonday, weekDates } from "@/lib/leave/week";
+import { requirePageSession } from "@/lib/supabase/page-session";
 
 import { signOut } from "./login/actions";
 
@@ -14,15 +15,46 @@ import { signOut } from "./login/actions";
 // Розклад тут, щоб робочі години було видно до відкриття форми заявки
 // (основний сценарій requirements/01-leave-request.md, крок 2).
 // Сторінка читає cookies, тому рендериться динамічно (шаблон зібрано з --no-cache-components).
-export default async function Home() {
-  const supabase = await createClient();
 
-  // getClaims() перевіряє JWT. getSession() для авторизації на сервері не використовуємо.
-  const { data } = await supabase.auth.getClaims();
-  const claims = data?.claims;
-  if (!claims) {
-    redirect("/login");
-  }
+/** Статуси, які прибирають людину з розкладу. Відхилений чи скасований запис її не прибирає. */
+const ABSENT_STATUSES = ["awaiting", "approved", "returned"];
+
+type PageSupabase = Awaited<ReturnType<typeof requirePageSession>>["supabase"];
+
+/**
+ * Відпустки тижня — лише власні: фільтр за своїми посадами. Політика
+ * `leave_records_select_own_managed_or_admin` віддала б менеджеру ще й чужі,
+ * а це сторінка «Personal Information».
+ */
+async function loadWeekLeaves(
+  supabase: PageSupabase,
+  positionIds: readonly string[],
+  dates: readonly string[],
+): Promise<ScheduleLeave[]> {
+  if (positionIds.length === 0) return [];
+
+  const { data } = await supabase
+    .from("leave_records")
+    .select("id, position_id, on_date, starts_at, ends_at, status, leave_requests(leave_type)")
+    .in("position_id", [...positionIds])
+    .in("status", ABSENT_STATUSES)
+    .gte("on_date", dates[0])
+    .lte("on_date", dates[dates.length - 1]);
+
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    position_id: r.position_id,
+    on_date: r.on_date,
+    starts_at: r.starts_at,
+    ends_at: r.ends_at,
+    status: r.status,
+    leave_type: r.leave_requests?.leave_type ?? null,
+  }));
+}
+
+export default async function Home({ searchParams }: PageProps<"/">) {
+  const { week } = await searchParams;
+  const { supabase, claims } = await requirePageSession();
 
   // RLS: користувач бачить лише власний профіль.
   const { data: profile } = await supabase
@@ -38,76 +70,38 @@ export default async function Home() {
     .eq("employee_id", claims.sub)
     .order("kind", { ascending: false }); // main перед additional
 
-  const hasPositions = Boolean(positions && positions.length > 0);
+  const myPositions = positions ?? [];
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const mondayIso = resolveMonday(week, todayIso);
+  const leaves = await loadWeekLeaves(
+    supabase,
+    myPositions.map((p) => p.id),
+    weekDates(mondayIso),
+  );
+
+  const canDecide = profile?.role === "manager" || profile?.role === "admin";
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-16">
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-16">
       <h1 className="text-2xl font-semibold">Personal Information</h1>
 
-      <Card>
-        <CardContent>
-          <dl className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-3 text-sm">
-            <dt className="text-muted-foreground">Email</dt>
-            <dd data-testid="user-email">{profile?.email ?? claims.email ?? "—"}</dd>
+      <ProfileCard
+        email={profile?.email ?? claims.email}
+        fullName={profile?.full_name}
+        role={profile?.role}
+        positions={myPositions}
+      />
 
-            <dt className="text-muted-foreground">Ім&apos;я</dt>
-            <dd data-testid="user-name">{profile?.full_name ?? "—"}</dd>
-
-            {/*
-              Рядок посад показуємо лише тим, у кого вони є. За глосарієм product.md
-              працівник — це «a person who works at the school and has at least one position»,
-              тож порожній список буває хіба в адміністратора без посади.
-            */}
-            {hasPositions ? (
-              <>
-                <dt className="text-muted-foreground">Посади</dt>
-                <dd data-testid="positions">
-                  <ul className="flex flex-col gap-1">
-                    {positions!.map((p) => (
-                      <li key={p.id}>
-                        {p.divisions?.name ?? "—"} / {p.job_title}{" "}
-                        <span className="text-muted-foreground">
-                          ({positionKindLabel(p.kind)})
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </dd>
-              </>
-            ) : null}
-
-            <dt className="text-muted-foreground">Доступ</dt>
-            <dd data-testid="user-role">{roleLabel(profile?.role)}</dd>
-          </dl>
-        </CardContent>
-      </Card>
-
-      {hasPositions ? (
-        <Card>
-          <CardHeader>
-            <CardTitle as="h2" className="text-lg">Мій розклад</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <dl
-              data-testid="schedule"
-              className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm"
-            >
-              {positions!.map((p) => (
-                <div key={p.id} className="contents">
-                  <dt className="text-muted-foreground">{p.job_title}</dt>
-                  <dd className="tabular-nums">
-                    {p.schedule_blocks?.length
-                      ? scheduleSummary(p.schedule_blocks)
-                      : "розкладу немає"}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </CardContent>
-        </Card>
+      {myPositions.length > 0 ? (
+        <ScheduleCard
+          positions={myPositions}
+          leaves={leaves}
+          mondayIso={mondayIso}
+          todayIso={todayIso}
+        />
       ) : null}
 
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         {/* Button базується на @base-ui/react: замість asChild — buttonVariants на посиланні. */}
         <Link href="/requests" className={buttonVariants({ variant: "outline" })}>
           Мої заявки на відпустку
@@ -120,7 +114,7 @@ export default async function Home() {
           Саму сторінку й дію захищають перевірка ролі в них і політики бази
           (openspec/changes/impl-leave-decision/design.md, розділ «Auth»).
         */}
-        {profile?.role === "manager" || profile?.role === "admin" ? (
+        {canDecide ? (
           <Link href="/decisions" className={buttonVariants({ variant: "outline" })}>
             Awaiting decision
           </Link>
