@@ -239,7 +239,7 @@ export function suggestedSplit(remaining: Hundredths, share: Hundredths): Split 
 
 /** Чи перевищує запис залишок типу. Для типів без ліміту — ніколи. */
 export function exceedsBalance(remaining: Hundredths | null, share: Hundredths): boolean {
-  return remaining !== null && share > remaining;
+  return remaining !== null && share >= remaining;
 }
 
 // --- Тексти PM ------------------------------------------------------------
