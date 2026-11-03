@@ -60,6 +60,17 @@ export function shiftWeeks(isoDate: string, weeks: number): string {
   return toIso(date);
 }
 
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Понеділок тижня, який показуємо: з параметра адреси, якщо він схожий на дату,
+ * інакше поточний. Невалідне значення мовчки замінюємо на сьогодні — це навігація,
+ * а не введення даних, і сторінка з кривим `?week=` має просто показати цей тиждень.
+ */
+export function resolveMonday(week: string | string[] | undefined, todayIso: string): string {
+  return mondayOf(typeof week === "string" && ISO_DATE.test(week) ? week : todayIso);
+}
+
 /** Сім дат тижня, від понеділка. */
 export function weekDates(mondayIso: string): string[] {
   return Array.from({ length: 7 }, (_, index) => shiftDays(mondayIso, index));

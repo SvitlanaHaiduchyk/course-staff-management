@@ -89,7 +89,10 @@ export function ScheduleWeek({
   return (
     <div className="flex flex-col gap-4">
       <div className="overflow-x-auto pb-2">
-        <div className="grid min-w-xl grid-cols-[3.25rem_repeat(7,minmax(0,1fr))] gap-x-1.5">
+        <div
+          className="grid min-w-xl gap-x-1.5"
+          style={{ gridTemplateColumns: "3.25rem repeat(7, minmax(0, 1fr))" }}
+        >
           <div aria-hidden="true" />
           {dates.map((date) => {
             const isToday = date === todayIso;
