@@ -1,21 +1,35 @@
-// Негативний контроль: специфікація з НАВМИСНО хибним очікуванням «Тоді».
-// Доводить, що гарнес справді червоніє, а вердикт агента не ставить PASS наосліп.
+// Негативний контроль: специфікація з НАВМИСНО хибною перевіркою «Тоді».
+// Доводить, що гарнес справді червоніє й агент не ставить PASS наосліп.
 // Запускається лише в npm run uat:nc (проєкт negative-controls, grep @negative-control).
+//
+// Формат — як у materials/uat/examples/negative-controls.spec.ts: ім'я починається з NC-…,
+// анотація `ac` називає СПРАВЖНІЙ критерій, а «Тоді» (clause) теж правильне —
+// хибне лише твердження в коді. Так ми перевіряємо саме ланцюг «перевірка → кадр → агент»,
+// а не вміння агента читати вигадані AC.
 import { expect, test } from "@playwright/test";
 
 import { attachRuntimeErrors, given, thenStep, when } from "./support/uat";
 
 test.use({ storageState: "playwright/.auth/manager2.json" });
 
+const CLAUSE = "бачить повідомлення «No records awaiting decision», і жодного запису в списку немає";
+/** Текст, якого на сторінці немає: правильний — «No records awaiting decision». */
+const WRONG_MESSAGE = "Awaiting decision: 3 records";
+
 test.afterEach(async ({ page }) => attachRuntimeErrors(page));
 
 test(
-  "NC-DECIDE-14: порожній список нібито показує «Awaiting decision: 3 records» — очікування навмисно хибне",
-  { tag: ["@uat", "@negative-control"], annotation: { type: "ac", description: "NC-DECIDE-14" } },
+  "NC-1 (AC-DECIDE-14, навмисно хибне очікування в тесті: інший текст порожнього стану)",
+  {
+    tag: ["@negative-control"],
+    annotation: [
+      { type: "ac", description: "AC-DECIDE-14" },
+      { type: "case", description: "NC-1" },
+    ],
+  },
   async ({ page }) => {
     await given("менеджер manager2@example.test — у порталі", async () => {
       await page.goto("/");
-      await expect(page.getByTestId("user-email")).toHaveText("manager2@example.test");
     });
 
     await when("відкриває список «Awaiting decision»", async () => {
@@ -24,13 +38,9 @@ test(
 
     await thenStep(
       page,
-      {
-        // Текст, якого на сторінці НЕМАЄ: правильна поведінка — «No records awaiting decision».
-        clause: "бачить повідомлення «Awaiting decision: 3 records»",
-        visible: ["повідомлення «Awaiting decision: 3 records»"],
-      },
+      { clause: CLAUSE, visible: ["повідомлення «No records awaiting decision»"] },
       async () => {
-        await expect(page.getByText("Awaiting decision: 3 records", { exact: true })).toBeVisible();
+        await expect(page.getByText(WRONG_MESSAGE, { exact: true })).toBeVisible({ timeout: 5_000 });
       },
     );
   },

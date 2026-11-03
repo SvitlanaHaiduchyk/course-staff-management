@@ -6,6 +6,7 @@
 // за URL — так, як це зробив би той, хто вгадав чуже посилання.
 import { expect, test, type Page } from "@playwright/test";
 
+import { adminClient, hasAdminKey } from "./support/admin";
 import { attachRuntimeErrors, given, thenStep, when } from "./support/uat";
 
 test.use({ storageState: "playwright/.auth/teacher1.json" });
@@ -21,19 +22,29 @@ async function visibleEmails(page: Page): Promise<string[]> {
   return [...new Set(text.match(/[\w.+-]+@example\.test/gi) ?? [])];
 }
 
+/**
+ * id іншого працівника беремо секретним ключем — це інфраструктура тесту, а не те,
+ * що перевіряємо: teacher1 чужого профілю не бачить (на тому й стоїть AC), тож
+ * дізнатися id «зсередини» його сесії неможливо.
+ */
+let otherId: string | null = null;
+
+test.beforeAll(async () => {
+  expect(hasAdminKey(), "потрібен SUPABASE_SECRET_KEY у .env.local: треба id іншого працівника").toBe(
+    true,
+  );
+  const { data } = await adminClient().from("profiles").select("id").eq("email", OTHER).maybeSingle();
+  expect(data?.id, `немає профілю ${OTHER} — спершу npm run users:demo на проді`).toBeTruthy();
+  otherId = data!.id;
+});
+
 test.afterEach(async ({ page }) => attachRuntimeErrors(page));
 
 test(
   "AC-BALANCE-13: працівник відкриває чужі залишки за прямим посиланням — чисел не бачить",
   { tag: ["@uat"], annotation: { type: "ac", description: "AC-BALANCE-13" } },
   async ({ page }) => {
-    const otherId = process.env.UAT_OTHER_EMPLOYEE_ID;
-
     await given(`працівник ${TEACHER1} — у порталі, і він не менеджер жодної посади ${OTHER}`, async () => {
-      expect(
-        otherId,
-        "задайте UAT_OTHER_EMPLOYEE_ID — id teacher2@example.test у profiles (беремо з .env.local, у репо не зберігаємо)",
-      ).toBeTruthy();
       await page.goto("/");
       await expect(page.getByTestId("user-email")).toHaveText(TEACHER1);
     });

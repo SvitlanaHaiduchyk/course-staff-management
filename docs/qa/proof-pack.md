@@ -81,11 +81,55 @@
 
 ## C. UAT на проді
 
-Ще не зроблено — завдання C.
+| AC | Специфікація | Тест | Агент | Вердикт | Кадр |
+|---|---|---|---|---|---|
+| `AC-DECIDE-04` | [`decisions-return-no-comment.spec.ts`](https://github.com/SvitlanaHaiduchyk/course-staff-management/blob/b5b009dcf3018f06ffe1ec7ee281d322409add50/tests/e2e/decisions-return-no-comment.spec.ts) | passed | Haiku: PASS | **PASS** (R6) | [`AC-DECIDE-04-then-1.png`](https://github.com/SvitlanaHaiduchyk/course-staff-management/blob/b5b009dcf3018f06ffe1ec7ee281d322409add50/docs/qa/uat/2026-11-03/frames/AC-DECIDE-04-then-1.png) |
+| `AC-DECIDE-14` | [`decisions-empty.spec.ts`](https://github.com/SvitlanaHaiduchyk/course-staff-management/blob/b5b009dcf3018f06ffe1ec7ee281d322409add50/tests/e2e/decisions-empty.spec.ts) | passed | Haiku: PASS | **PASS** (R6) | [`AC-DECIDE-14-then-1.png`](https://github.com/SvitlanaHaiduchyk/course-staff-management/blob/b5b009dcf3018f06ffe1ec7ee281d322409add50/docs/qa/uat/2026-11-03/frames/AC-DECIDE-14-then-1.png) |
+| `AC-BALANCE-13` | [`balances-forbidden.spec.ts`](https://github.com/SvitlanaHaiduchyk/course-staff-management/blob/b5b009dcf3018f06ffe1ec7ee281d322409add50/tests/e2e/balances-forbidden.spec.ts) | passed | Haiku: PASS | **PASS** (R6) | [`AC-BALANCE-13-then-1.png`](https://github.com/SvitlanaHaiduchyk/course-staff-management/blob/b5b009dcf3018f06ffe1ec7ee281d322409add50/docs/qa/uat/2026-11-03/frames/AC-BALANCE-13-then-1.png) |
+
+- Звіт: [`docs/qa/uat/2026-11-03/report.md`](https://github.com/SvitlanaHaiduchyk/course-staff-management/blob/b5b009dcf3018f06ffe1ec7ee281d322409add50/docs/qa/uat/2026-11-03/report.md) · прод на коміті `7503be9`, `/api/health` → `db: ok`
+- Рецензент: `claude-haiku-5-5`, суперечки → `claude-sonnet-5-5`; за розбір $0.0057
+- Дані: `AC-DECIDE-14` і `AC-BALANCE-13` — лише читання. `AC-DECIDE-04` має тег `@writes`: засіває один запис і прибирає його за собою (`afterAll`); у звіті рядок «Прибирання» — 0 залишків.
+- Негативний контроль: `NC-1` (`AC-DECIDE-14`, навмисно хибне очікування) → **FAIL** за правилом R1.
+
+### UAT знайшов баг, якого не бачив жоден тест
+
+Перший же прогін проти прода показав, що сторінка `/decisions` **завжди** віддавала «No records awaiting decision», хоч записи на розгляді в базі були. Запит падав:
+
+> `Could not embed because more than one relationship was found for 'positions' and 'profiles'`
+
+PostgREST бачить **два** шляхи між `positions` і `profiles`: прямий FK `employee_id` і «багато-до-багатьох» через `position_managers`. Помилка ковталася, `awaiting` ставало `null`, і малювався порожній стан.
+
+**Менеджер не міг ухвалити жодного рішення на проді** — увесь зріз 2 був непрацездатний у браузері, хоч усі 24 його AC позначені «реалізовано».
+
+Чому не впіймав жоден наявний тест:
+
+- тести бази на PGlite ходять через **SQL**, а ця помилка існує лише в **PostgREST**;
+- сторінки мають 0 % покриття Vitest — і в таблиці покриття вище чесно написано «доведено базою і e2e». Доти e2e не було, тож половина доказу була обіцянкою.
+
+Виправлено явним FK (`profiles!positions_employee_id_fkey`) у PR [#44](https://github.com/SvitlanaHaiduchyk/course-staff-management/pull/44).
+
+**Друга знахідка:** `AC-DECIDE-04` був недосяжний у браузері — поле коментаря мало `required`, тож браузер блокував порожню форму **своїм** повідомленням, і текст PM «Tell the employee what to fix» не з'являвся ніколи.
+
+### Що показав негативний контроль
+
+`NC-1` бере правильне «Тоді» `AC-DECIDE-14`, але хибне твердження в коді. Результат:
+
+- перевірка Playwright — **впала** (правильно: хибного тексту на сторінці немає);
+- агент — **PASS**: кадр справді відповідає критерію, і він це чесно побачив;
+- підсумок — **FAIL** за правилом R1: впала перевірка не перекривається агентом.
+
+Тобто від хибного PASS захищає **код правил вердикту**, а не судження агента. Якби вердикт рахував агент, цей випадок пройшов би.
 
 ### Приймання PM
 
-Ще не зроблено.
+Три AC написано в чат команди. Рішення PM чекаємо до кінця Нд 08.11.
+
+| AC | Рішення PM | Посилання |
+|---|---|---|
+| `AC-DECIDE-04` | очікується | — |
+| `AC-DECIDE-14` | очікується | — |
+| `AC-BALANCE-13` | очікується | — |
 
 ## D. Eval рецензента
 

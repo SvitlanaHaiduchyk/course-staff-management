@@ -1,19 +1,19 @@
 # Звіт UAT — 03.11.2026
 
-- **Застосунок:** https://course-staff-management.vercel.app (/api/health: коміт `8bbc7ec`)
-- **Код тестів:** `task/uat-prod` @ `8bbc7ec` + незакомічені зміни
-- **Прогін:** 03.11.2026, 12:45 (Київ), Playwright 30.9 с; AC: 3 — PASS 0, FAIL 2, NEEDS-HUMAN 1
-- **Рецензент:** `claude-haiku-5-5`; суперечки → `claude-sonnet-5-5`. Разом за розбір: $0.0382 (ціни API; за підпискою — у межах ліміту плану)
+- **Застосунок:** https://course-staff-management.vercel.app (/api/health: коміт `7503be9`)
+- **Код тестів:** `task/uat-report` @ `7503be9` + незакомічені зміни
+- **Прогін:** 03.11.2026, 13:04 (Київ), Playwright 28.6 с; AC: 3 — PASS 3, FAIL 0, NEEDS-HUMAN 0
+- **Рецензент:** `claude-haiku-5-5`; суперечки → `claude-sonnet-5-5`. Разом за розбір: $0.0057 (ціни API; за підпискою — у межах ліміту плану)
 - **Прибирання:** синтетичних uat-*@example.test видалено 0, лишилось 0, їхніх рядків, що лишились: 0
 - **Відео й траси:** не в git — `test-results/` локально або артефакт CI; трасу відкриває `npx playwright show-trace <trace.zip>`
 
 | AC | Перевірки | Агент | Підсумок | Чому | Playwright | Розбір |
 |---|---|---|---|---|---|---|
-| AC-BALANCE-13 | впали | Haiku: NEEDS-HUMAN | **FAIL** | R1: перевірка впала — FAIL завжди, агент не перекриває | 0.5 с | $0.0019, 10.5 с |
-| AC-DECIDE-04 | впали | Haiku: NEEDS-HUMAN | **FAIL** | R1: перевірка впала — FAIL завжди, агент не перекриває | 7.0 с | $0.0020, 9.7 с |
-| AC-DECIDE-14 | пройшли | Haiku: NEEDS-HUMAN, Sonnet: NEEDS-HUMAN | **NEEDS-HUMAN** | R3: перевірки пройшли, агент не погоджується — вирішує людина | 4.5 с | $0.0343, 21.0 с |
+| AC-BALANCE-13 | пройшли | Haiku: PASS | **PASS** | R6: перевірки, агент і цитати збігаються | 3.9 с | $0.0018, 6.8 с |
+| AC-DECIDE-04 | пройшли | Haiku: PASS | **PASS** | R6: перевірки, агент і цитати збігаються | 9.0 с | $0.0022, 10.7 с |
+| AC-DECIDE-14 | пройшли | Haiku: PASS | **PASS** | R6: перевірки, агент і цитати збігаються | 3.9 с | $0.0017, 6.5 с |
 
-## AC-BALANCE-13 — FAIL
+## AC-BALANCE-13 — PASS
 
 **Тест:** AC-BALANCE-13: працівник відкриває чужі залишки за прямим посиланням — чисел не бачить
 
@@ -21,31 +21,23 @@
 
 > AC-BALANCE-13: Given employee teacher1@example.test. When teacher1@example.test tries to view another employee's balances. Then the balances are not shown.
 
+![Кадр «Тоді» 1](frames/AC-BALANCE-13-then-1.png)
 
-**Кроки:** ✘ Дано: працівник teacher1@example.test — у порталі, і він не менеджер жодної посади teacher2@example.test
+**Кроки:** ✔ Дано: працівник teacher1@example.test — у порталі, і він не менеджер жодної посади teacher2@example.test → ✔ Коли: відкриває сторінку залишків іншого працівника за її адресою → ✔ Тоді: залишки не показуються: замість таблиці з числами — повідомлення про те, хто їх бачить, і жодного чужого числа чи адреси на сторінці немає
 
-**Перевірка впала:**
+**Агент (claude-haiku-5-5, PASS):** На кадрі видно заголовок «Залишки працівника» і червоне повідомлення з текстом, який посимвольно збігається з очікуваним. Таблиці залишків на кадрі немає, а адреса іншого працівника не показана; ці частини не з кадрів, тому я їх не оцінював.
 
-```
-Error: задайте UAT_OTHER_EMPLOYEE_ID — id teacher2@example.test у profiles (беремо з .env.local, у репо не зберігаємо)
+**Цитати агента, звірені зі сторінкою (aria):**
+- «Залишки працівника» — є на сторінці
+- «Залишки працівника бачить він сам, відповідальний менеджер будь-якої його посади й адміністратор.» — є на сторінці
 
-expect(received).toBeTruthy()
-
-Received: undefined
-```
-
-**Агент (claude-haiku-5-5, NEEDS-HUMAN):** Жодного кадру я не побачив, тому нічого не можу підтвердити чи спростувати щодо частини «Тоді». Щоб продовжити, потрібно дозволити читання цих трьох файлів (або запустити рецензію з повним шляхом без короткого імені DEVELO~1) і повторити перевірку. Я не обходив обмеження альтернативними шляхами.
-
-**Агент бачить вади:**
-- Доступ до ac.md, journey.md і frame-then-1.png заблоковано системою дозволів: шлях C:\Users\DEVELO~1\... містить короткe ім'я DEVELO~1, і читання вимагає ручного підтвердження, якого в цій сесії немає. Жоден файл не прочитано, тому критерій і кадри не перевірено.
-
-**Правило:** R1: перевірка впала — FAIL завжди, агент не перекриває
+**Правило:** R6: перевірки, агент і цитати збігаються
 
 **Відео:** `test-results/artifacts/balances-forbidden-AC-BALA-48372-осиланням-—-чисел-не-бачить-chromium/video.webm` · **траса:** `test-results/artifacts/balances-forbidden-AC-BALA-48372-осиланням-—-чисел-не-бачить-chromium/trace.zip` (не в git)
 
 **Рішення PM:** ☐ приймаю · ☐ відхилення від вимог (issue «Відхилення від вимог: AC-BALANCE-13 — …») · @login: ____
 
-## AC-DECIDE-04 — FAIL
+## AC-DECIDE-04 — PASS
 
 **Тест:** AC-DECIDE-04: менеджер повертає запис без коментаря — статус не змінюється, видно «Tell the employee what to fix»
 
@@ -53,35 +45,24 @@ Received: undefined
 
 > AC-DECIDE-04: Given a record with status "Awaiting decision". When the manager returns it for revision without a comment. Then the status does not change, and the manager sees the message "Tell the employee what to fix".
 
+![Кадр «Тоді» 1](frames/AC-DECIDE-04-then-1.png)
 
-**Кроки:** ✘ Дано: у менеджера manager1@example.test є запис зі статусом «Awaiting decision»
+**Кроки:** ✔ Дано: у менеджера manager1@example.test є запис зі статусом «Awaiting decision» → ✔ Коли: він повертає запис на доопрацювання, лишивши коментар порожнім → ✔ Тоді: статус запису не змінився — він досі «Awaiting decision», — і менеджер бачить повідомлення «Tell the employee what to fix»
 
-**Перевірка впала:**
+**Агент (claude-haiku-5-5, PASS):** На кадрі frame-then-1.png у верхньому червоному блоці видно «Tell the employee what to fix», а запис з датою 2027-11-08 (коментар «uat-261103110451: AC-DECIDE-04») лишається в списку під заголовком «Awaiting decision». Розділ History показує «Рішень ще немає.», що узгоджується з незмінним статусом. Позначку «Returned for revision» кадри не показують, тому цю частину не оцінюю.
 
-```
-Error: expect(locator).toBeVisible() failed
+**Цитати агента, звірені зі сторінкою (aria):**
+- «Tell the employee what to fix» — є на сторінці
+- «Awaiting decision» — є на сторінці
+- «2027-11-08» — є на сторінці
 
-Locator: getByText('2027-11-08')
-Expected: visible
-Timeout: 5000ms
-Error: element(s) not found
-
-Call log:
-```
-
-**Агент (claude-haiku-5-5, NEEDS-HUMAN):** Жоден із трьох файлів не вдалося прочитати, тому я не бачив ні критерію, ні кадрів. Я не намагався обійти перевірку шляху (наприклад, іншою формою шляху), бо дозвіл був відхилений автоматично і повторювати його не можна. Щоб завершити рецензію, потрібно або погодити читання цих файлів вручну, або перезапустити перевірку з шляхом без короткого імені DEVELO~1.
-
-**Агент бачить вади:**
-- Доступ до ac.md, journey.md і frame-then-*.png заблоковано системою дозволів: шлях C:\Users\DEVELO~1\AppData\Local\Temp\uat-review-5MZRr2 містить короткe ім'я (DEVELO~1), що позначено як підозрілий шаблон. Запит потребує ручного погодження, а в цій сесії погодження неможливе.
-- Через це не відомо, які частини «Тоді» треба перевірити, і кадри не переглянуто. Жодних висновків про відповідність критерію не зроблено.
-
-**Правило:** R1: перевірка впала — FAIL завжди, агент не перекриває
+**Правило:** R6: перевірки, агент і цитати збігаються
 
 **Відео:** `test-results/artifacts/decisions-return-no-commen-942cb-l-the-employee-what-to-fix»-chromium/video.webm` · **траса:** `test-results/artifacts/decisions-return-no-commen-942cb-l-the-employee-what-to-fix»-chromium/trace.zip` (не в git)
 
 **Рішення PM:** ☐ приймаю · ☐ відхилення від вимог (issue «Відхилення від вимог: AC-DECIDE-04 — …») · @login: ____
 
-## AC-DECIDE-14 — NEEDS-HUMAN
+## AC-DECIDE-14 — PASS
 
 **Тест:** AC-DECIDE-14: менеджер без записів на розгляді бачить «No records awaiting decision»
 
@@ -93,15 +74,13 @@ Call log:
 
 **Кроки:** ✔ Дано: менеджер manager2@example.test — у порталі, записів на розгляді в нього немає → ✔ Коли: відкриває список «Awaiting decision» → ✔ Тоді: бачить повідомлення «No records awaiting decision», і жодного запису в списку немає
 
-**Агент (claude-sonnet-5-5, NEEDS-HUMAN):** Я не прочитав жодного файлу, тому не можу оцінити критерій. Щоб повторити перевірку, потрібен дозвіл на читання цієї теки або повний шлях без скорочених імен 8.3.
+**Агент (claude-haiku-5-5, PASS):** На кадрі frame-then-1.png (сторінка /decisions) видно заголовок «Awaiting decision» і повідомлення «No records awaiting decision» під блоком «На розгляді»; обидва написи збігаються з критерієм посимвольно. Кадр чіткий, без обрізання. Таблиці з рядками й кнопок рішень на кадрі немає, що відповідає умові.
 
-Haiku сказав NEEDS-HUMAN, тож розбір повторив Sonnet; рішення агента — за Sonnet.
+**Цитати агента, звірені зі сторінкою (aria):**
+- «Awaiting decision» — є на сторінці
+- «No records awaiting decision» — є на сторінці
 
-**Агент бачить вади:**
-- Читання ac.md і journey.md заблоковано: шлях у короткому форматі Windows (DEVELO~1) вимагає ручного схвалення, а в цій сесії немає кому його дати.
-- Кадри frame-then-*.png не відкривались, бо без ac.md невідомо, які саме частини «Тоді» перевіряти.
-
-**Правило:** R3: перевірки пройшли, агент не погоджується — вирішує людина
+**Правило:** R6: перевірки, агент і цитати збігаються
 
 **Відео:** `test-results/artifacts/decisions-empty-AC-DECIDE--62fd7--records-awaiting-decision»-chromium/video.webm` · **траса:** `test-results/artifacts/decisions-empty-AC-DECIDE--62fd7--records-awaiting-decision»-chromium/trace.zip` (не в git)
 
