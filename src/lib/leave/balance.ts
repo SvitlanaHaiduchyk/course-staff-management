@@ -246,7 +246,7 @@ export function suggestedSplit(remaining: Hundredths, share: Hundredths): Split 
  * де база погоджує запис цілком.
  */
 export function exceedsBalance(remaining: Hundredths | null, share: Hundredths): boolean {
-  return remaining !== null && share > remaining;
+  return remaining !== null && share >= remaining;
 }
 
 // --- Тексти PM ------------------------------------------------------------
