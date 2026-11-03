@@ -24,7 +24,10 @@
     "coverage:summary": "node scripts/coverage-summary.mjs",
     "audit:dead": "fallow audit",
     "mutation:ts": "stryker run",
-    "mutation:sql": "node scripts/mutation-check.mjs --kind sql"
+    "mutation:sql": "node scripts/mutation-check.mjs --kind sql",
+    "uat": "node scripts/uat/run.mjs",
+    "uat:nc": "node scripts/uat/run.mjs --negative-controls",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -42,6 +45,7 @@
   "devDependencies": {
     "@electric-sql/pglite": "0.5.8",
     "@fission-ai/openspec": "1.14.1",
+    "@playwright/test": "^1.64.1",
     "@stryker-mutator/core": "^9.2.0",
     "@stryker-mutator/vitest-runner": "^9.2.0",
     "@tailwindcss/turbopack": "^4",
@@ -52,6 +56,7 @@
     "@vitest/eslint-plugin": "^1.6.27",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
+    "eslint-plugin-playwright": "^2.12.1",
     "fallow": "^3.35.0",
     "supabase": "2.120.0",
     "tailwindcss": "^4",
