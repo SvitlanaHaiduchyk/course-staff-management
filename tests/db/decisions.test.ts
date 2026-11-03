@@ -220,6 +220,27 @@ describe("кому вирішувати не можна", () => {
     expect(await decisionCount()).toBe(0);
   });
 
+  it("AC-DECIDE-04: повернення без коментаря не записати й напряму в історію", async () => {
+    // Тест вище йде через decide_leave_record, і функція відмовляє ще до вставки —
+    // тож обмеження таблиці leave_decisions_return_needs_comment_check не доводив
+    // ЖОДЕН тест: мутація «check (true)» виживала (npm run mutation:sql, мутант D2).
+    // Тут б'ємо в таблицю напряму, повз функцію.
+    const id = await seedRecord("teacher1@example.test", "teacher1@example.test:main");
+
+    for (const comment of [null, "   "]) {
+      await expect(
+        leave.asUser(
+          leave.users["manager1@example.test"],
+          `insert into public.leave_decisions (record_id, decided_by, decision, comment)
+           values ($1, $2, 'returned', $3)`,
+          [id, leave.users["manager1@example.test"], comment],
+        ),
+      ).rejects.toThrow(/violates check constraint "leave_decisions_return_needs_comment_check"/);
+    }
+
+    expect(await decisionCount()).toBe(0);
+  });
+
   it("AC-DECIDE-07: другий менеджер після рішення першого", async () => {
     // Основну посаду teacher2 ведуть обидва менеджери.
     const id = await seedRecord("teacher2@example.test", "teacher2@example.test:main");

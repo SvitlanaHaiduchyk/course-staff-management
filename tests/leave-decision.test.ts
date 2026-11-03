@@ -13,6 +13,7 @@ import {
   RETURN_NEEDS_COMMENT,
   alreadyDecidedMessage,
   canDecide,
+  decisionLabel,
   checkDecision,
   commentRequired,
   isDecision,
@@ -56,13 +57,13 @@ describe("коментар", () => {
   it("AC-DECIDE-04: для повернення коментар обов'язковий", () => {
     expect(commentRequired("returned")).toBe(true);
 
-    const result = checkDecision({
-      viewer: manager,
-      status: "awaiting",
-      decision: "returned",
-      comment: "   ",
-    });
-    expect(result).toEqual({ ok: false, message: RETURN_NEEDS_COMMENT });
+    // «без коментаря» з AC — це і порожнє поле (null), і самі пробіли.
+    // Мутант `comment === null` → `false` виживав, бо тест перевіряв лише пробіли.
+    for (const comment of [null, "", "   "]) {
+      expect(
+        checkDecision({ viewer: manager, status: "awaiting", decision: "returned", comment }),
+      ).toEqual({ ok: false, message: RETURN_NEEDS_COMMENT });
+    }
     expect(RETURN_NEEDS_COMMENT).toBe("Tell the employee what to fix");
   });
 
@@ -128,14 +129,53 @@ describe("повідомлення", () => {
     expect(OWN_RECORD_NEEDS_ADMIN).toBe("Your own record is decided by an administrator");
   });
 
+  it("AC-DECIDE-08: менеджер чужої посади отримує відмову з повної перевірки", () => {
+    // Гілку `if (!canDecide(viewer))` у checkDecision не перевіряв жоден тест:
+    // canDecide ми кликали напряму, а через checkDecision — лише власника.
+    // Через це п'ять мутантів на цих двох рядках виживали.
+    expect(
+      checkDecision({
+        viewer: { role: "manager", isOwner: false, managesPosition: false },
+        status: "awaiting",
+        decision: "approved",
+        comment: null,
+      }),
+    ).toEqual({ ok: false, message: "You cannot decide on this record" });
+  });
+
+  it("AC-DECIDE-19: адміністратор вирішує й власний запис — повна перевірка, не лише canDecide", () => {
+    // Мутант `viewer.isOwner && viewer.role !== "admin"` → `viewer.isOwner && true`
+    // виживав: гілку власника в checkDecision перевіряв лише менеджер.
+    expect(
+      checkDecision({
+        viewer: { role: "admin", isOwner: true, managesPosition: false },
+        status: "awaiting",
+        decision: "approved",
+        comment: null,
+      }),
+    ).toEqual({ ok: true });
+  });
+
   it("AC-DECIDE-14: порожній список менеджера", () => {
     expect(NO_RECORDS_AWAITING).toBe("No records awaiting decision");
   });
 
   it("підписи статусів — як у вимозі PM", () => {
+    // Усі п'ять, а не вибірково: мутанти на гілках «rejected» і default виживали.
     expect(statusLabel("awaiting")).toBe("Awaiting decision");
+    expect(statusLabel("approved")).toBe("Approved");
+    expect(statusLabel("rejected")).toBe("Rejected");
     expect(statusLabel("returned")).toBe("Returned for revision");
     expect(statusLabel("cancelled")).toBe("Cancelled");
+    // default: невідомий статус повертаємо як є, а не порожнім рядком.
+    expect(statusLabel("unknown")).toBe("unknown");
+  });
+
+  it("підписи кнопок рішення", () => {
+    // Увесь switch у decisionLabel був непокритий: жоден мутант на ньому не вмирав.
+    expect(decisionLabel("approved")).toBe("Approve");
+    expect(decisionLabel("rejected")).toBe("Reject");
+    expect(decisionLabel("returned")).toBe("Return for revision");
   });
 
   it("чужого рішення не вигадуємо", () => {
