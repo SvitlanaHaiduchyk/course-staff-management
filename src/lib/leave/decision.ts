@@ -90,8 +90,13 @@ export type Viewer = {
  * менеджеру вирішувати власний запис, навіть коли він відповідальний менеджер
  * своєї ж посади. Тому право залежить і від того, **чий** це запис.
  */
+/** Адміністратор вирішує будь-який запис, зокрема власний (AC-DECIDE-10, AC-DECIDE-19). */
+function isAdmin(viewer: Viewer): boolean {
+  return viewer.role === "admin";
+}
+
 export function canDecide(viewer: Viewer): boolean {
-  if (viewer.role === "admin") {
+  if (isAdmin(viewer)) {
     return true; // AC-DECIDE-10, AC-DECIDE-19
   }
   // Роль обов'язкова: саме лише «веде цю посаду» права не дає — те саме
@@ -119,7 +124,7 @@ export function checkDecision(input: {
   const { viewer, status, decision, comment } = input;
 
   // AC-DECIDE-18 — перед правом: менеджеру власної посади потрібен саме цей текст.
-  if (viewer.isOwner && viewer.role !== "admin") {
+  if (viewer.isOwner && !isAdmin(viewer)) {
     return { ok: false, message: OWN_RECORD_NEEDS_ADMIN };
   }
 

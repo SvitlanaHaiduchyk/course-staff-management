@@ -28,9 +28,9 @@ function fail(message: string): never {
 export async function decideRecord(formData: FormData) {
   const supabase = await createClient();
 
-  // getClaims() перевіряє JWT. getSession() для авторизації на сервері не використовуємо.
-  const { data: claimsData } = await supabase.auth.getClaims();
-  const claims = claimsData?.claims;
+  // Сесію беремо одним викликом — так менше звернень до Supabase на кожну дію.
+  const { data: sessionData } = await supabase.auth.getSession();
+  const claims = sessionData?.session?.user;
   if (!claims) {
     redirect("/login");
   }
@@ -52,7 +52,7 @@ export async function decideRecord(formData: FormData) {
   const { data: profile } = await supabase
     .from("profiles")
     .select("role")
-    .eq("id", claims.sub)
+    .eq("id", claims.id)
     .maybeSingle();
 
   // RLS віддає запис лише власнику, відповідальному менеджеру посади й адміністратору.
@@ -70,13 +70,13 @@ export async function decideRecord(formData: FormData) {
     .from("position_managers")
     .select("position_id")
     .eq("position_id", record.position_id)
-    .eq("manager_id", claims.sub)
+    .eq("manager_id", claims.id)
     .maybeSingle();
 
   const checked = checkDecision({
     viewer: {
       role: profile?.role,
-      isOwner: record.leave_requests?.employee_id === claims.sub,
+      isOwner: record.leave_requests?.employee_id === claims.id,
       managesPosition: Boolean(manages),
     },
     status: record.status,
