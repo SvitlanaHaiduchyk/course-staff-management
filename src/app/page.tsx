@@ -182,7 +182,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         </Card>
       ) : null}
 
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         {/* Button базується на @base-ui/react: замість asChild — buttonVariants на посиланні. */}
         <Link href="/requests" className={buttonVariants({ variant: "outline" })}>
           Мої заявки на відпустку
