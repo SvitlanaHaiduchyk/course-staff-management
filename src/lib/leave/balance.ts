@@ -237,9 +237,16 @@ export function suggestedSplit(remaining: Hundredths, share: Hundredths): Split 
   return { onType, unpaid: share - onType };
 }
 
-/** Чи перевищує запис залишок типу. Для типів без ліміту — ніколи. */
+/**
+ * Чи перевищує запис залишок типу. Для типів без ліміту — ніколи.
+ *
+ * Строге `>`: заявка рівно на залишок перевищенням НЕ є (AC-BALANCE-08 описує
+ * попередження лише для заявки **понад** залишок). Те саме порівняння стоїть у
+ * decide_leave_record, і розходження між ними показувало б попередження там,
+ * де база погоджує запис цілком.
+ */
 export function exceedsBalance(remaining: Hundredths | null, share: Hundredths): boolean {
-  return remaining !== null && share >= remaining;
+  return remaining !== null && share > remaining;
 }
 
 // --- Тексти PM ------------------------------------------------------------

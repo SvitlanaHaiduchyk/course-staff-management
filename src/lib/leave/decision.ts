@@ -83,6 +83,11 @@ export type Viewer = {
   readonly managesPosition: boolean;
 };
 
+/** Адміністратор вирішує будь-який запис, зокрема власний (AC-DECIDE-10, AC-DECIDE-19). */
+function isAdmin(viewer: Viewer): boolean {
+  return viewer.role === "admin";
+}
+
 /**
  * Чи може ця людина вирішувати цей запис.
  *
@@ -90,11 +95,6 @@ export type Viewer = {
  * менеджеру вирішувати власний запис, навіть коли він відповідальний менеджер
  * своєї ж посади. Тому право залежить і від того, **чий** це запис.
  */
-/** Адміністратор вирішує будь-який запис, зокрема власний (AC-DECIDE-10, AC-DECIDE-19). */
-function isAdmin(viewer: Viewer): boolean {
-  return viewer.role === "admin";
-}
-
 export function canDecide(viewer: Viewer): boolean {
   if (isAdmin(viewer)) {
     return true; // AC-DECIDE-10, AC-DECIDE-19
