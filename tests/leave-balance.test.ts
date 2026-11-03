@@ -212,6 +212,15 @@ describe("поділ", () => {
     expect(exceedsBalance(1800, 100)).toBe(false);
   });
 
+  it("AC-BALANCE-08: заявка рівно на залишок перевищенням не є", () => {
+    // Межа з AC: попередження дає лише заявка ПОНАД залишок. Саме цей тест
+    // був відсутній, тож зміну `>` на `>=` не впіймав ні CI, ні обидва
+    // рецензенти (PR #39), і вона потрапила в main.
+    expect(exceedsBalance(100, 100)).toBe(false);
+    expect(exceedsBalance(50, 50)).toBe(false);
+    expect(exceedsBalance(50, 51)).toBe(true);
+  });
+
   it("тип без ліміту залишок не перевищує ніколи", () => {
     expect(exceedsBalance(GRANTED.unpaid, 100)).toBe(false);
   });
