@@ -1,9 +1,9 @@
 {
   "kind": "uat",
-  "generatedAt": "2026-11-03T10:46:46.356Z",
+  "generatedAt": "2026-11-03T11:05:30.857Z",
   "baseURL": "https://course-staff-management.vercel.app",
-  "deployedSha": "8bbc7ecf5e16632d5411c8ef7f35a6cc492f50a5",
-  "testsCommit": "8bbc7ecf5e16632d5411c8ef7f35a6cc492f50a5",
+  "deployedSha": "7503be967381e35ff40a46301b5ae0f8827af7c6",
+  "testsCommit": "7503be967381e35ff40a46301b5ae0f8827af7c6",
   "reviewer": {
     "model": "claude-haiku-5-5",
     "disputes": "claude-sonnet-5-5"
@@ -14,55 +14,77 @@
       "id": "AC-BALANCE-13",
       "proof": "AC-BALANCE-13",
       "title": "AC-BALANCE-13: працівник відкриває чужі залишки за прямим посиланням — чисел не бачить",
-      "screenshot": "docs/qa/uat/2026-11-03",
+      "screenshot": "docs/qa/uat/2026-11-03/frames/AC-BALANCE-13-then-1.png",
       "video": "test-results/artifacts/balances-forbidden-AC-BALA-48372-осиланням-—-чисел-не-бачить-chromium/video.webm",
       "trace": "test-results/artifacts/balances-forbidden-AC-BALA-48372-осиланням-—-чисел-не-бачить-chromium/trace.zip",
-      "asserted": false,
+      "asserted": true,
       "vision": {
-        "met": false,
-        "readable": false,
-        "notes": "Жодного кадру я не побачив, тому нічого не можу підтвердити чи спростувати щодо частини «Тоді». Щоб продовжити, потрібно дозволити читання цих трьох файлів (або запустити рецензію з повним шляхом без короткого імені DEVELO~1) і повторити перевірку. Я не обходив обмеження альтернативними шляхами."
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі видно заголовок «Залишки працівника» і червоне повідомлення з текстом, який посимвольно збігається з очікуваним. Таблиці залишків на кадрі немає, а адреса іншого працівника не показана; ці частини не з кадрів, тому я їх не оцінював."
       },
       "agentModel": "claude-haiku-5-5",
       "agentVerdicts": {
-        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-haiku-5-5": "PASS",
         "claude-sonnet-5-5": null
       },
       "escalated": false,
-      "quotesVerified": [],
-      "verdict": "FAIL",
-      "factoryGate": "FAIL",
-      "rule": "R1: перевірка впала — FAIL завжди, агент не перекриває",
-      "playwrightMs": 536,
-      "reviewCostUsd": 0.00195,
-      "reviewWallMs": 10518
+      "quotesVerified": [
+        {
+          "quote": "Залишки працівника",
+          "onPage": true
+        },
+        {
+          "quote": "Залишки працівника бачить він сам, відповідальний менеджер будь-якої його посади й адміністратор.",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 3899,
+      "reviewCostUsd": 0.00179,
+      "reviewWallMs": 6789
     },
     {
       "id": "AC-DECIDE-04",
       "proof": "AC-DECIDE-04",
       "title": "AC-DECIDE-04: менеджер повертає запис без коментаря — статус не змінюється, видно «Tell the employee what to fix»",
-      "screenshot": "docs/qa/uat/2026-11-03",
+      "screenshot": "docs/qa/uat/2026-11-03/frames/AC-DECIDE-04-then-1.png",
       "video": "test-results/artifacts/decisions-return-no-commen-942cb-l-the-employee-what-to-fix»-chromium/video.webm",
       "trace": "test-results/artifacts/decisions-return-no-commen-942cb-l-the-employee-what-to-fix»-chromium/trace.zip",
-      "asserted": false,
+      "asserted": true,
       "vision": {
-        "met": false,
-        "readable": false,
-        "notes": "Жоден із трьох файлів не вдалося прочитати, тому я не бачив ні критерію, ні кадрів. Я не намагався обійти перевірку шляху (наприклад, іншою формою шляху), бо дозвіл був відхилений автоматично і повторювати його не можна. Щоб завершити рецензію, потрібно або погодити читання цих файлів вручну, або перезапустити перевірку з шляхом без короткого імені DEVELO~1."
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі frame-then-1.png у верхньому червоному блоці видно «Tell the employee what to fix», а запис з датою 2027-11-08 (коментар «uat-261103110451: AC-DECIDE-04») лишається в списку під заголовком «Awaiting decision». Розділ History показує «Рішень ще немає.», що узгоджується з незмінним статусом. Позначку «Returned for revision» кадри не показують, тому цю частину не оцінюю."
       },
       "agentModel": "claude-haiku-5-5",
       "agentVerdicts": {
-        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-haiku-5-5": "PASS",
         "claude-sonnet-5-5": null
       },
       "escalated": false,
-      "quotesVerified": [],
-      "verdict": "FAIL",
-      "factoryGate": "FAIL",
-      "rule": "R1: перевірка впала — FAIL завжди, агент не перекриває",
-      "playwrightMs": 7043,
-      "reviewCostUsd": 0.00197,
-      "reviewWallMs": 9661
+      "quotesVerified": [
+        {
+          "quote": "Tell the employee what to fix",
+          "onPage": true
+        },
+        {
+          "quote": "Awaiting decision",
+          "onPage": true
+        },
+        {
+          "quote": "2027-11-08",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 9008,
+      "reviewCostUsd": 0.00225,
+      "reviewWallMs": 10695
     },
     {
       "id": "AC-DECIDE-14",
@@ -73,28 +95,37 @@
       "trace": "test-results/artifacts/decisions-empty-AC-DECIDE--62fd7--records-awaiting-decision»-chromium/trace.zip",
       "asserted": true,
       "vision": {
-        "met": false,
-        "readable": false,
-        "notes": "Я не прочитав жодного файлу, тому не можу оцінити критерій. Щоб повторити перевірку, потрібен дозвіл на читання цієї теки або повний шлях без скорочених імен 8.3."
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі frame-then-1.png (сторінка /decisions) видно заголовок «Awaiting decision» і повідомлення «No records awaiting decision» під блоком «На розгляді»; обидва написи збігаються з критерієм посимвольно. Кадр чіткий, без обрізання. Таблиці з рядками й кнопок рішень на кадрі немає, що відповідає умові."
       },
-      "agentModel": "claude-sonnet-5-5",
+      "agentModel": "claude-haiku-5-5",
       "agentVerdicts": {
-        "claude-haiku-5-5": "NEEDS-HUMAN",
-        "claude-sonnet-5-5": "NEEDS-HUMAN"
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
       },
-      "escalated": true,
-      "quotesVerified": [],
-      "verdict": "NEEDS-HUMAN",
-      "factoryGate": "NOT-EARNED",
-      "rule": "R3: перевірки пройшли, агент не погоджується — вирішує людина",
-      "playwrightMs": 4529,
-      "reviewCostUsd": 0.03428,
-      "reviewWallMs": 20984
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "Awaiting decision",
+          "onPage": true
+        },
+        {
+          "quote": "No records awaiting decision",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 3930,
+      "reviewCostUsd": 0.00171,
+      "reviewWallMs": 6487
     }
   ],
   "negativeControls": [],
   "cleanup": {
-    "at": "2026-11-03T10:46:21.921Z",
+    "at": "2026-11-03T11:05:18.917Z",
     "deleted": [],
     "remaining": [],
     "leftoverRequests": 0
