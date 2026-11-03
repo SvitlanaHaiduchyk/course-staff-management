@@ -27,7 +27,8 @@
     "mutation:sql": "node scripts/mutation-check.mjs --kind sql",
     "uat": "node scripts/uat/run.mjs",
     "uat:nc": "node scripts/uat/run.mjs --negative-controls",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "accounts:zip": "node --env-file=.env.local scripts/zip-accounts.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
