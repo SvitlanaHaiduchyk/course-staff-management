@@ -9,6 +9,9 @@
  * (основний сценарій вимоги `requirements/01-leave-request.md`, крок 2).
  */
 
+import { LEAVE_TYPE_LABELS } from "./balance";
+import { type LeaveType } from "./build";
+
 /** Дні тижня: 1 — понеділок, 7 — неділя, як у `schedule_blocks.weekday`. */
 export const WEEKDAYS = ["", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
 
@@ -40,6 +43,18 @@ export function roleLabel(role: string | null | undefined): string {
     default:
       return "профіль не знайдено";
   }
+}
+
+/**
+ * Тип відпустки назвою, а не ідентифікатором бази: `sick` → `Sick leave`.
+ *
+ * Вимоги називають тип саме назвою, і PM вимагає показувати його текстом
+ * (…spec#14). Тримаємо це однією функцією: поки кожна сторінка індексувала
+ * мапу сама, список «На розгляді» показував сирий `sick` — зауваження PM
+ * за приймання 03.11.
+ */
+export function leaveTypeLabel(type: string | null | undefined): string {
+  return LEAVE_TYPE_LABELS[type as LeaveType] ?? "—";
 }
 
 /** Тип посади: основна чи додаткова (`positions.kind`, глосарій `product.md`). */

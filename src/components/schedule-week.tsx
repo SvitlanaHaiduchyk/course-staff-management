@@ -1,5 +1,5 @@
-import { LEAVE_TYPE_LABELS } from "@/lib/leave/balance";
 import { statusLabel } from "@/lib/leave/decision";
+import { leaveTypeLabel } from "@/lib/leave/format";
 import {
   assignLanes,
   dayNumber,
@@ -60,10 +60,6 @@ const STATUS_TONE: Record<string, string> = {
 
 /** Висота однієї години сітки. Доба цілком у картку не влізе й не потрібна. */
 const HOUR_HEIGHT_REM = 2.75;
-
-function leaveTypeLabel(type: string | null): string {
-  return LEAVE_TYPE_LABELS[type as keyof typeof LEAVE_TYPE_LABELS] ?? "Відпустка";
-}
 
 export function ScheduleWeek({
   positions,

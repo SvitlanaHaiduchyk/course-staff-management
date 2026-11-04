@@ -15,20 +15,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { positionKindLabel, scheduleSummary } from "@/lib/leave/format";
-import { formatDays, splitLabel } from "@/lib/leave/balance";
+import { leaveTypeLabel, positionKindLabel, scheduleSummary } from "@/lib/leave/format";
+import { formatDays, LEAVE_TYPE_LABELS, splitLabel } from "@/lib/leave/balance";
 import { canCancel, canEditHours, canResubmit } from "@/lib/leave/record-edit";
 import { createClient } from "@/lib/supabase/server";
 
 import { cancelRecord, changeRecordHours, submitLeaveRequest } from "./actions";
-
-/** Типи відпустки з глосарію `requirements/product.md`. Кольором не позначаємо — лише текстом. */
-const LEAVE_TYPE_LABELS: Record<string, string> = {
-  sick: "Sick leave",
-  personal: "Personal leave",
-  unpaid: "Unpaid leave",
-  family_celebration: "Family celebration",
-};
 
 /** П'ять статусів запису — перелік остаточний (припущення PM). Текст обов'язковий, колір на додачу. */
 const STATUS_LABELS: Record<string, string> = {
@@ -241,7 +233,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
                     </TableCell>
                     <TableCell>{r.positions?.job_title ?? "—"}</TableCell>
                     <TableCell>
-                      {LEAVE_TYPE_LABELS[r.leave_requests?.leave_type ?? ""] ?? "—"}
+                      {leaveTypeLabel(r.leave_requests?.leave_type)}
                     </TableCell>
                     <TableCell>
                       <Badge className={STATUS_CLASSES[r.status] ?? ""}>
