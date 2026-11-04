@@ -31,6 +31,16 @@ import { DecisionForm } from "./decision-form";
 
 const hhmm = (time: string) => time.slice(0, 5);
 
+/**
+ * Назва списку так, як її пише PM: «the "Awaiting decision" list».
+ *
+ * Англійська в обох мовах — як і «My requests». Це не недогляд перекладу:
+ * специфікації UAT для `AC-DECIDE-04` і `AC-DECIDE-14` шукають саме цей
+ * заголовок, і перекладний `<h1>` їх ламає. Перекладається підзаголовок
+ * картки («На розгляді»), а не назва сторінки.
+ */
+const AWAITING_LIST = "Awaiting decision";
+
 // Сторінка «Awaiting decision» менеджера й адміністратора — вимога
 // requirements/02-leave-decision.md, основний сценарій.
 //
@@ -67,7 +77,7 @@ export default async function DecisionsPage({
     // Відмова на сторінці: жодного чужого запису тут не показано.
     return (
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-16">
-        <h1 className="text-2xl font-semibold">{m("decisions.awaiting")}</h1>
+        <h1 className="text-2xl font-semibold">{AWAITING_LIST}</h1>
         <Alert variant="destructive">
           <AlertDescription>
             {m("decisions.forbidden")}
@@ -174,7 +184,7 @@ export default async function DecisionsPage({
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-16">
-      <h1 className="text-2xl font-semibold">{m("decisions.awaiting")}</h1>
+      <h1 className="text-2xl font-semibold">{AWAITING_LIST}</h1>
 
       {params.error ? (
         <Alert variant="destructive">
