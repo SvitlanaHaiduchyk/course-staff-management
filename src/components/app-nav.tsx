@@ -1,8 +1,7 @@
-import Link from "next/link";
-
 import { signOut } from "@/app/login/actions";
 import { LanguageSwitch } from "@/components/language-switch";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { NavLinks, type NavItem } from "@/components/nav-links";
+import { Button } from "@/components/ui/button";
 import { getMessages } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 
@@ -44,26 +43,16 @@ export async function AppNav() {
     .maybeSingle();
   const canDecide = profile?.role === "manager" || profile?.role === "admin";
 
-  const link = buttonVariants({ variant: "ghost", size: "sm" });
+  const items: NavItem[] = [
+    { href: "/", label: m("nav.home") },
+    { href: "/requests", label: m("nav.requests") },
+    { href: "/balances", label: m("nav.balances") },
+    ...(canDecide ? [{ href: "/decisions", label: m("decisions.awaiting") }] : []),
+  ];
 
   return (
     <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-6 py-2">
-      <nav aria-label={m("nav.main")} className="flex flex-wrap items-center gap-1">
-        <Link href="/" className={link}>
-          {m("nav.home")}
-        </Link>
-        <Link href="/requests" className={link}>
-          {m("nav.requests")}
-        </Link>
-        <Link href="/balances" className={link}>
-          {m("nav.balances")}
-        </Link>
-        {canDecide ? (
-          <Link href="/decisions" className={link}>
-            {m("decisions.awaiting")}
-          </Link>
-        ) : null}
-      </nav>
+      <NavLinks items={items} label={m("nav.main")} />
 
       <div className="flex items-center gap-2">
         <LanguageSwitch lang={lang} />
