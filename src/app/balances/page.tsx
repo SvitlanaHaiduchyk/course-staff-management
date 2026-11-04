@@ -1,8 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { BalanceTable, type BalanceRpcRow } from "@/components/balance-table";
-import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getMessages } from "@/lib/i18n/server";
 import { schoolYearOf } from "@/lib/leave/balance";
@@ -44,14 +42,6 @@ export default async function BalancesPage() {
         </CardContent>
       </Card>
 
-      <div className="flex flex-wrap gap-3">
-        <Link href="/requests" className={buttonVariants({ variant: "outline" })}>
-          {m("nav.requests")}
-        </Link>
-        <Link href="/" className={buttonVariants({ variant: "outline" })}>
-          {m("nav.home")}
-        </Link>
-      </div>
     </main>
   );
 }
