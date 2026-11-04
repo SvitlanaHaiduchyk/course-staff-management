@@ -139,8 +139,9 @@ if (!hasAdminKey()) {
       await thenStep(
         page,
         {
+          // «Тоді» — дослівно з AC-DECIDE-04 (requirements/02-leave-decision.md).
           clause:
-            "статус запису не змінився — він досі «Awaiting decision», — і менеджер бачить повідомлення «Tell the employee what to fix»",
+            'the status does not change, and the manager sees the message "Tell the employee what to fix".',
           visible: [
             "повідомлення «Tell the employee what to fix»",
             `запис на ${onDate} досі в списку «Awaiting decision»`,

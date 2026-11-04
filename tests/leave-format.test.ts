@@ -9,6 +9,7 @@ import {
   type ScheduleBlockRow,
   positionKindLabel,
   roleLabel,
+  leaveTypeLabel,
   scheduleSummary,
 } from "../src/lib/leave/format";
 
@@ -61,5 +62,21 @@ describe("підписи ролі й типу посади", () => {
   it("розрізняє основну й додаткову посаду", () => {
     expect(positionKindLabel("main")).toBe("основна");
     expect(positionKindLabel("additional")).toBe("додаткова");
+  });
+});
+
+describe("тип відпустки", () => {
+  it("тип показується назвою, а не ідентифікатором бази", () => {
+    expect(leaveTypeLabel("sick")).toBe("Sick leave");
+    expect(leaveTypeLabel("family_celebration")).toBe("Family celebration");
+  });
+
+  it("невідомий тип не показує сирого рядка з бази", () => {
+    expect(leaveTypeLabel("whatever")).toBe("—");
+  });
+
+  it("порожній тип теж дає прочерк", () => {
+    expect(leaveTypeLabel(null)).toBe("—");
+    expect(leaveTypeLabel(undefined)).toBe("—");
   });
 });

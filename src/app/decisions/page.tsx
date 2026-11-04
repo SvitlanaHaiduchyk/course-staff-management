@@ -21,6 +21,7 @@ import {
   suggestedSplit,
 } from "@/lib/leave/balance";
 import { DECISIONS, NO_RECORDS_AWAITING, statusLabel } from "@/lib/leave/decision";
+import { leaveTypeLabel } from "@/lib/leave/format";
 import { minutesInsideBlocks, scheduleFor } from "@/lib/leave/schedule";
 import { positionKindLabel } from "@/lib/leave/format";
 import { createClient } from "@/lib/supabase/server";
@@ -239,7 +240,8 @@ export default async function DecisionsPage({
                         <div className="text-xs text-muted-foreground">{hours}</div>
                       </TableCell>
                       <TableCell>
-                        <div>{request?.leave_type ?? "—"}</div>
+                        {/* Тип — назвою, не `sick` із бази (чому — у leaveTypeLabel). */}
+                        <div>{leaveTypeLabel(request?.leave_type)}</div>
                         {/* AC-DECIDE-20: коментар працівника видно менеджеру. */}
                         {request?.comment ? (
                           <div className="text-xs text-muted-foreground">{request.comment}</div>

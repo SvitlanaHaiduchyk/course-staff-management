@@ -27,7 +27,8 @@ test(
     await thenStep(
       page,
       {
-        clause: "бачить повідомлення «No records awaiting decision», і жодного запису в списку немає",
+        // «Тоді» — дослівно з AC-DECIDE-14 (requirements/02-leave-decision.md).
+        clause: 'the manager sees the message "No records awaiting decision".',
         visible: [
           "заголовок сторінки «Awaiting decision»",
           "повідомлення «No records awaiting decision»",
