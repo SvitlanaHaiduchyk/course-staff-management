@@ -65,6 +65,7 @@ const UK = {
 
   "nav.requests": "Мої заявки на відпустку",
   "nav.balances": "Мої залишки",
+  "nav.main": "Основна навігація",
   "nav.home": "На головну",
   "nav.decisions": "До списку на розгляді",
   "nav.signOut": "Вийти",
@@ -165,6 +166,7 @@ const EN: Record<MessageKey, string> = {
 
   "nav.requests": "My requests",
   "nav.balances": "My balances",
+  "nav.main": "Main navigation",
   "nav.home": "Home",
   "nav.decisions": "To the Awaiting decision list",
   "nav.signOut": "Sign out",

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
-import { LanguageSwitch } from "@/components/language-switch";
+import { AppNav } from "@/components/app-nav";
 import { getLang } from "@/lib/i18n/server";
 
 import "./globals.css";
@@ -33,9 +33,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <header className="flex justify-end border-b border-border px-6 py-2">
-          <LanguageSwitch lang={lang} />
-        </header>
+        <AppNav />
         {children}
       </body>
     </html>

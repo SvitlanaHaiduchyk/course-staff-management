@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 
 import { StatusBadge } from "@/components/status-badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -83,9 +82,6 @@ export default async function DecisionsPage({
             {m("decisions.forbidden")}
           </AlertDescription>
         </Alert>
-        <Link href="/" className={buttonVariants({ variant: "outline" }) + " w-fit"}>
-          {m("nav.home")}
-        </Link>
       </main>
     );
   }
@@ -348,9 +344,6 @@ export default async function DecisionsPage({
         </CardContent>
       </Card>
 
-      <Link href="/" className={buttonVariants({ variant: "outline" }) + " w-fit"}>
-        {m("nav.home")}
-      </Link>
     </main>
   );
 }

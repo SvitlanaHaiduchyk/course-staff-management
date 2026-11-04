@@ -1,9 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { BalanceTable, type BalanceRpcRow } from "@/components/balance-table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getMessages } from "@/lib/i18n/server";
 import { schoolYearOf } from "@/lib/leave/balance";
@@ -69,10 +67,6 @@ export default async function EmployeeBalancesPage({
           </AlertDescription>
         </Alert>
       )}
-
-      <Link href="/decisions" className={buttonVariants({ variant: "outline" }) + " w-fit"}>
-        {m("nav.decisions")}
-      </Link>
     </main>
   );
 }
