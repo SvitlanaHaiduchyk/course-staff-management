@@ -1,0 +1,83 @@
+# E2E у CI: збираємо застосунок із цього PR і ганяємо специфікації Playwright проти нього.
+#
+# Навіщо окремий workflow, а не job у ci.yml: назви jobs `spec`, `app`, `conformance`, `db-check`
+# тримає ruleset, і їх не чіпаємо (AGENTS.md, «Структура»).
+#
+# Що це ловить і чого не ловить — чесно:
+#   ЛОВИТЬ    зміну тексту чи структури сторінки, на яку спирається AC. Саме так PR #54 мовчки
+#             зламав AC-DECIDE-04 і AC-DECIDE-14: Vitest e2e не запускає, і всі ворота були зелені.
+#   НЕ ЛОВИТЬ специфікації з тегом @writes і AC-BALANCE-13: їм потрібен SUPABASE_SECRET_KEY, а його
+#             в GitHub Secrets немає й не буде (AGENTS.md, «Секрети»). Вони самі пропускаються.
+#   Тобто в CI реально біжить AC-DECIDE-14. Повний набір — лише локально: npm run uat.
+#
+# Застосунок піднімається свій (playwright.config.ts, webServer), але база — ВАША бойова, бо іншої
+# немає. Тому тут лише специфікації, що нічого не пишуть.
+#
+# Налаштування (без них прогін червоніє з підказкою, а не падає мовчки):
+#   Variables: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY — не секрети, ті самі, що у Vercel
+#   Secrets:   DEMO_USER_PASSWORD — пароль синтетичних акаунтів @example.test
+#
+# Це НЕ обов'язкова перевірка ruleset-у, доки не побачимо, наскільки стабільно воно бігає.
+name: e2e
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: "E2E: сторінки під тестовими акаунтами"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      DEMO_USER_PASSWORD: ${{ secrets.DEMO_USER_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      - name: Налаштування задано
+        run: |
+          missing=""
+          [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] && missing="$missing NEXT_PUBLIC_SUPABASE_URL(variable)"
+          [ -z "$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY" ] && missing="$missing NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY(variable)"
+          [ -z "$DEMO_USER_PASSWORD" ] && missing="$missing DEMO_USER_PASSWORD(secret)"
+          if [ -n "$missing" ]; then
+            echo "::error title=e2e::Немає:$missing — Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+
+      - name: Браузер
+        run: npx playwright install --with-deps chromium
+
+      - name: Збірка (її ж підніме webServer playwright.config.ts)
+        run: npm run build
+
+      # --grep-invert '@writes' — специфікації, що пишуть у базу, у CI не запускаємо:
+      # бойова база, і прибирання за ними потребує секретного ключа.
+      - name: Playwright
+        run: npx playwright test --grep-invert "@writes" --reporter=line
+
+      # Артефакти вантажимо завжди: зелений прогін — такий самий доказ, як червоний.
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: e2e-${{ github.run_id }}
+          path: |
+            test-results/html
+            test-results/artifacts
+            test-results/results.json
+          retention-days: 7
+          if-no-files-found: warn
