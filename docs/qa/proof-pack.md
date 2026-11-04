@@ -83,13 +83,18 @@
 
 | AC | Специфікація | Тест | Агент | Вердикт | Кадр |
 |---|---|---|---|---|---|
-| `AC-DECIDE-04` | [`decisions-return-no-comment.spec.ts`](https://github.com/SvitlanaHaiduchyk/course-staff-management/blob/b5b009dcf3018f06ffe1ec7ee281d322409add50/tests/e2e/decisions-return-no-comment.spec.ts) | passed | Haiku: PASS | **PASS** (R6) | [`AC-DECIDE-04-then-1.png`](https://github.com/SvitlanaHaiduchyk/course-staff-management/blob/b5b009dcf3018f06ffe1ec7ee281d322409add50/docs/qa/uat/2026-11-03/frames/AC-DECIDE-04-then-1.png) |
-| `AC-DECIDE-14` | [`decisions-empty.spec.ts`](https://github.com/SvitlanaHaiduchyk/course-staff-management/blob/b5b009dcf3018f06ffe1ec7ee281d322409add50/tests/e2e/decisions-empty.spec.ts) | passed | Haiku: PASS | **PASS** (R6) | [`AC-DECIDE-14-then-1.png`](https://github.com/SvitlanaHaiduchyk/course-staff-management/blob/b5b009dcf3018f06ffe1ec7ee281d322409add50/docs/qa/uat/2026-11-03/frames/AC-DECIDE-14-then-1.png) |
-| `AC-BALANCE-13` | [`balances-forbidden.spec.ts`](https://github.com/SvitlanaHaiduchyk/course-staff-management/blob/b5b009dcf3018f06ffe1ec7ee281d322409add50/tests/e2e/balances-forbidden.spec.ts) | passed | Haiku: PASS | **PASS** (R6) | [`AC-BALANCE-13-then-1.png`](https://github.com/SvitlanaHaiduchyk/course-staff-management/blob/b5b009dcf3018f06ffe1ec7ee281d322409add50/docs/qa/uat/2026-11-03/frames/AC-BALANCE-13-then-1.png) |
+| `AC-DECIDE-04` | [`decisions-return-no-comment.spec.ts`](https://github.com/SvitlanaHaiduchyk/course-staff-management/blob/680921bfd233ed95bf36534322e75e7e30b27ffd/tests/e2e/decisions-return-no-comment.spec.ts) | passed | Haiku: PASS | **PASS** (R6) | [`AC-DECIDE-04-then-1.png`](https://github.com/SvitlanaHaiduchyk/course-staff-management/blob/680921bfd233ed95bf36534322e75e7e30b27ffd/docs/qa/uat/2026-11-04/frames/AC-DECIDE-04-then-1.png) |
+| `AC-DECIDE-14` | [`decisions-empty.spec.ts`](https://github.com/SvitlanaHaiduchyk/course-staff-management/blob/680921bfd233ed95bf36534322e75e7e30b27ffd/tests/e2e/decisions-empty.spec.ts) | passed | Haiku: PASS | **PASS** (R6) | [`AC-DECIDE-14-then-1.png`](https://github.com/SvitlanaHaiduchyk/course-staff-management/blob/680921bfd233ed95bf36534322e75e7e30b27ffd/docs/qa/uat/2026-11-04/frames/AC-DECIDE-14-then-1.png) |
+| `AC-BALANCE-13` | [`balances-forbidden.spec.ts`](https://github.com/SvitlanaHaiduchyk/course-staff-management/blob/680921bfd233ed95bf36534322e75e7e30b27ffd/tests/e2e/balances-forbidden.spec.ts) | passed | Haiku: PASS | **PASS** (R6) | [`AC-BALANCE-13-then-1.png`](https://github.com/SvitlanaHaiduchyk/course-staff-management/blob/680921bfd233ed95bf36534322e75e7e30b27ffd/docs/qa/uat/2026-11-04/frames/AC-BALANCE-13-then-1.png) |
 
-- Звіт: [`docs/qa/uat/2026-11-03/report.md`](https://github.com/SvitlanaHaiduchyk/course-staff-management/blob/b5b009dcf3018f06ffe1ec7ee281d322409add50/docs/qa/uat/2026-11-03/report.md) · прод на коміті `7503be9`, `/api/health` → `db: ok`
-- Рецензент: `claude-haiku-5-5`, суперечки → `claude-sonnet-5-5`; за розбір $0.0057
+- Звіт: [`docs/qa/uat/2026-11-04/report.md`](https://github.com/SvitlanaHaiduchyk/course-staff-management/blob/680921bfd233ed95bf36534322e75e7e30b27ffd/docs/qa/uat/2026-11-04/report.md) · прод на коміті `680921b`, `/api/health` → `db: ok`; код тестів — `main` @ `680921b`, **без незакомічених змін**
+- Рецензент: `claude-haiku-5-5`, суперечки → `claude-sonnet-5-5`; за розбір $0.0056
 - Дані: `AC-DECIDE-14` і `AC-BALANCE-13` — лише читання. `AC-DECIDE-04` має тег `@writes`: засіває один запис і прибирає його за собою (`afterAll`); у звіті рядок «Прибирання» — 0 залишків.
+- **Прогін 2026-11-04 — за зауваженням PM.** Приймання 03.11 пройшло (усі три AC прийнято), але PM
+  зауважив, що `clause` у `thenStep(…)` був переказом українською, а не дослівним «Тоді» з AC, і що
+  попередній звіт зроблено з незакоміченими змінами. Обидва виправлено: «Тоді» тепер слово в слово
+  з `requirements/`, прогін — на чистому дереві. Звіт 03.11 лишаємо в репо як є: переписувати історію
+  приймання не можна.
 - Негативний контроль: `NC-1` (`AC-DECIDE-14`, навмисно хибне очікування) → **FAIL** за правилом R1.
 
 ### UAT знайшов баг, якого не бачив жоден тест

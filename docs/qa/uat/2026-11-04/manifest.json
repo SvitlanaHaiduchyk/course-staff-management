@@ -1,0 +1,129 @@
+{
+  "kind": "uat",
+  "generatedAt": "2026-11-04T09:36:17.948Z",
+  "baseURL": "https://course-staff-management.vercel.app",
+  "deployedSha": "680921bfd233ed95bf36534322e75e7e30b27ffd",
+  "testsCommit": "680921bfd233ed95bf36534322e75e7e30b27ffd",
+  "reviewer": {
+    "model": "claude-haiku-5-5",
+    "disputes": "claude-sonnet-5-5"
+  },
+  "note": "Відео й траси не в git (test-results/ локально, артефакт CI). check-recordings конвеєра WS9 вимагає відео на диску — для нього цей manifest треба доповнити.",
+  "results": [
+    {
+      "id": "AC-BALANCE-13",
+      "proof": "AC-BALANCE-13",
+      "title": "AC-BALANCE-13: працівник відкриває чужі залишки за прямим посиланням — чисел не бачить",
+      "screenshot": "docs/qa/uat/2026-11-04/frames/AC-BALANCE-13-then-1.png",
+      "video": "test-results/artifacts/balances-forbidden-AC-BALA-48372-осиланням-—-чисел-не-бачить-chromium/video.webm",
+      "trace": "test-results/artifacts/balances-forbidden-AC-BALA-48372-осиланням-—-чисел-не-бачить-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі сторінка /balances/56a23cac-... показує заголовок «Залишки працівника» і червоне повідомлення з відмовою, текст якого збігається з критерієм посимвольно. Таблиці залишків на кадрі немає, кнопка «До списку на розгляді» видима. Частини про таблицю і чужу адресу не з кадрів, тому не оцінювались."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "Залишки працівника",
+          "onPage": true
+        },
+        {
+          "quote": "Залишки працівника бачить він сам, відповідальний менеджер будь-якої його посади й адміністратор.",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 3754,
+      "reviewCostUsd": 0.00185,
+      "reviewWallMs": 9459
+    },
+    {
+      "id": "AC-DECIDE-04",
+      "proof": "AC-DECIDE-04",
+      "title": "AC-DECIDE-04: менеджер повертає запис без коментаря — статус не змінюється, видно «Tell the employee what to fix»",
+      "screenshot": "docs/qa/uat/2026-11-04/frames/AC-DECIDE-04-then-1.png",
+      "video": "test-results/artifacts/decisions-return-no-commen-942cb-l-the-employee-what-to-fix»-chromium/video.webm",
+      "trace": "test-results/artifacts/decisions-return-no-commen-942cb-l-the-employee-what-to-fix»-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі сторінки /decisions з заголовком «Awaiting decision» видно червоний напис «Tell the employee what to fix» над списком. Запис Андрій Демо-Вчитель, дата 2027-11-08, досі в секції «На розгляді» з кнопками Approve і Reject, тобто статус не змінився. В історії видно інший, уже закритий запис (2026-10-26, Approved), він не стосується цього критерію."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "Tell the employee what to fix",
+          "onPage": true
+        },
+        {
+          "quote": "2027-11-08",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 8229,
+      "reviewCostUsd": 0.00191,
+      "reviewWallMs": 10441
+    },
+    {
+      "id": "AC-DECIDE-14",
+      "proof": "AC-DECIDE-14",
+      "title": "AC-DECIDE-14: менеджер без записів на розгляді бачить «No records awaiting decision»",
+      "screenshot": "docs/qa/uat/2026-11-04/frames/AC-DECIDE-14-then-1.png",
+      "video": "test-results/artifacts/decisions-empty-AC-DECIDE--62fd7--records-awaiting-decision»-chromium/video.webm",
+      "trace": "test-results/artifacts/decisions-empty-AC-DECIDE--62fd7--records-awaiting-decision»-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі frame-then-1.png (сторінка /decisions) заголовок «Awaiting decision» і під картką «На розгляді» напис «No records awaiting decision» — обидва збігаються з критерієм посимвольно. Рядків із записами та кнопок рішення на кадрі немає, що узгоджується з очікуваним станом; ці частини не оцінювалися."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "Awaiting decision",
+          "onPage": true
+        },
+        {
+          "quote": "No records awaiting decision",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 3902,
+      "reviewCostUsd": 0.00186,
+      "reviewWallMs": 9123
+    }
+  ],
+  "negativeControls": [],
+  "cleanup": {
+    "at": "2026-11-04T09:36:06.328Z",
+    "deleted": [],
+    "remaining": [],
+    "leftoverRequests": 0
+  }
+}
