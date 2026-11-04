@@ -5,6 +5,7 @@ import { BalanceTable, type BalanceRpcRow } from "@/components/balance-table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getMessages } from "@/lib/i18n/server";
 import { schoolYearOf } from "@/lib/leave/balance";
 import { createClient } from "@/lib/supabase/server";
 
@@ -27,6 +28,7 @@ export default async function EmployeeBalancesPage({
     redirect("/login");
   }
 
+  const { lang, m } = await getMessages();
   const year = schoolYearOf(new Date().toISOString().slice(0, 10));
 
   const { data: rows } = await supabase.rpc("employee_balance", {
@@ -46,31 +48,30 @@ export default async function EmployeeBalancesPage({
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-12">
       <h1 className="text-2xl font-semibold">
-        {allowed ? (profile?.full_name ?? profile?.email ?? "Залишки працівника") : "Залишки працівника"}
+        {(allowed ? (profile?.full_name ?? profile?.email) : null) ?? m("balances.employee")}
       </h1>
 
       {allowed ? (
         <Card>
           <CardHeader>
             <CardTitle as="h2" className="text-lg font-medium">
-              Навчальний рік {year}–{year + 1}
+              {m("balances.schoolYear")} {year}–{year + 1}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <BalanceTable rows={rows as BalanceRpcRow[]} />
+            <BalanceTable rows={rows as BalanceRpcRow[]} lang={lang} />
           </CardContent>
         </Card>
       ) : (
         <Alert variant="destructive">
           <AlertDescription>
-            Залишки працівника бачить він сам, відповідальний менеджер будь-якої його посади
-            й адміністратор.
+            {m("balances.forbidden")}
           </AlertDescription>
         </Alert>
       )}
 
       <Link href="/decisions" className={buttonVariants({ variant: "outline" }) + " w-fit"}>
-        До списку на розгляді
+        {m("nav.decisions")}
       </Link>
     </main>
   );

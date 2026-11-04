@@ -15,7 +15,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { leaveTypeLabel, positionKindLabel, scheduleSummary } from "@/lib/leave/format";
+import { positionKindKey, weekdayNames } from "@/lib/i18n/dict";
+import { getMessages } from "@/lib/i18n/server";
+import { leaveTypeLabel, scheduleSummary } from "@/lib/leave/format";
 import { formatDays, LEAVE_TYPE_LABELS, splitLabel } from "@/lib/leave/balance";
 import { canCancel, canEditHours, canResubmit } from "@/lib/leave/record-edit";
 import { createClient } from "@/lib/supabase/server";
@@ -42,6 +44,8 @@ const STATUS_CLASSES: Record<string, string> = {
 
 export default async function RequestsPage({ searchParams }: PageProps<"/requests">) {
   const { error, notice } = await searchParams;
+  const { lang, m } = await getMessages();
+  const dayNames = weekdayNames(lang);
   const supabase = await createClient();
 
   const { data: claimsData } = await supabase.auth.getClaims();
@@ -104,13 +108,13 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
 
       <Card>
         <CardHeader>
-          <CardTitle as="h2" className="text-lg">Нова заявка</CardTitle>
+          <CardTitle as="h2" className="text-lg">{m("requests.new")}</CardTitle>
         </CardHeader>
         <CardContent>
           {positions && positions.length > 0 ? (
             <form action={submitLeaveRequest} className="flex flex-col gap-4">
               <fieldset className="flex flex-col gap-2">
-                <legend className="mb-1 text-sm font-medium">Посади</legend>
+                <legend className="mb-1 text-sm font-medium">{m("home.positions")}</legend>
                 {positions.map((p) => (
                   <Label key={p.id} className="flex items-start gap-2 font-normal">
                     {/*
@@ -132,13 +136,13 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
                       <span>
                         {p.divisions?.name ?? "—"} / {p.job_title}{" "}
                         <span className="text-muted-foreground">
-                          ({positionKindLabel(p.kind)})
+                          ({m(positionKindKey(p.kind))})
                         </span>
                       </span>
                       <span data-testid="schedule" className="text-xs text-muted-foreground">
                         {p.schedule_blocks?.length
-                          ? scheduleSummary(p.schedule_blocks)
-                          : "розкладу немає"}
+                          ? scheduleSummary(p.schedule_blocks, dayNames)
+                          : m("schedule.none")}
                       </span>
                     </span>
                   </Label>
@@ -146,21 +150,20 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
               </fieldset>
 
               <div className="flex flex-col gap-2">
-                <Label htmlFor="date-1">Дата (цілий день)</Label>
+                <Label htmlFor="date-1">{m("requests.date1")}</Label>
                 <Input id="date-1" name="date" type="date" required />
                 <p className="text-xs text-muted-foreground">
-                  Обирайте день, що є в розкладі вище. Дата без робочих годин відпаде з
-                  повідомленням, а решта дат заявки лишаться.
+                  {m("requests.dateHint")}
                 </p>
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label htmlFor="date-2">Ще дата (не обов&apos;язково)</Label>
+                <Label htmlFor="date-2">{m("requests.date2")}</Label>
                 <Input id="date-2" name="date" type="date" />
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label htmlFor="leaveType">Тип відпустки</Label>
+                <Label htmlFor="leaveType">{m("requests.type")}</Label>
                 {/*
                   Нативний select із тієї ж причини, що й checkbox вище: Select із
                   @/components/ui клієнтський (@base-ui/react), а форма серверна.
@@ -183,24 +186,24 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
 
               <div className="flex flex-col gap-2">
                 <Label htmlFor="relationship">
-                  Ступінь спорідненості (лише для Family celebration)
+                  {m("requests.relation")}
                 </Label>
                 <Input id="relationship" name="relationship" />
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label htmlFor="comment">Коментар (до 500 символів)</Label>
+                <Label htmlFor="comment">{m("requests.comment")}</Label>
                 <Textarea id="comment" name="comment" maxLength={500} rows={2}
                 />
               </div>
 
               <Button type="submit" className="self-start">
-                Подати заявку
+                {m("requests.submit")}
               </Button>
             </form>
           ) : (
             <p className="text-sm text-muted-foreground">
-              У вас ще немає посад з розкладом. Їх створює адміністратор (зріз WS10).
+              {m("requests.noPositions")}
             </p>
           )}
         </CardContent>
@@ -208,20 +211,20 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
 
       <Card>
         <CardHeader>
-          <CardTitle as="h2" className="text-lg">Мої записи</CardTitle>
+          <CardTitle as="h2" className="text-lg">{m("requests.mine")}</CardTitle>
         </CardHeader>
         <CardContent>
           {records && records.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Дата</TableHead>
-                  <TableHead>Години</TableHead>
-                  <TableHead>Посада</TableHead>
-                  <TableHead>Тип</TableHead>
-                  <TableHead>Статус</TableHead>
-                  <TableHead>Списано й коментар</TableHead>
-                  <TableHead>Дії</TableHead>
+                  <TableHead>{m("table.date")}</TableHead>
+                  <TableHead>{m("table.hours")}</TableHead>
+                  <TableHead>{m("table.position")}</TableHead>
+                  <TableHead>{m("table.type")}</TableHead>
+                  <TableHead>{m("table.status")}</TableHead>
+                  <TableHead>{m("table.chargedAndComment")}</TableHead>
+                  <TableHead>{m("table.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody data-testid="records">
@@ -306,7 +309,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
                             />
                           </div>
                           <Button type="submit" variant="outline" size="sm">
-                            {canResubmit(r.status) ? "Подати знову" : "Зберегти години"}
+                            {m(canResubmit(r.status) ? "requests.resubmit" : "requests.saveHours")}
                           </Button>
                         </form>
                       ) : null}
@@ -328,7 +331,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
             </Table>
           ) : (
             <p data-testid="records-empty" className="text-sm text-muted-foreground">
-              Записів ще немає.
+              {m("requests.empty")}
             </p>
           )}
         </CardContent>

@@ -1,3 +1,4 @@
+import { messages, weekdayNames, type Lang } from "@/lib/i18n/dict";
 import { statusLabel } from "@/lib/leave/decision";
 import { leaveTypeLabel } from "@/lib/leave/format";
 import {
@@ -8,7 +9,6 @@ import {
   hourTicks,
   hourWindow,
   tickPercent,
-  WEEKDAY_SHORT,
   weekDates,
   weekdayOf,
 } from "@/lib/leave/week";
@@ -66,12 +66,16 @@ export function ScheduleWeek({
   leaves,
   mondayIso,
   todayIso,
+  lang,
 }: {
   positions: readonly SchedulePosition[];
   leaves: readonly ScheduleLeave[];
   mondayIso: string;
   todayIso: string;
+  lang: Lang;
 }) {
+  const m = messages(lang);
+  const dayNames = weekdayNames(lang);
   const dates = weekDates(mondayIso);
   const jobTitle = new Map(positions.map((p) => [p.id, p.job_title]));
 
@@ -99,7 +103,7 @@ export function ScheduleWeek({
                   isToday ? "bg-primary text-primary-foreground" : "text-muted-foreground"
                 }`}
               >
-                <div className="text-xs">{WEEKDAY_SHORT[weekdayOf(date)]}</div>
+                <div className="text-xs">{dayNames[weekdayOf(date)]}</div>
                 <div
                   className={`text-sm tabular-nums ${isToday ? "font-semibold" : "text-foreground"}`}
                 >
@@ -150,7 +154,7 @@ export function ScheduleWeek({
 
                 {dayOff ? (
                   <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-xs text-muted-foreground">
-                    Вихідний
+                    {m("schedule.dayOff")}
                   </span>
                 ) : null}
 
@@ -212,18 +216,18 @@ export function ScheduleWeek({
       <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
         <li className="flex items-center gap-1.5">
           <span aria-hidden="true" className="size-3 rounded-xs bg-accent ring-1 ring-ring/40" />
-          Робочі години
+          {m("schedule.legend.work")}
         </li>
         <li className="flex items-center gap-1.5">
           <span
             aria-hidden="true"
             className="size-3 rounded-xs bg-status-approved ring-1 ring-border"
           />
-          Відпустка — тип і статус написано в самій смузі
+          {m("schedule.legend.leave")}
         </li>
         <li className="flex items-center gap-1.5">
           <span aria-hidden="true" className="size-3 rounded-xs bg-muted ring-1 ring-border" />
-          Вихідний
+          {m("schedule.dayOff")}
         </li>
       </ul>
     </div>

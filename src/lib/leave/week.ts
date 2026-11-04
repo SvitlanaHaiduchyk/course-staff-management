@@ -12,9 +12,6 @@
  * з'їхати на добу на півкулі із від'ємним зміщенням.
  */
 
-/** Короткі назви днів: 1 — понеділок, 7 — неділя, як у `schedule_blocks.weekday`. */
-export const WEEKDAY_SHORT = ["", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
-
 /** Скільки годин лишаємо над найранішим і під найпізнішим блоком, щоб було видно межі дня. */
 const PADDING_HOURS = 1;
 
@@ -87,22 +84,23 @@ export function dayNumber(isoDate: string): string {
   return String(toUtc(isoDate).getUTCDate());
 }
 
-const RANGE_FORMAT = new Intl.DateTimeFormat("uk-UA", {
-  day: "numeric",
-  month: "long",
-  timeZone: "UTC",
-});
+const rangeFormat = (locale: string) =>
+  new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", timeZone: "UTC" });
 
 /**
  * Підпис тижня: `3 – 9 листопада 2026`. Місяць пишемо один раз, якщо тиждень
  * не переходить через його межу, — інакше `30 листопада – 6 грудня 2026`.
+ *
+ * Локаль передає сторінка: назва місяця має бути тією ж мовою, що й решта
+ * інтерфейсу, а модуль про вибір мови нічого не знає.
  */
-export function weekRangeLabel(mondayIso: string): string {
+export function weekRangeLabel(mondayIso: string, locale: string): string {
+  const format = rangeFormat(locale);
   const sunday = shiftDays(mondayIso, 6);
   const year = toUtc(sunday).getUTCFullYear();
   const sameMonth = mondayIso.slice(0, 7) === sunday.slice(0, 7);
-  const from = sameMonth ? dayNumber(mondayIso) : RANGE_FORMAT.format(toUtc(mondayIso));
-  return `${from} – ${RANGE_FORMAT.format(toUtc(sunday))} ${year}`;
+  const from = sameMonth ? dayNumber(mondayIso) : format.format(toUtc(mondayIso));
+  return `${from} – ${format.format(toUtc(sunday))} ${year}`;
 }
 
 /** Вікно годин, яке показує сітка. */

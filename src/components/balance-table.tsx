@@ -1,5 +1,6 @@
 import { type Hundredths, LEAVE_TYPES, balanceRow, formatDays } from "@/lib/leave/balance";
 import { type LeaveType } from "@/lib/leave/build";
+import { messages, type Lang } from "@/lib/i18n/dict";
 import {
   Table,
   TableBody,
@@ -27,18 +28,19 @@ const toHundredths = (days: number): Hundredths => Math.round(days * 100);
  *
  * Числа — `tabular-nums`, щоб їх можна було порівнювати поглядом згори вниз.
  */
-export function BalanceTable({ rows }: { rows: readonly BalanceRpcRow[] }) {
+export function BalanceTable({ rows, lang }: { rows: readonly BalanceRpcRow[]; lang: Lang }) {
   const byType = new Map(rows.map((r) => [r.leave_type, r]));
+  const m = messages(lang);
 
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Тип відпустки</TableHead>
-          <TableHead className="text-right">Надано</TableHead>
-          <TableHead className="text-right">Перенесено</TableHead>
-          <TableHead className="text-right">Використано</TableHead>
-          <TableHead className="text-right">Залишилось</TableHead>
+          <TableHead>{m("balances.type")}</TableHead>
+          <TableHead className="text-right">{m("balances.granted")}</TableHead>
+          <TableHead className="text-right">{m("balances.carried")}</TableHead>
+          <TableHead className="text-right">{m("balances.used")}</TableHead>
+          <TableHead className="text-right">{m("balances.remaining")}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody data-testid="balances">

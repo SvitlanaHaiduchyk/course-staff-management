@@ -21,9 +21,10 @@ import {
   suggestedSplit,
 } from "@/lib/leave/balance";
 import { DECISIONS, NO_RECORDS_AWAITING, statusLabel } from "@/lib/leave/decision";
+import { positionKindKey } from "@/lib/i18n/dict";
+import { getMessages } from "@/lib/i18n/server";
 import { leaveTypeLabel } from "@/lib/leave/format";
 import { minutesInsideBlocks, scheduleFor } from "@/lib/leave/schedule";
-import { positionKindLabel } from "@/lib/leave/format";
 import { createClient } from "@/lib/supabase/server";
 
 import { DecisionForm } from "./decision-form";
@@ -42,6 +43,7 @@ export default async function DecisionsPage({
   searchParams: Promise<{ error?: string; notice?: string }>;
 }) {
   const params = await searchParams;
+  const { lang, m } = await getMessages();
   const supabase = await createClient();
 
   // getClaims() перевіряє JWT. getSession() для авторизації на сервері не використовуємо.
@@ -65,14 +67,14 @@ export default async function DecisionsPage({
     // Відмова на сторінці: жодного чужого запису тут не показано.
     return (
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-16">
-        <h1 className="text-2xl font-semibold">Awaiting decision</h1>
+        <h1 className="text-2xl font-semibold">{m("decisions.awaiting")}</h1>
         <Alert variant="destructive">
           <AlertDescription>
-            Рішення по записах ухвалює відповідальний менеджер посади або адміністратор.
+            {m("decisions.forbidden")}
           </AlertDescription>
         </Alert>
         <Link href="/" className={buttonVariants({ variant: "outline" }) + " w-fit"}>
-          На головну
+          {m("nav.home")}
         </Link>
       </main>
     );
@@ -172,7 +174,7 @@ export default async function DecisionsPage({
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-16">
-      <h1 className="text-2xl font-semibold">Awaiting decision</h1>
+      <h1 className="text-2xl font-semibold">{m("decisions.awaiting")}</h1>
 
       {params.error ? (
         <Alert variant="destructive">
@@ -188,7 +190,7 @@ export default async function DecisionsPage({
       <Card>
         <CardHeader>
           <CardTitle as="h2" className="text-lg font-medium">
-            На розгляді
+            {m("decisions.awaiting")}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -198,11 +200,11 @@ export default async function DecisionsPage({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Працівник</TableHead>
-                  <TableHead>Посада</TableHead>
-                  <TableHead>Дата й години</TableHead>
-                  <TableHead>Тип і коментар</TableHead>
-                  <TableHead className="text-right">Рішення</TableHead>
+                  <TableHead>{m("table.employee")}</TableHead>
+                  <TableHead>{m("table.position")}</TableHead>
+                  <TableHead>{m("table.dateAndHours")}</TableHead>
+                  <TableHead>{m("table.typeAndComment")}</TableHead>
+                  <TableHead className="text-right">{m("table.decision")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -225,14 +227,14 @@ export default async function DecisionsPage({
                             href={`/balances/${position.employee_id}`}
                             className="text-xs underline underline-offset-4"
                           >
-                            Залишки
+                            {m("decisions.balancesLink")}
                           </Link>
                         ) : null}
                       </TableCell>
                       <TableCell>
                         <div>{position?.job_title ?? "—"}</div>
                         <div className="text-xs text-muted-foreground">
-                          {position ? positionKindLabel(position.kind) : ""}
+                          {position ? m(positionKindKey(position.kind)) : ""}
                         </div>
                       </TableCell>
                       <TableCell className="tabular-nums">
@@ -266,6 +268,7 @@ export default async function DecisionsPage({
                                 recordId={record.id}
                                 decision={decision}
                                 summary={summary}
+                                lang={lang}
                                 withSplit={decision === "approved" && warnings.has(record.id)}
                               />
                             ))}
@@ -284,20 +287,20 @@ export default async function DecisionsPage({
       <Card>
         <CardHeader>
           <CardTitle as="h2" className="text-lg font-medium">
-            History
+            {m("decisions.history")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {(history ?? []).length === 0 ? (
-            <p className="text-sm text-muted-foreground">Рішень ще немає.</p>
+            <p className="text-sm text-muted-foreground">{m("decisions.historyEmpty")}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Коли</TableHead>
-                  <TableHead>Працівник і запис</TableHead>
-                  <TableHead>Рішення</TableHead>
-                  <TableHead>Коментар</TableHead>
+                  <TableHead>{m("table.when")}</TableHead>
+                  <TableHead>{m("table.employeeAndRecord")}</TableHead>
+                  <TableHead>{m("table.decision")}</TableHead>
+                  <TableHead>{m("table.comment")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -336,7 +339,7 @@ export default async function DecisionsPage({
       </Card>
 
       <Link href="/" className={buttonVariants({ variant: "outline" }) + " w-fit"}>
-        На головну
+        {m("nav.home")}
       </Link>
     </main>
   );
