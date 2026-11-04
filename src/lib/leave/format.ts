@@ -12,9 +12,6 @@
 import { LEAVE_TYPE_LABELS } from "./balance";
 import { type LeaveType } from "./build";
 
-/** Дні тижня: 1 — понеділок, 7 — неділя, як у `schedule_blocks.weekday`. */
-export const WEEKDAYS = ["", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
-
 /** Блок розкладу, як його повертає база: час у форматі `HH:MM:SS`. */
 export type ScheduleBlockRow = {
   readonly weekday: number;
@@ -23,27 +20,6 @@ export type ScheduleBlockRow = {
 };
 
 const hhmm = (time: string) => time.slice(0, 5);
-
-/**
- * Назва ролі доступу для показу користувачеві.
- *
- * Ідентифікатори `employee`, `manager`, `admin` задає `requirements/product.md`;
- * тут лише підпис для інтерфейсу. Роль визначає доступ (наприклад, `AC-DECIDE-09`:
- * без ролі менеджера чи адміністратора рішення не зберігається), тож показуємо її
- * людським словом, а не ідентифікатором із бази.
- */
-export function roleLabel(role: string | null | undefined): string {
-  switch (role) {
-    case "employee":
-      return "Працівник";
-    case "manager":
-      return "Менеджер";
-    case "admin":
-      return "Адміністратор";
-    default:
-      return "профіль не знайдено";
-  }
-}
 
 /**
  * Тип відпустки назвою, а не ідентифікатором бази: `sick` → `Sick leave`.
@@ -57,20 +33,21 @@ export function leaveTypeLabel(type: string | null | undefined): string {
   return LEAVE_TYPE_LABELS[type as LeaveType] ?? "—";
 }
 
-/** Тип посади: основна чи додаткова (`positions.kind`, глосарій `product.md`). */
-export function positionKindLabel(kind: string): string {
-  return kind === "main" ? "основна" : "додаткова";
-}
-
 /**
  * Тижневий розклад посади одним рядком:
  * `Пн 08:30–15:30 · Вт 08:30–12:00, 12:30–15:30`.
+ *
+ * Назви днів передає той, хто викликає: вони залежать від вибраної мови, а цей
+ * модуль про мову нічого не знає (`weekdayNames(lang)` у `lib/i18n/dict.ts`).
  *
  * Дні йдуть за порядком тижня, блоки всередині дня — за часом. Кілька блоків
  * одного дня показано через кому, щоб перерва всередині дня була видна
  * (випадок `AC-LEAVE-15`).
  */
-export function scheduleSummary(blocks: readonly ScheduleBlockRow[]): string {
+export function scheduleSummary(
+  blocks: readonly ScheduleBlockRow[],
+  dayNames: readonly string[],
+): string {
   const byDay = new Map<number, ScheduleBlockRow[]>();
   for (const block of blocks) {
     byDay.set(block.weekday, [...(byDay.get(block.weekday) ?? []), block]);
@@ -83,7 +60,7 @@ export function scheduleSummary(blocks: readonly ScheduleBlockRow[]): string {
         .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
         .map((b) => `${hhmm(b.starts_at)}–${hhmm(b.ends_at)}`)
         .join(", ");
-      return `${WEEKDAYS[weekday]} ${hours}`;
+      return `${dayNames[weekday]} ${hours}`;
     })
     .join(" · ");
 }

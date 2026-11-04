@@ -7,6 +7,7 @@ import {
 } from "@/components/schedule-week";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { INTL_LOCALE, messages, weekdayNames, type Lang } from "@/lib/i18n/dict";
 import { scheduleSummary } from "@/lib/leave/format";
 import { shiftWeeks, weekRangeLabel } from "@/lib/leave/week";
 
@@ -22,31 +23,36 @@ export function ScheduleCard({
   leaves,
   mondayIso,
   todayIso,
+  lang,
 }: {
   positions: readonly SchedulePosition[];
   leaves: readonly ScheduleLeave[];
   mondayIso: string;
   todayIso: string;
+  lang: Lang;
 }) {
+  const m = messages(lang);
+  const dayNames = weekdayNames(lang);
+
   return (
     <Card>
       <CardHeader className="gap-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle as="h2" className="text-lg">Мій розклад</CardTitle>
-          <nav aria-label="Тиждень" className="flex items-center gap-2">
+          <CardTitle as="h2" className="text-lg">{m("schedule.title")}</CardTitle>
+          <nav aria-label={m("schedule.week")} className="flex items-center gap-2">
             <Link
               href={`/?week=${shiftWeeks(mondayIso, -1)}`}
-              aria-label="Попередній тиждень"
+              aria-label={m("schedule.prev")}
               className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               ←
             </Link>
             <Link href="/" className={buttonVariants({ variant: "outline", size: "sm" })}>
-              Цей тиждень
+              {m("schedule.thisWeek")}
             </Link>
             <Link
               href={`/?week=${shiftWeeks(mondayIso, 1)}`}
-              aria-label="Наступний тиждень"
+              aria-label={m("schedule.next")}
               className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               →
@@ -54,7 +60,7 @@ export function ScheduleCard({
           </nav>
         </div>
         <p data-testid="week-range" className="text-xs tabular-nums text-muted-foreground">
-          {weekRangeLabel(mondayIso)}
+          {weekRangeLabel(mondayIso, INTL_LOCALE[lang])}
         </p>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
@@ -63,6 +69,7 @@ export function ScheduleCard({
           leaves={leaves}
           mondayIso={mondayIso}
           todayIso={todayIso}
+          lang={lang}
         />
 
         {/*
@@ -80,7 +87,7 @@ export function ScheduleCard({
             <div key={p.id} className="contents">
               <dt>{p.job_title}</dt>
               <dd className="tabular-nums">
-                {p.schedule_blocks?.length ? scheduleSummary(p.schedule_blocks) : "розкладу немає"}
+                {p.schedule_blocks?.length ? scheduleSummary(p.schedule_blocks, dayNames) : m("schedule.none")}
               </dd>
             </div>
           ))}

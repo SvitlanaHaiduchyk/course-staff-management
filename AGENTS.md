@@ -56,10 +56,14 @@ OpenSpec 1.14.1 (devDependency + глобальний CLI тієї ж версі
 - `.claude/commands/` — наші `requirements-sync.md` і `conformance.md` (у `.cursor/commands/` — посилання на них);
   `.claude/skills/` — наші скіли `spec-clarify` і `spec-review`; Cursor читає їх звідти ж. `openspec-*` і `/opsx*`
   у `.claude/` та `.cursor/` згенерував OpenSpec (однакові копії для двох інструментів) — вручну не редагуй.
-- Нові шари курсу — новими файлами: e2e-тести — `tests/e2e/*.spec.ts` (Vitest їх не запускає, і `ac:coverage`
-  не рахує їх як покриття AC, доки e2e не запускає окремий крок CI — тоді фільтр у `scripts/lib/test-titles.mjs`
-  розширюють разом із цим кроком), нові перевірки — окремим workflow у `.github/workflows/`. Jobs `spec`, `app`,
-  `conformance`, `db-check`, `db-deploy` у `ci.yml` не перейменовуй і не видаляй: на їхніх назвах тримається ruleset.
+- Нові шари курсу — новими файлами: e2e-тести — `tests/e2e/*.spec.ts`, нові перевірки — окремим workflow у
+  `.github/workflows/`. Jobs `spec`, `app`, `conformance`, `db-check`, `db-deploy` у `ci.yml` не перейменовуй і
+  не видаляй: на їхніх назвах тримається ruleset.
+- **E2E у CI — `.github/workflows/e2e.yml`** (PR і `workflow_dispatch`): збирає застосунок із PR і ганяє
+  специфікації без тегу `@writes`. `ac:coverage` рахує `tests/e2e/**/*.spec.ts` як покриття AC (фільтр —
+  `scripts/lib/test-titles.mjs`). Vitest e2e НЕ запускає, тож `npm test` зелений нічого не каже про сторінки:
+  саме так зміна заголовка `/decisions` мовчки зламала два прийняті AC. У CI без `SUPABASE_SECRET_KEY`
+  специфікації `@writes` і `AC-BALANCE-13` пропускаються самі — повний набір лише локально (`npm run uat`).
 
 ## Дизайн-система
 
@@ -146,7 +150,9 @@ OpenSpec 1.14.1 (devDependency + глобальний CLI тієї ж версі
 ## Секрети
 
 - Значення лише в `.env.local`, Vercel (Production + Preview) і GitHub (секрет environment `production` —
-  `SUPABASE_DB_URL`; секрет репозиторію `SPEC_DENYLIST`); ніколи в git, логах чи чаті.
+  `SUPABASE_DB_URL`; секрети репозиторію `SPEC_DENYLIST` і `DEMO_USER_PASSWORD` — останній потрібен `e2e.yml`,
+  це пароль синтетичних акаунтів `@example.test`, не людський); ніколи в git, логах чи чаті.
+  Змінні репозиторію (не секрети) для `e2e.yml`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
   У Vercel — лише `NEXT_PUBLIC_SUPABASE_URL` і `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; `SUPABASE_SECRET_KEY` —
   ніколи (лише ваш `.env.local` для скриптів).
 - Імена: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` лише для скриптів

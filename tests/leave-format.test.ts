@@ -7,11 +7,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   type ScheduleBlockRow,
-  positionKindLabel,
-  roleLabel,
   leaveTypeLabel,
   scheduleSummary,
 } from "../src/lib/leave/format";
+
+/** Назви днів передає сторінка; у тестах беремо українські — їх і перевіряємо. */
+const DAYS = ["", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
 
 const block = (weekday: number, starts: string, ends: string): ScheduleBlockRow => ({
   weekday,
@@ -21,11 +22,11 @@ const block = (weekday: number, starts: string, ends: string): ScheduleBlockRow 
 
 describe("розклад рядком", () => {
   it("показує один блок дня з днем тижня", () => {
-    expect(scheduleSummary([block(1, "08:30", "15:30")])).toBe("Пн 08:30–15:30");
+    expect(scheduleSummary([block(1, "08:30", "15:30")], DAYS)).toBe("Пн 08:30–15:30");
   });
 
   it("показує обидва блоки дня через кому, щоб перерва була видна", () => {
-    const summary = scheduleSummary([block(2, "08:30", "12:00"), block(2, "12:30", "15:30")]);
+    const summary = scheduleSummary([block(2, "08:30", "12:00"), block(2, "12:30", "15:30")], DAYS);
 
     expect(summary).toBe("Вт 08:30–12:00, 12:30–15:30");
   });
@@ -35,33 +36,13 @@ describe("розклад рядком", () => {
       block(3, "08:30", "15:30"),
       block(1, "12:30", "15:30"),
       block(1, "08:30", "12:00"),
-    ]);
+    ], DAYS);
 
     expect(summary).toBe("Пн 08:30–12:00, 12:30–15:30 · Ср 08:30–15:30");
   });
 
   it("порожній розклад дає порожній рядок", () => {
-    expect(scheduleSummary([])).toBe("");
-  });
-});
-
-describe("підписи ролі й типу посади", () => {
-  it("показує три ролі продукту людським словом", () => {
-    // Ідентифікатори — з requirements/product.md, розділ «Users and roles».
-    expect(roleLabel("employee")).toBe("Працівник");
-    expect(roleLabel("manager")).toBe("Менеджер");
-    expect(roleLabel("admin")).toBe("Адміністратор");
-  });
-
-  it("невідому або відсутню роль не вигадує", () => {
-    expect(roleLabel(null)).toBe("профіль не знайдено");
-    expect(roleLabel(undefined)).toBe("профіль не знайдено");
-    expect(roleLabel("member")).toBe("профіль не знайдено");
-  });
-
-  it("розрізняє основну й додаткову посаду", () => {
-    expect(positionKindLabel("main")).toBe("основна");
-    expect(positionKindLabel("additional")).toBe("додаткова");
+    expect(scheduleSummary([], DAYS)).toBe("");
   });
 });
 

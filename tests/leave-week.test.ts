@@ -16,7 +16,6 @@ import {
   resolveMonday,
   shiftWeeks,
   tickPercent,
-  WEEKDAY_SHORT,
   weekDates,
   weekdayOf,
   weekRangeLabel,
@@ -78,11 +77,11 @@ describe("дати тижня", () => {
   });
 
   it("підпис тижня називає місяць один раз, коли тиждень у ньому й лишається", () => {
-    expect(weekRangeLabel("2026-11-02")).toBe("2 – 8 листопада 2026");
+    expect(weekRangeLabel("2026-11-02", "uk-UA")).toBe("2 – 8 листопада 2026");
   });
 
   it("підпис тижня називає обидва місяці, коли тиждень їх перетинає", () => {
-    expect(weekRangeLabel("2026-11-30")).toBe("30 листопада – 6 грудня 2026");
+    expect(weekRangeLabel("2026-11-30", "uk-UA")).toBe("30 листопада – 6 грудня 2026");
   });
 
   it("без параметра показуємо тиждень сьогоднішнього дня", () => {
@@ -101,8 +100,8 @@ describe("дати тижня", () => {
     expect(resolveMonday(["2026-10-28", "2026-10-29"], "2026-11-05")).toBe("2026-11-02");
   });
 
-  it("короткі назви днів відповідають weekday з бази", () => {
-    expect(WEEKDAY_SHORT[weekdayOf("2026-11-02")]).toBe("Пн");
+  it("підпис тижня англійською бере англійські назви місяців", () => {
+    expect(weekRangeLabel("2026-11-02", "en-GB")).toBe("2 – 8 November 2026");
   });
 });
 

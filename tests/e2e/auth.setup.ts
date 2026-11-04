@@ -24,13 +24,20 @@ const ROLES = {
 } as const;
 
 for (const [role, email] of Object.entries(ROLES)) {
-  setup(`вхід: ${role}`, async ({ page }) => {
+  setup(`вхід: ${role}`, async ({ page, baseURL }) => {
     const password =
       process.env[`UAT_PASSWORD_${role.toUpperCase()}`] ?? process.env.DEMO_USER_PASSWORD;
     expect(
       password,
       `немає пароля для ролі ${role}: задайте DEMO_USER_PASSWORD або UAT_PASSWORD_${role.toUpperCase()} у .env.local`,
     ).toBeTruthy();
+
+    // Мову закріплюємо явно: інтерфейс має перемикач UKR/ENG, і без цього
+    // рядка звіт залежав би від того, що випадково лежить у cookie браузера.
+    // Українська — типова мова порталу; тексти з AC однакові в обох мовах.
+    await page.context().addCookies([
+      { name: "lang", value: "uk", url: baseURL! },
+    ]);
 
     await signIn(page, email, password!);
     // Головна показує email того, хто увійшов (data-testid="user-email").

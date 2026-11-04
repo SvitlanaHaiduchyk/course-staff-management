@@ -4,6 +4,7 @@ import { ProfileCard } from "@/components/profile-card";
 import { ScheduleCard } from "@/components/schedule-card";
 import { type ScheduleLeave } from "@/components/schedule-week";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { getMessages } from "@/lib/i18n/server";
 import { resolveMonday, weekDates } from "@/lib/leave/week";
 import { requirePageSession } from "@/lib/supabase/page-session";
 
@@ -54,6 +55,7 @@ async function loadWeekLeaves(
 
 export default async function Home({ searchParams }: PageProps<"/">) {
   const { week } = await searchParams;
+  const { lang, m } = await getMessages();
   const { supabase, claims } = await requirePageSession();
 
   // RLS: користувач бачить лише власний профіль.
@@ -83,13 +85,14 @@ export default async function Home({ searchParams }: PageProps<"/">) {
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-16">
-      <h1 className="text-2xl font-semibold">Personal Information</h1>
+      <h1 className="text-2xl font-semibold">{m("home.title")}</h1>
 
       <ProfileCard
         email={profile?.email ?? claims.email}
         fullName={profile?.full_name}
         role={profile?.role}
         positions={myPositions}
+        lang={lang}
       />
 
       {myPositions.length > 0 ? (
@@ -98,16 +101,17 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           leaves={leaves}
           mondayIso={mondayIso}
           todayIso={todayIso}
+          lang={lang}
         />
       ) : null}
 
       <div className="flex flex-wrap gap-3">
         {/* Button базується на @base-ui/react: замість asChild — buttonVariants на посиланні. */}
         <Link href="/requests" className={buttonVariants({ variant: "outline" })}>
-          Мої заявки на відпустку
+          {m("nav.requests")}
         </Link>
         <Link href="/balances" className={buttonVariants({ variant: "outline" })}>
-          My balances
+          {m("nav.balances")}
         </Link>
         {/*
           Посилання показуємо лише менеджеру й адміністратору — це UX, а не захист.
@@ -116,12 +120,12 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         */}
         {canDecide ? (
           <Link href="/decisions" className={buttonVariants({ variant: "outline" })}>
-            Awaiting decision
+            {m("decisions.awaiting")}
           </Link>
         ) : null}
         <form action={signOut}>
           <Button type="submit" variant="ghost">
-            Вийти
+            {m("nav.signOut")}
           </Button>
         </form>
       </div>
