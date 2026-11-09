@@ -5,6 +5,7 @@
  * знімок 2026-10-20), разом із тире «–»: тести звіряють їх посимвольно.
  */
 
+import { isWholeDayClosure, type Closure } from "./closure";
 import { type ScheduleBlock, type TimeRange, toMinutes } from "./schedule";
 
 export type HoursCheck =
@@ -18,6 +19,28 @@ export const NO_WORKING_HOURS = "You have no working hours on this day";
 
 /** AC-LEAVE-09: кінець не пізніший за початок. */
 export const END_BEFORE_START = "The end must be later than the start";
+
+/** AC-CAL-03: дата, закрита шкільним календарем на цілий день. */
+export function schoolClosedMessage(name: string): string {
+  return `The school is closed on this day: ${name}`;
+}
+
+/**
+ * AC-CAL-03: чи приймається дата, на яку припадає закриття.
+ *
+ * Не приймається лише закриття на **цілий день**: скорочений день дату не
+ * закриває, а обрізає її розклад (`AC-CAL-04`) — заявку на нього подати можна.
+ *
+ * Перевірка окрема від `validateHours`, бо вона про дату, а не про години: у
+ * заявці на кілька дат закрита дата відпадає зі своїм повідомленням, а решта
+ * дат створюється — як дата без робочих годин (`AC-LEAVE-21`).
+ */
+export function validateClosedDate(closure: Closure | null): HoursCheck {
+  if (closure !== null && isWholeDayClosure(closure)) {
+    return { ok: false, message: schoolClosedMessage(closure.name) };
+  }
+  return OK;
+}
 
 /**
  * AC-LEAVE-07, AC-LEAVE-19: години поза розкладом.

@@ -10,10 +10,10 @@
 
 Правило «закрито» без бази: що лишається від блоків дня після закриття і яке повідомлення показати. Першим і окремо, щоб `AC-CAL-04` і `AC-CAL-05` мали тести ще до будь-якої міграції.
 
-- [ ] `src/lib/leave/closure.ts` — тип `Closure` (назва, `startsOn`, `endsOn`, `closesAt`), `closureOn(closures, date)`, `closedFrom(closure)`
-- [ ] там само — `blocksAfterClosure(blocks, closedFrom)`: блок у процесі обрізається, наступні відпадають
-- [ ] `src/lib/leave/validate.ts` — закрита на цілий день дата не приймається, текст `schoolClosedMessage(name)`
-- [ ] `tests/leave-closure.test.ts` — числа з прикладів PM: 08:30–15:30 із закриттям 12:00 → 08:30–12:00 (210 хв); 13:00–17:00 із закриттям 12:00 → жодного блоку
+- [x] `src/lib/leave/closure.ts` — тип `Closure` (назва, `startsOn`, `endsOn`, `closesAt`), `closureOn(closures, date)`, `closedFrom(closure)`
+- [x] там само — `blocksAfterClosure(blocks, closedFrom)`: блок у процесі обрізається, наступні відпадають
+- [x] `src/lib/leave/validate.ts` — закрита на цілий день дата не приймається, текст `schoolClosedMessage(name)`
+- [x] `tests/leave-closure.test.ts` — числа з прикладів PM: 08:30–15:30 із закриттям 12:00 → 08:30–12:00 (210 хв); 13:00–17:00 із закриттям 12:00 → жодного блоку
 - [ ] `src/lib/leave/validate.ts` — перевірка закриття **перед** перевіркою порожнього розкладу: коли обрізання не лишило блоків, перемагає «The school is closed on this day: …», а не «You have no working hours on this day» (`AC-CAL-16`)
 - [ ] тест на межу `AC-CAL-16`: лишився хоч один блок до часу закриття → дата **приймається** з обрізаним розкладом, повідомлення немає
 
