@@ -61,6 +61,15 @@ describe("розклад посади", () => {
     expect(minutes).toBe(90);
   });
 
+  it("AC-LEAVE-22: кінець на початку наступного блоку дає тривалість 3 год", () => {
+    const blocks = scheduleFor(twoBlocksTue, TUESDAY);
+
+    // 09:00–12:00 (180 хв); перерва 12:00–12:30 у тривалість не входить.
+    const minutes = minutesInsideBlocks(blocks, { startsAt: "09:00", endsAt: "12:30" });
+
+    expect(minutes).toBe(180);
+  });
+
   it("AC-LEAVE-01: цілий день основної посади — це весь блок розкладу 08:30–15:30", () => {
     const blocks = scheduleFor(weekdays, MONDAY);
 
@@ -85,6 +94,22 @@ describe("перевірка годин", () => {
     expect(blocks).toHaveLength(0);
     expect(result).toEqual({ ok: false, message: NO_WORKING_HOURS });
     expect(result.ok ? "" : result.message).toBe("You have no working hours on this day");
+  });
+
+  it("AC-LEAVE-22: кінець дорівнює початку наступного блоку й приймається", () => {
+    const blocks = scheduleFor(twoBlocksTue, TUESDAY);
+
+    expect(validateHours(blocks, { startsAt: "09:00", endsAt: "12:30" })).toEqual({ ok: true });
+  });
+
+  it("AC-LEAVE-19: кінець після останнього блоку дня далі не приймається", () => {
+    const blocks = scheduleFor(twoBlocksTue, TUESDAY);
+
+    // Межа з AC-LEAVE-22 відкриває лише початки блоків цього дня, а не будь-який час після них.
+    expect(validateHours(blocks, { startsAt: "09:00", endsAt: "16:00" })).toEqual({
+      ok: false,
+      message: "Hours must be within your schedule: 08:30–12:00, 12:30–15:30",
+    });
   });
 
   it("AC-LEAVE-07: початок раніший за розклад показує межі блоку", () => {

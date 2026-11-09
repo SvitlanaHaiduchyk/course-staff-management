@@ -70,7 +70,7 @@
 | AC-DECIDE-15 | Рядок історії після погодження | `supabase/migrations/20261026201058_leave_decisions.sql` (leave_decisions, require_decision_trail) · `src/app/decisions/` | `tests/db/decisions.test.ts` | реалізовано |
 | AC-BALANCE-01 | Залишки на початку навчального року | `src/app/balances/` · `src/components/balance-table.tsx` · `src/lib/leave/balance.ts` (balanceRow) | `tests/leave-balance.test.ts` | реалізовано |
 | AC-BALANCE-02 | Цілий день єдиної посади | `supabase/migrations/20261102202514_decide_with_split.sql` (day_share_hundredths) · `src/lib/leave/balance.ts` | `tests/db/decide-split.test.ts` · `tests/leave-balance.test.ts` | реалізовано |
-| AC-BALANCE-05 | Цілий день двох посад рахується як один день | `src/lib/leave/balance.ts` | `tests/leave-balance.test.ts` | відкладено (арифметику й тексти реалізовано й покрито тестами; бракує схеми, погодження з поділом і екрана — задачі 2–4 impl-leave-balance) |
+| AC-BALANCE-05 | Цілий день двох посад рахується як один день | `src/lib/leave/balance.ts` | `tests/leave-balance.test.ts` | реалізовано |
 | AC-BALANCE-03 | Години на єдиній посаді | `supabase/migrations/20261102202514_decide_with_split.sql` (хвилини всередині блоків) · `src/lib/leave/balance.ts` (dayShare) | `tests/db/decide-split.test.ts` · `tests/leave-balance.test.ts` | реалізовано |
 | AC-BALANCE-06 | Цілий день лише додаткової посади | `supabase/migrations/20261102202514_decide_with_split.sql` (private.working_minutes_on) · `src/lib/leave/balance.ts` | `tests/db/decide-split.test.ts` · `tests/leave-balance.test.ts` | реалізовано |
 | AC-BALANCE-04 | Запис, що чекає рішення, балансу не чіпає | `supabase/migrations/20261102202514_decide_with_split.sql` (частка лише для погодження) | `tests/db/decide-split.test.ts` | реалізовано |
@@ -96,7 +96,7 @@
 | AC-BALANCE-19 | Нульовий залишок | `supabase/migrations/20261102202514_decide_with_split.sql` (p_with_split) · `src/lib/leave/balance.ts` (suggestedSplit) | `tests/db/decide-split.test.ts` · `tests/leave-balance.test.ts` | реалізовано |
 | AC-BALANCE-20 | Менеджер додаткової посади бачить повний баланс | `supabase/migrations/20261102200744_leave_balance.sql` (політики *_select_balance_scope) | `tests/db/balance-access.test.ts` · `tests/leave-balance.test.ts` | реалізовано |
 | AC-LEAVE-21 | Неробоча дата відпадає, решта дат лишаються | `src/lib/leave/build.ts` (buildRecords) | `tests/leave-request.test.ts` | реалізовано |
-| AC-LEAVE-22 | Кінець відпустки дорівнює початку наступного блоку | — | — | відкладено (чекає реалізації) |
+| AC-LEAVE-22 | Кінець відпустки дорівнює початку наступного блоку | `src/lib/leave/validate.ts` (isBlockStart) | `tests/leave-schedule.test.ts` | реалізовано |
 | AC-DECIDE-23 | Відхилення з коментарем | `supabase/migrations/20261026201058_leave_decisions.sql` (decide_leave_record) · `src/app/decisions/` | `tests/db/decisions.test.ts` · `tests/leave-decision.test.ts` | реалізовано |
 | AC-DECIDE-24 | Погодження з коментарем | `supabase/migrations/20261026201058_leave_decisions.sql` (decide_leave_record) · `src/app/decisions/` | `tests/db/decisions.test.ts` · `tests/leave-decision.test.ts` | реалізовано |
 | AC-BALANCE-21 | Пізнє погодження за минулий навчальний рік | `supabase/migrations/20261102200744_leave_balance.sql` (employee_balance, рік за on_date) · `src/lib/leave/balance.ts` (schoolYearOf) | `tests/db/balance-access.test.ts` · `tests/leave-balance.test.ts` | реалізовано |
