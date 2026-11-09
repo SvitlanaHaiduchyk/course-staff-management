@@ -44,6 +44,18 @@ function isBlockEnd(blocks: readonly ScheduleBlock[], minute: number): boolean {
 }
 
 /**
+ * Чи дорівнює час початку якогось блоку дня.
+ *
+ * `AC-LEAVE-22`: кінець відпустки може дорівнювати початку наступного блоку.
+ * Блок, що починається рівно на `minute`, завжди і є «наступним»: початок
+ * відпустки лежить усередині якогось блоку, блоки не перетинаються, тож жодна
+ * врахована хвилина в цей блок не потрапляє.
+ */
+function isBlockStart(blocks: readonly ScheduleBlock[], minute: number): boolean {
+  return blocks.some((b) => toMinutes(b.startsAt) === minute);
+}
+
+/**
  * Перевіряє години заявки для однієї посади на одну дату.
  *
  * Порядок перевірок задає, яке саме повідомлення побачить працівник, і він важливий:
@@ -63,9 +75,11 @@ export function validateHours(blocks: readonly ScheduleBlock[], range: TimeRange
     return { ok: false, message: endOfWorkingTimeMessage(range.startsAt) };
   }
 
-  // Початок і кінець мають кожен потрапляти в блок; кінець може дорівнювати кінцю блоку.
+  // Початок має потрапляти в блок; кінець — бути всередині блоку, дорівнювати
+  // кінцю блоку (AC-LEAVE-04) або початку наступного блоку (AC-LEAVE-22).
   const startInside = insideSomeBlock(blocks, from);
-  const endInside = insideSomeBlock(blocks, to - 1) || isBlockEnd(blocks, to);
+  const endInside =
+    insideSomeBlock(blocks, to - 1) || isBlockEnd(blocks, to) || isBlockStart(blocks, to);
   if (!startInside || !endInside) {
     return { ok: false, message: outsideScheduleMessage(blocks) };
   }
