@@ -1,5 +1,11 @@
 // Скріни за ролями для docs/img/ — читає лише сторінки, нічого не записує в базу.
-// Стан входу — playwright/.auth/<role>.json (npx playwright test --project=setup).
+//
+//   npx playwright test --project=setup   → стани входу playwright/.auth/<role>.json
+//   npm run dev                           → застосунок на http://localhost:3000
+//   npm run shots:roles                   → знімки в docs/img/
+//
+// Інша адреса — SHOT_BASE_URL (наприклад, прод-URL). Без npm-скрипта ворота fallow
+// вважали б цей файл мертвим: скрипти з package.json fallow бачить сам.
 import { chromium } from "@playwright/test";
 
 const BASE = process.env.SHOT_BASE_URL ?? "http://localhost:3000";
