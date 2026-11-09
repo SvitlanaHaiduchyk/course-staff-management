@@ -15,12 +15,15 @@ import { signIn } from "./support/uat";
  * Ролі, під якими ганяємо UAT. Беремо рівно тих, кого потребують наші три AC:
  *   teacher1  — працівник (AC-BALANCE-13: чужі залишки);
  *   manager1  — відповідальний менеджер основної посади teacher1 (AC-DECIDE-04);
- *   manager2  — веде лише ДОДАТКОВУ посаду teacher1, тож записів основної не бачить (AC-DECIDE-14).
+ *   manager2  — веде лише ДОДАТКОВУ посаду teacher1, тож записів основної не бачить (AC-DECIDE-14);
+ *   admin     — адміністратор: поки що лише для скрінів за ролями, далі — AC шкільного календаря
+ *               (`AC-CAL-01`, `-09`, `-12`: змінювати календар може лише він).
  */
 const ROLES = {
   teacher1: "teacher1@example.test",
   manager1: "manager1@example.test",
   manager2: "manager2@example.test",
+  admin: "admin@example.test",
 } as const;
 
 for (const [role, email] of Object.entries(ROLES)) {

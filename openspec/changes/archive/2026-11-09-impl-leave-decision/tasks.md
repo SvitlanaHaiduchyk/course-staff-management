@@ -30,9 +30,9 @@ Done when: AC-DECIDE-06, AC-DECIDE-12, AC-DECIDE-13, AC-DECIDE-16, AC-DECIDE-17,
 ## 3. ADR і прод
 
 - [x] ADR про те, де живе перевірка прав на рішення (роль із `profiles` + хелпер у `private`, а не роль із токена)
-- [ ] `/conformance` і `npm run ac:coverage` — рядки 24 AC зрізу оновлено в тих самих PR, що й код
-- [ ] Після merge — `db-deploy` зелений, зріз працює на прод-URL
-- [ ] Скріни за ролями (працівник, менеджер, адміністратор) у `docs/img/`
-- [ ] `npx openspec archive impl-leave-decision -y` в останньому PR зрізу
+- [x] `/conformance` і `npm run ac:coverage` — рядки 24 AC зрізу оновлено в тих самих PR, що й код
+- [x] Після merge — `db-deploy` зелений, зріз працює на прод-URL (`/api/health`: `db: ok` на коміті `main`)
+- [x] Скріни за ролями (працівник, менеджер, адміністратор) у `docs/img/` — `ws6-*.png`, зняті `scripts/role-screenshots.mjs`
+- [x] `npx openspec archive impl-leave-decision -y` в останньому PR зрізу
 
 Done when: усі 24 AC зрізу мають статус у `docs/conformance.md`, відмінний від «відкладено (чекає реалізації)»

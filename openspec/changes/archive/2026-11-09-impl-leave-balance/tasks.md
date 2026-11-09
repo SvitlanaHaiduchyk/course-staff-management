@@ -6,10 +6,10 @@
 
 Арифметика зрізу без бази: частка дня з хвилин і розкладів усіх посад, навчальний рік за датою запису, складання балансу. Найщільніше місце зрізу на числа, тож робимо його першим і окремо — щоб `AC-BALANCE-03`, `-05`, `-06` мали тести ще до будь-якої міграції.
 
-- [ ] `src/lib/leave/balance.ts` — `workingMinutesOn`, `dayShare` (half up до 0.01), `schoolYearOf`, `sumShares`
-- [ ] там само — `balanceRow` (надано, перенесено, використано, залишилось) і `suggestedSplit`
-- [ ] тексти PM: `overBalanceWarning`, `managerSplitWarning`, `approveNeedsSplit`, `splitLabel`
-- [ ] `tests/leave-balance.test.ts` — числа з прикладів PM: 420/420, 150/420, 495/495, 75/495
+- [x] `src/lib/leave/balance.ts` — `workingMinutesOn`, `dayShare` (half up до 0.01), `schoolYearOf`, `sumShares`
+- [x] там само — `balanceRow` (надано, перенесено, використано, залишилось) і `suggestedSplit`
+- [x] тексти PM: `overBalanceWarning`, `managerSplitWarning`, `approveNeedsSplit`, `splitLabel`
+- [x] `tests/leave-balance.test.ts` — числа з прикладів PM: 420/420, 150/420, 495/495, 75/495
 
 Done when: AC-BALANCE-02, AC-BALANCE-03, AC-BALANCE-05, AC-BALANCE-06, AC-BALANCE-22
 
@@ -48,8 +48,8 @@ Done when: AC-BALANCE-01, AC-BALANCE-08, AC-BALANCE-15, AC-BALANCE-17, AC-BALANC
 ## 5. Завершення зрізу
 
 - [x] `/conformance` і `npm run ac:coverage` — рядки 22 AC оновлено в тих самих PR, що й код
-- [ ] ADR, якщо рішення «зберігаємо частку, а не перераховуємо» виявиться спірним у рев'ю
-- [ ] Після merge — `db-deploy` зелений, зріз працює на прод-URL
-- [ ] `npx openspec archive impl-leave-balance -y` в останньому PR зрізу
+- [x] ADR не знадобився: рішення «зберігаємо частку, а не перераховуємо» в рев'ю не оскаржували — ні CodeRabbit, ні PM на прийманні
+- [x] Після merge — `db-deploy` зелений, зріз працює на прод-URL (`/api/health`: `db: ok` на коміті `main`)
+- [x] `npx openspec archive impl-leave-balance -y` в останньому PR зрізу
 
 Done when: усі 67 AC у `docs/conformance.md` мають статус, відмінний від «відкладено (чекає реалізації)»
