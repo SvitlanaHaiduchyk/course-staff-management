@@ -524,14 +524,32 @@ body::before {
   color: var(--muted-foreground);
 }
 
-.cally-wrap calendar-date::part(header),
-.cally-wrap calendar-date::part(heading) {
+.cally-wrap calendar-date::part(header) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
   color: var(--foreground);
 }
 
+.cally-wrap calendar-date::part(heading) {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+/* Кнопки «місяць назад / вперед»: підписи словами, тож їм потрібен дрібний шрифт. */
 .cally-wrap calendar-date::part(button) {
   border: 1px solid var(--input);
   border-radius: var(--radius-sm);
+  padding: 0.125rem 0.5rem;
+  font-size: 0.6875rem;
+  line-height: 1.4;
   background: var(--card);
+  color: var(--muted-foreground);
+}
+
+.cally-wrap calendar-date::part(button):hover {
   color: var(--foreground);
 }
