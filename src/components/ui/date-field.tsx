@@ -62,10 +62,17 @@ export function DateField({
 
   // Календар → поле. `change` кастомного елемента не спливає як подія React,
   // тож вішаємо слухача вручну.
+  //
+  // Тут же переносимо в календар те, що вже є в полі. Робити це в обробнику
+  // кнопки не можна: `setOpen` лише планує монтування, тож `calendarRef`
+  // під час кліку ще `null`, і введена з клавіатури дата не потрапляла б у
+  // календар при першому відкритті.
   useEffect(() => {
     const calendar = calendarRef.current;
     const input = inputRef.current;
     if (!calendar || !input) return;
+
+    (calendar as unknown as { value?: string }).value = input.value;
 
     const onChange = () => {
       const value = (calendar as unknown as { value?: string }).value ?? "";
@@ -102,10 +109,13 @@ export function DateField({
         {ready ? (
           <button
             type="button"
-            onClick={() => {
-              setOpen((value) => !value);
-              syncCalendar();
-            }}
+            /*
+              На сторінці два поля дати, тож сам лише «Обрати в календарі»
+              не дав би екранному читачеві розрізнити кнопки. Видимий текст
+              лишається на початку назви — правило «label in name» виконано.
+            */
+            aria-label={`${calendarLabel}: ${label}`}
+            onClick={() => setOpen((value) => !value)}
             aria-expanded={open}
             aria-controls={`${id}-calendar`}
             className="rounded-md border border-input px-3 py-1 text-xs text-muted-foreground hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"

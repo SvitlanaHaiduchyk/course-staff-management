@@ -411,8 +411,15 @@ body::before {
   color: var(--muted-foreground);
 }
 
+/*
+  Оригінал позначає фокус лише бічними межами й гасить outline. Бічні риски —
+  не кільце: DESIGN.md (розділ 7) вимагає видимий `ring` на кожному
+  інтерактивному елементі, тож кільце повертаємо, а бічні межі лишаємо як
+  додатковий відтінок оригіналу.
+*/
 .swift-card__input:focus {
-  outline: none;
+  outline: 3px solid var(--ring);
+  outline-offset: 3px;
   border-inline: 2px solid var(--ring);
 }
 
