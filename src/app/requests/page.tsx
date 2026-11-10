@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PillTabs } from "@/components/ui/pill-tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
@@ -163,25 +164,26 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label htmlFor="leaveType">{m("requests.type")}</Label>
                 {/*
-                  Нативний select із тієї ж причини, що й checkbox вище: Select із
-                  @/components/ui клієнтський (@base-ui/react), а форма серверна.
-                  Класи — лише семантичні токени.
+                  Вкладки-пігулки замість select: чотири типи відпустки видно
+                  одразу, без розкривання. Усередині — звичайні радіокнопки з
+                  name="leaveType", тож серверна форма приймає їх так само, як
+                  приймала select (`@/components/ui/pill-tabs`).
+
+                  Підписи — LEAVE_TYPE_LABELS, тобто дослівні тексти PM: тип
+                  відпустки лишається англійською в обох мовах інтерфейсу.
                 */}
-                <select
-                  id="leaveType"
+                <span className="text-sm font-medium">{m("requests.type")}</span>
+                <PillTabs
                   name="leaveType"
-                  required
+                  label={m("requests.type")}
                   defaultValue="sick"
-                  className="border-input bg-background ring-offset-background focus-visible:ring-ring h-9 rounded-md border px-3 py-1 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-                >
-                  {Object.entries(LEAVE_TYPE_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+                  options={Object.entries(LEAVE_TYPE_LABELS).map(([value, label]) => ({
+                    value,
+                    label,
+                  }))}
+                  className="self-start"
+                />
               </div>
 
               <div className="flex flex-col gap-2">
