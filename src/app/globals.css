@@ -141,3 +141,422 @@
     @apply font-sans;
   }
 }
+
+/*
+  ───────────────────────────────────────────────────────────────────────────
+  Тло сторінки — у дусі stripe.com, у наших кольорах
+  ───────────────────────────────────────────────────────────────────────────
+  Від Stripe беремо саме прийом: широка кутова стрічка згори з різкою
+  діагональною межею, а всередині неї — кілька м'яких плям, що перетікають
+  одна в одну. Кольори свої: --primary, --accent і --ring, тобто вся стрічка
+  лишається в одній родині відтінків порталу й сама переходить у темну тему.
+
+  Чужих активів не беремо: ні шрифтів Stripe, ні їхніх зображень, ні жодного
+  платного UI-кіта. Загальний прийом (світла основа, нахилена градієнтна
+  стрічка) нічиєю власністю не є — активи є, тому їх не чіпаємо.
+
+  Чому ::before, а не background-image на body: різку діагональ дає clip-path,
+  а він працює лише на елементі. Щоб псевдоелемент було видно під вмістом і
+  над фоном, колір сторінки переїхав на <html>, а body лишився прозорим.
+*/
+html {
+  background-color: var(--background);
+}
+
+body {
+  background-color: transparent;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      40rem 24rem at 8% 0%,
+      color-mix(in srgb, var(--primary) 45%, transparent) 0%,
+      transparent 62%
+    ),
+    radial-gradient(
+      36rem 22rem at 48% -6%,
+      color-mix(in srgb, var(--ring) 40%, transparent) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      44rem 26rem at 96% 4%,
+      color-mix(in srgb, var(--primary) 28%, transparent) 0%,
+      transparent 64%
+    ),
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--primary) 22%, transparent) 0%,
+      color-mix(in srgb, var(--ring) 22%, transparent) 55%,
+      color-mix(in srgb, var(--background) 88%, var(--primary)) 100%
+    );
+  /* Різка діагональ: ліворуч стрічка нижча, праворуч вища — як у Stripe. */
+  clip-path: polygon(0 0, 100% 0, 100% 46%, 0 72%);
+  animation: stripe-drift 30s ease-in-out infinite alternate;
+}
+
+@keyframes stripe-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-1.5%, -1%, 0) scale(1.05);
+  }
+}
+
+/*
+  ───────────────────────────────────────────────────────────────────────────
+  Готові елементи з Uiverse — у нашій гамі
+  ───────────────────────────────────────────────────────────────────────────
+  Усі три під MIT License; умова ліцензії одна — зберегти напис про авторство:
+
+  • перемикач — Yaya Mohamed (Yaya12085)
+    https://uiverse.io/Yaya12085/bright-dolphin-91
+  • вкладки-пігулки — Astronaut (uiverse-astronaut)
+    https://uiverse.io/uiverse-astronaut/odd-bobcat-3
+  • картка входу — Smit Prajapati (Smit-Prajapati)
+    https://uiverse.io/Smit-Prajapati/swift-liger-76
+
+  Геометрія, тіні, переходи й структура селекторів — як в оригіналах.
+  Кольори — наші токени, тож елементи в одній гамі з тлом і між собою.
+  Прозорість, де оригінали мали rgba, робимо через color-mix: інакше тінь
+  лишалася б чорною на чорному в темній темі.
+*/
+
+/* ── Перемикач ──────────────────────────────────────────────────────────── */
+/*
+  Дві відмінності від оригіналу:
+  1. стан із [data-checked], а не з #checkbox:checked ~ .label — перемикач
+     подає серверну форму, тож це кнопка type="submit" і працює без JS;
+  2. видиме кільце фокуса: в оригіналі #checkbox { display: none } прибирає
+     перемикач із табуляції й з екранного читача (DESIGN.md, розділ 7).
+*/
+.uiverse-switch {
+  height: 60px;
+  width: 120px;
+  background-color: var(--card);
+  border-radius: 30px;
+  box-shadow:
+    inset 0 0 5px 4px color-mix(in oklch, var(--card) 70%, transparent),
+    inset 0 0 20px 1px color-mix(in oklch, var(--foreground) 28%, transparent),
+    10px 20px 30px color-mix(in oklch, var(--foreground) 10%, transparent),
+    inset 0 0 0 3px color-mix(in oklch, var(--border) 90%, transparent);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.4s;
+}
+
+.uiverse-switch:hover {
+  transform: perspective(100px) rotateX(5deg) rotateY(-5deg);
+}
+
+.uiverse-switch[data-checked]:hover {
+  transform: perspective(100px) rotateX(-5deg) rotateY(5deg);
+}
+
+.uiverse-switch:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 3px;
+}
+
+.uiverse-switch::before {
+  position: absolute;
+  content: "";
+  height: 40px;
+  width: 40px;
+  border-radius: 50%;
+  background-image: linear-gradient(
+    130deg,
+    var(--muted-foreground) 10%,
+    var(--card) 11%,
+    var(--muted-foreground) 62%
+  );
+  left: 10px;
+  box-shadow:
+    0 2px 1px color-mix(in oklch, var(--foreground) 30%, transparent),
+    10px 10px 10px color-mix(in oklch, var(--foreground) 25%, transparent);
+  transition: 0.4s;
+}
+
+.uiverse-switch[data-checked]::before {
+  left: 70px;
+  background-image: linear-gradient(
+    315deg,
+    var(--primary) 0%,
+    color-mix(in oklch, var(--primary) 55%, var(--foreground)) 70%
+  );
+  transition: 0.4s;
+}
+
+/* Оригінал розрахований на 120×60: у шапці це завелико, тож масштабуємо цілком. */
+.uiverse-switch--sm {
+  transform-origin: center;
+  zoom: 0.45;
+}
+
+/*
+  zoom масштабує і кільце фокуса: 3px перетворювалися на 1.8px, і на екрані
+  його майже не було видно. Ділимо на той самий масштаб (DESIGN.md, розділ 7).
+*/
+.uiverse-switch--sm:focus-visible {
+  outline-width: calc(3px / 0.45);
+  outline-offset: calc(3px / 0.45);
+}
+
+/* ── Вкладки-пігулки (вибір типу відпустки) ─────────────────────────────── */
+/*
+  Прибрано лише @import шрифту Inter із Google Fonts: шрифт порталу — Geist,
+  а зайвий зовнішній запит нам не потрібен (DESIGN.md, розділ 3).
+
+  Радіокнопки лишаються справжніми й фокусованими, як в оригіналі: він ховає
+  їх прозорістю, а не display: none, тож клавіатура й екранний читач працюють.
+*/
+.cir-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow:
+    0 1px 1px color-mix(in oklch, var(--foreground) 6%, transparent),
+    0 20px 40px -24px color-mix(in oklch, var(--foreground) 25%, transparent);
+}
+
+.cir-tabs__r {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cir-tabs__t {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cir-tabs__t:hover {
+  color: var(--foreground);
+}
+
+.cir-tabs__r:checked + .cir-tabs__t {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow:
+    0 1px 1px color-mix(in oklch, var(--foreground) 8%, transparent),
+    0 8px 18px -10px color-mix(in oklch, var(--primary) 60%, transparent);
+}
+
+.cir-tabs__r:focus-visible + .cir-tabs__t {
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 45%, transparent);
+}
+
+/* ── Картка входу ───────────────────────────────────────────────────────── */
+/*
+  З оригіналу не беремо кнопки соцмереж, «Forgot password» і «Terms»: таких
+  сторінок у порталі немає, а посилання в нікуди гірші за їхню відсутність.
+  Підписи полів лишаються видимими Label із htmlFor (DESIGN.md, розділ 5): в
+  оригіналі їх заміняє placeholder, і поле втрачає зв'язок із підписом — а на
+  цих підписах тримається ще й вхід у наших e2e-тестах.
+*/
+.swift-card {
+  width: 100%;
+  max-width: 350px;
+  background: linear-gradient(0deg, var(--card) 0%, var(--muted) 100%);
+  border-radius: 40px;
+  padding: 25px 35px;
+  border: 5px solid var(--card);
+  box-shadow: 0 30px 30px -20px color-mix(in oklch, var(--primary) 45%, transparent);
+}
+
+.swift-card__heading {
+  text-align: center;
+  font-weight: 900;
+  font-size: 30px;
+  color: var(--primary);
+}
+
+.swift-card__input {
+  width: 100%;
+  background: var(--card);
+  color: var(--foreground);
+  border: none;
+  padding: 15px 20px;
+  border-radius: 20px;
+  box-shadow: 0 10px 10px -5px color-mix(in oklch, var(--primary) 22%, transparent);
+  border-inline: 2px solid transparent;
+}
+
+.swift-card__input::placeholder {
+  color: var(--muted-foreground);
+}
+
+/*
+  Оригінал позначає фокус лише бічними межами й гасить outline. Бічні риски —
+  не кільце: DESIGN.md (розділ 7) вимагає видимий `ring` на кожному
+  інтерактивному елементі, тож кільце повертаємо, а бічні межі лишаємо як
+  додатковий відтінок оригіналу.
+*/
+.swift-card__input:focus {
+  outline: 3px solid var(--ring);
+  outline-offset: 3px;
+  border-inline: 2px solid var(--ring);
+}
+
+.swift-card__button {
+  display: block;
+  width: 100%;
+  font-weight: bold;
+  background: linear-gradient(
+    45deg,
+    var(--primary) 0%,
+    color-mix(in oklch, var(--primary) 55%, var(--accent)) 100%
+  );
+  color: var(--primary-foreground);
+  padding-block: 15px;
+  border-radius: 20px;
+  box-shadow: 0 20px 10px -15px color-mix(in oklch, var(--primary) 45%, transparent);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.swift-card__button:hover {
+  transform: scale(1.03);
+  box-shadow: 0 23px 10px -20px color-mix(in oklch, var(--primary) 45%, transparent);
+}
+
+.swift-card__button:active {
+  transform: scale(0.95);
+  box-shadow: 0 15px 10px -10px color-mix(in oklch, var(--primary) 45%, transparent);
+}
+
+.swift-card__button:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 3px;
+}
+
+/* ── Менше руху ─────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  body::before {
+    animation: none;
+  }
+
+  .uiverse-switch,
+  .uiverse-switch::before,
+  .cir-tabs__t,
+  .swift-card__button {
+    transition: none;
+  }
+
+  .uiverse-switch:hover,
+  .uiverse-switch[data-checked]:hover,
+  .swift-card__button:hover,
+  .swift-card__button:active {
+    transform: none;
+  }
+}
+
+/* ── Календар cally ─────────────────────────────────────────────────────── */
+/*
+  `cally` (MIT, https://github.com/WickyNilliams/cally) — веб-компонент, тож
+  усередину нього наші класи не дістають. Він навмисно відкриває лише дві
+  змінні, і цього досить, щоб він був у нашій гамі.
+
+  Календар — покращення над нативним полем дати, а не заміна: саме поле
+  лишається справжнім полем форми (src/components/ui/date-field.tsx).
+*/
+.cally-wrap {
+  align-self: start;
+  padding: 0.75rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow:
+    0 2px 5px -1px color-mix(in srgb, var(--foreground) 12%, transparent),
+    0 1px 3px -1px color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.cally-wrap calendar-date {
+  --color-accent: var(--primary);
+  --color-text-on-accent: var(--primary-foreground);
+  color: var(--foreground);
+}
+
+/*
+  Усередину тіньового дерева наші класи не дістають, тому решту беремо через
+  ::part — імена частин відкриває сам компонент.
+*/
+.cally-wrap calendar-month::part(button) {
+  border-radius: var(--radius-sm);
+  color: var(--foreground);
+}
+
+.cally-wrap calendar-month::part(button):hover {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.cally-wrap calendar-month::part(today) {
+  outline: 1px solid var(--border);
+}
+
+.cally-wrap calendar-month::part(selected) {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.cally-wrap calendar-month::part(outside),
+.cally-wrap calendar-month::part(disallowed) {
+  color: var(--muted-foreground);
+}
+
+.cally-wrap calendar-date::part(header) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+  color: var(--foreground);
+}
+
+.cally-wrap calendar-date::part(heading) {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+/* Кнопки «місяць назад / вперед»: підписи словами, тож їм потрібен дрібний шрифт. */
+.cally-wrap calendar-date::part(button) {
+  border: 1px solid var(--input);
+  border-radius: var(--radius-sm);
+  padding: 0.125rem 0.5rem;
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  background: var(--card);
+  color: var(--muted-foreground);
+}
+
+.cally-wrap calendar-date::part(button):hover {
+  color: var(--foreground);
+}
