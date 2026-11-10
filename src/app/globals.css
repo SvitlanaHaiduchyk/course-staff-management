@@ -469,3 +469,69 @@ body::before {
     transform: none;
   }
 }
+
+/* ── Календар cally ─────────────────────────────────────────────────────── */
+/*
+  `cally` (MIT, https://github.com/WickyNilliams/cally) — веб-компонент, тож
+  усередину нього наші класи не дістають. Він навмисно відкриває лише дві
+  змінні, і цього досить, щоб він був у нашій гамі.
+
+  Календар — покращення над нативним полем дати, а не заміна: саме поле
+  лишається справжнім полем форми (src/components/ui/date-field.tsx).
+*/
+.cally-wrap {
+  align-self: start;
+  padding: 0.75rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow:
+    0 2px 5px -1px color-mix(in srgb, var(--foreground) 12%, transparent),
+    0 1px 3px -1px color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.cally-wrap calendar-date {
+  --color-accent: var(--primary);
+  --color-text-on-accent: var(--primary-foreground);
+  color: var(--foreground);
+}
+
+/*
+  Усередину тіньового дерева наші класи не дістають, тому решту беремо через
+  ::part — імена частин відкриває сам компонент.
+*/
+.cally-wrap calendar-month::part(button) {
+  border-radius: var(--radius-sm);
+  color: var(--foreground);
+}
+
+.cally-wrap calendar-month::part(button):hover {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.cally-wrap calendar-month::part(today) {
+  outline: 1px solid var(--border);
+}
+
+.cally-wrap calendar-month::part(selected) {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.cally-wrap calendar-month::part(outside),
+.cally-wrap calendar-month::part(disallowed) {
+  color: var(--muted-foreground);
+}
+
+.cally-wrap calendar-date::part(header),
+.cally-wrap calendar-date::part(heading) {
+  color: var(--foreground);
+}
+
+.cally-wrap calendar-date::part(button) {
+  border: 1px solid var(--input);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--foreground);
+}

@@ -73,6 +73,9 @@ const UK = {
   "requests.new": "Нова заявка",
   "requests.date1": "Дата (цілий день)",
   "requests.date2": "Ще дата (не обов'язково)",
+  "requests.calendar": "Обрати в календарі",
+  "requests.prevMonth": "Попередній місяць",
+  "requests.nextMonth": "Наступний місяць",
   "requests.dateHint":
     "Обирайте день, що є в розкладі вище. Дата без робочих годин відпаде з повідомленням, а решта дат заявки лишаться.",
   "requests.type": "Тип відпустки",
@@ -174,6 +177,9 @@ const EN: Record<MessageKey, string> = {
   "requests.new": "New request",
   "requests.date1": "Date (whole day)",
   "requests.date2": "Another date (optional)",
+  "requests.calendar": "Pick in calendar",
+  "requests.prevMonth": "Previous month",
+  "requests.nextMonth": "Next month",
   "requests.dateHint":
     "Pick a day that is in the schedule above. A date with no working hours is dropped with a message, and the other dates of the request stay.",
   "requests.type": "Leave type",

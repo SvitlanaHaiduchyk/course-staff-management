@@ -4,6 +4,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DateField } from "@/components/ui/date-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PillTabs } from "@/components/ui/pill-tabs";
@@ -16,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { positionKindKey, weekdayNames } from "@/lib/i18n/dict";
+import { INTL_LOCALE, positionKindKey, weekdayNames } from "@/lib/i18n/dict";
 import { getMessages } from "@/lib/i18n/server";
 import { leaveTypeLabel, scheduleSummary } from "@/lib/leave/format";
 import { formatDays, LEAVE_TYPE_LABELS, splitLabel } from "@/lib/leave/balance";
@@ -150,18 +151,32 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
                 ))}
               </fieldset>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="date-1">{m("requests.date1")}</Label>
-                <Input id="date-1" name="date" type="date" required />
-                <p className="text-xs text-muted-foreground">
-                  {m("requests.dateHint")}
-                </p>
-              </div>
+              {/*
+                Дати: нативне поле лишається справжнім полем форми, а календар
+                `cally` лише пише в нього. Форма серверна, а веб-компонент без
+                JavaScript не існує — див. коментар у `date-field.tsx`.
+              */}
+              <DateField
+                id="date-1"
+                name="date"
+                label={m("requests.date1")}
+                hint={m("requests.dateHint")}
+                calendarLabel={m("requests.calendar")}
+                prevMonthLabel={m("requests.prevMonth")}
+                nextMonthLabel={m("requests.nextMonth")}
+                locale={INTL_LOCALE[lang]}
+                required
+              />
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="date-2">{m("requests.date2")}</Label>
-                <Input id="date-2" name="date" type="date" />
-              </div>
+              <DateField
+                id="date-2"
+                name="date"
+                label={m("requests.date2")}
+                calendarLabel={m("requests.calendar")}
+                prevMonthLabel={m("requests.prevMonth")}
+                nextMonthLabel={m("requests.nextMonth")}
+                locale={INTL_LOCALE[lang]}
+              />
 
               <div className="flex flex-col gap-2">
                 {/*
