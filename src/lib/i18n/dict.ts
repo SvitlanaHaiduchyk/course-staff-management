@@ -62,6 +62,7 @@ const UK = {
   "schedule.none": "розкладу немає",
   "schedule.legend.work": "Робочі години",
   "schedule.legend.leave": "Відпустка — тип і статус написано в самій смузі",
+  "schedule.asText": "Розклад посад текстом",
 
   "nav.requests": "Мої заявки на відпустку",
   "nav.balances": "Мої залишки",
@@ -166,6 +167,7 @@ const EN: Record<MessageKey, string> = {
   "schedule.none": "no schedule",
   "schedule.legend.work": "Working hours",
   "schedule.legend.leave": "Leave — the type and the status are written on the bar",
+  "schedule.asText": "Positions' schedule as text",
 
   "nav.requests": "My requests",
   "nav.balances": "My balances",
