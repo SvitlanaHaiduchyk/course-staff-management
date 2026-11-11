@@ -73,25 +73,48 @@ export function ScheduleCard({
         />
 
         {/*
-          Той самий розклад рядком. Лишається з трьох причин: екранний читач
-          пройде його за секунди замість сітки з абсолютних смуг, він не
-          залежить від обраного тижня, і на `data-testid="schedule"` уже
-          спираються перевірки.
+          Той самий розклад рядком, але згорнутий: на екрані він дублював
+          сітку, тож лишається за вимогою. Жоден AC PM його не вимагає, однак
+          прибирати зовсім не можна з двох причин:
+
+          • сітка — це смуги з абсолютним позиціюванням, і голосом вона
+            читається як низка чисел без зв'язку; рядок «Пн 08:30–15:30 · …»
+            екранний читач проходить за секунди;
+          • сітка показує лише обраний тиждень, а рядок — постійний розклад
+            посади: на тижні канікул сітка порожня, і без рядка людина свого
+            розкладу не побачила б узагалі.
+
+          `<details>` лишає обидві причини чинними, але з поправкою: згорнутий
+          `<details>` ховає вміст і від екранного читача теж, тож автоматично
+          він не читається. Зате `<summary>` — це кнопка в порядку табуляції з
+          виразною назвою, і розділ відкривається одним натисканням як мишею,
+          так і з клавіатури. Тобто розклад лишається досяжним обом, просто не
+          займає екран.
+
+          `data-testid="schedule"` тут на жоден тест не спирається (той, що
+          спирається, — у формі заявки); лишаємо як точку опори для майбутніх
+          перевірок.
         */}
-        <dl
-          data-testid="schedule"
-          className="grid gap-x-6 gap-y-2 border-t border-border pt-4 text-xs text-muted-foreground"
-          style={{ gridTemplateColumns: "max-content 1fr" }}
-        >
-          {positions.map((p) => (
-            <div key={p.id} className="contents">
-              <dt>{p.job_title}</dt>
-              <dd className="tabular-nums">
-                {p.schedule_blocks?.length ? scheduleSummary(p.schedule_blocks, dayNames) : m("schedule.none")}
-              </dd>
-            </div>
-          ))}
-        </dl>
+        <details data-testid="schedule" className="border-t border-border pt-4">
+          <summary className="cursor-pointer text-xs text-muted-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none">
+            {m("schedule.asText")}
+          </summary>
+          <dl
+            className="mt-3 grid gap-x-6 gap-y-2 text-xs text-muted-foreground"
+            style={{ gridTemplateColumns: "max-content 1fr" }}
+          >
+            {positions.map((p) => (
+              <div key={p.id} className="contents">
+                <dt>{p.job_title}</dt>
+                <dd className="tabular-nums">
+                  {p.schedule_blocks?.length
+                    ? scheduleSummary(p.schedule_blocks, dayNames)
+                    : m("schedule.none")}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </details>
       </CardContent>
     </Card>
   );
