@@ -5,6 +5,7 @@
  * знімок 2026-10-20), разом із тире «–»: тести звіряють їх посимвольно.
  */
 
+import { isWholeDayClosure, type Closure } from "./closure";
 import { type ScheduleBlock, type TimeRange, toMinutes } from "./schedule";
 
 export type HoursCheck =
@@ -18,6 +19,48 @@ export const NO_WORKING_HOURS = "You have no working hours on this day";
 
 /** AC-LEAVE-09: кінець не пізніший за початок. */
 export const END_BEFORE_START = "The end must be later than the start";
+
+/** AC-CAL-03, AC-CAL-16: дата, закрита шкільним календарем. */
+export function schoolClosedMessage(name: string): string {
+  return `The school is closed on this day: ${name}`;
+}
+
+/**
+ * AC-CAL-03, AC-CAL-16: чи приймається дата, на яку припадає закриття.
+ *
+ * Дата не приймається у двох випадках:
+ *
+ * • закриття на **цілий день** (`AC-CAL-03`);
+ * • **скорочений день, що не лишив жодного блоку** розкладу цього працівника
+ *   до часу закриття (`AC-CAL-16`).
+ *
+ * Другий випадок додав PM у відповідь на `…spec#22`. До відповіді ми читали
+ * інакше: обрізання лишає нуль блоків, далі спрацьовує «Дата без розкладу не
+ * приймається», і працівник бачить «You have no working hours on this day».
+ * Прочитання було правдоподібним і хибним — PM вирішив, що це закритий день,
+ * і повідомлення має називати закриття.
+ *
+ * Саме тому `blocksLeft` — обов'язковий аргумент, а не значення за
+ * замовчуванням: виклик без нього мовчки повернув би стару поведінку для
+ * скороченого дня, а тип тепер цього не дозволяє.
+ *
+ * Межа: якщо хоч один блок до часу закриття лишився, дата **приймається** з
+ * обрізаним розкладом (`AC-CAL-04`), і це правило не спрацьовує.
+ *
+ * Перевірка окрема від `validateHours`, бо вона про дату, а не про години: у
+ * заявці на кілька дат закрита дата відпадає зі своїм повідомленням, а решта
+ * дат створюється — як дата без робочих годин (`AC-LEAVE-21`).
+ */
+export function validateClosedDate(
+  closure: Closure | null,
+  blocksLeft: readonly ScheduleBlock[],
+): HoursCheck {
+  if (closure === null) return OK;
+  if (isWholeDayClosure(closure) || blocksLeft.length === 0) {
+    return { ok: false, message: schoolClosedMessage(closure.name) };
+  }
+  return OK;
+}
 
 /**
  * AC-LEAVE-07, AC-LEAVE-19: години поза розкладом.
