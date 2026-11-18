@@ -10,6 +10,16 @@
  */
 
 /** Закриття так, як його віддає база. */
+/**
+ * Дослівний текст PM, англійською в обох мовах інтерфейсу.
+ *
+ * Один на `AC-CAL-12` (сторінка зміни календаря) і `AC-ASSIST-11` (помічник):
+ * PM написав його один раз, тож і в коді він має бути один. Жити в модулі з
+ * `"use server"` він не може — звідти дозволено експортувати лише асинхронні
+ * функції.
+ */
+export const ONLY_ADMIN = "Only an administrator can change the school calendar";
+
 export type ClosureRow = {
   readonly id: string;
   readonly name: string;

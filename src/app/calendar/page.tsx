@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import { ClosureList } from "@/components/closure-list";
+import { cn } from "cn";
 import { buttonVariants } from "@/components/ui/button";
 import { SchoolYearNav } from "@/components/school-year-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -94,7 +95,7 @@ export default async function CalendarPage({
           {isAdmin ? (
             <Link
               href="/calendar/manage"
-              className={`${buttonVariants({ variant: "outline", size: "sm" })} self-start`}
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "self-start")}
             >
               {m("calendar.manage")}
             </Link>

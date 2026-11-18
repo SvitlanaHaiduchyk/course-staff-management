@@ -1,17 +1,17 @@
-import { redirect } from "next/navigation";
+import Link from "next/link";
 
 import { addClosure, removeClosure } from "./actions";
+import { cn } from "cn";
+import { buttonVariants } from "@/components/ui/button";
 import { ClosureAdminList } from "@/components/closure-admin-list";
 import { ClosureForm } from "@/components/closure-form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { INTL_LOCALE } from "@/lib/i18n/dict";
 import { getMessages } from "@/lib/i18n/server";
-import { type ClosureRow } from "@/lib/leave/calendar";
-import { createClient } from "@/lib/supabase/server";
+import { ONLY_ADMIN, type ClosureRow } from "@/lib/leave/calendar";
+import { requireAdminPage } from "@/lib/supabase/page-session";
 
-/** AC-CAL-12: дослівний текст PM, англійською в обох мовах інтерфейсу. */
-const ONLY_ADMIN = "Only an administrator can change the school calendar";
 
 /**
  * Зміна шкільного календаря — лише для адміністратора.
@@ -29,25 +29,12 @@ export default async function ManageCalendarPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  const supabase = await createClient();
-
-  const { data } = await supabase.auth.getClaims();
-  const claims = data?.claims;
-  if (!claims) {
-    redirect("/login");
-  }
+  const { supabase, isAdmin } = await requireAdminPage();
 
   const { lang, m } = await getMessages();
   const { error } = await searchParams;
 
-  // Роль — із profiles, ніколи з user_metadata.
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", claims.sub)
-    .maybeSingle();
-
-  if (profile?.role !== "admin") {
+  if (!isAdmin) {
     // Відмова на сторінці: жодного закриття тут не показано й не додано.
     return (
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-16">
@@ -87,6 +74,11 @@ export default async function ManageCalendarPage({
           <ClosureForm action={addClosure} m={m} locale={INTL_LOCALE[lang]} />
         </CardContent>
       </Card>
+
+      {/* Шлях до помічника є лише в адміністратора: сторінку він усе одно відмовить іншим (AC-ASSIST-11). */}
+      <Link href="/calendar/assistant" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+        {m("nav.assistant")}
+      </Link>
 
       <Card>
         <CardHeader>

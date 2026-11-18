@@ -20,15 +20,15 @@ Done when: AC-ASSIST-05, AC-ASSIST-06, AC-ASSIST-09, AC-ASSIST-10 (на рівн
 
 Сторінка `/calendar/assistant` і дія, що просить пропозиції. Нічого не зберігає.
 
-- [ ] `src/app/calendar/assistant/page.tsx` — роль із `profiles` через `getClaims()`; не-адміністратор бачить «Only an administrator can change the school calendar» і жодного поля (`AC-ASSIST-11`)
-- [ ] там само — поле тексту до 2000 символів з лічильником, кнопка, посилання на `/calendar/manage` і назад
-- [ ] `src/app/calendar/assistant/actions.ts` — `suggestClosures`: роль → `checkTextLength` → `productModel()` → `proposeClosures`; нічого не пише
-- [ ] перевірка ролі **перед** викликом моделі: чужий запит не витрачає денного ліміту
-- [ ] `src/components/closure-suggestions.tsx` — пропозиції як поля форми, кнопка «Прибрати» на кожній (`AC-ASSIST-03`)
+- [x] `src/app/calendar/assistant/page.tsx` — роль із `profiles` через `getClaims()`; не-адміністратор бачить «Only an administrator can change the school calendar» і жодного поля (`AC-ASSIST-11`)
+- [x] `src/components/assistant-text-form.tsx` — поле тексту до 2000 символів із підказкою про межу, кнопка; посилання на `/calendar/manage` і назад — на сторінці
+- [x] `src/app/calendar/assistant/actions.ts` — `suggestClosures`: роль → `checkTextLength` → `productModel()` → `proposeClosures`; нічого не пише
+- [x] перевірка ролі **перед** викликом моделі: чужий запит не витрачає денного ліміту
+- [x] `src/components/suggestion-list.tsx` — пропозиції як поля форми, кнопка «Прибрати» на кожній (`AC-ASSIST-03`)
 - [ ] клієнтська кнопка з `useFormStatus`: «Preparing suggestions…» і заборона другого прохання (`AC-ASSIST-08`)
-- [ ] тексти станів дослівно з AC: `needs_info`, `refused`, недоступність, межа довжини
-- [ ] тести: відмова не-адміністраторові, межа 2000 і рівно 2000, три стани на сторінці
-- [ ] `tests/e2e/assistant.spec.ts` — працівник за прямим посиланням бачить відмову (без тегу `@writes`)
+- [x] тексти станів дослівно з AC: `needs_info`, `refused`, недоступність, межа довжини
+- [x] тести: відмова не-адміністраторові, межа 2000 і рівно 2000, три стани на сторінці
+- [x] `tests/e2e/assistant.spec.ts` — працівник за прямим посиланням бачить відмову (без тегу `@writes`)
 
 Done when: AC-ASSIST-01, AC-ASSIST-05, AC-ASSIST-06, AC-ASSIST-08, AC-ASSIST-09, AC-ASSIST-10, AC-ASSIST-11
 
@@ -36,11 +36,12 @@ Done when: AC-ASSIST-01, AC-ASSIST-05, AC-ASSIST-06, AC-ASSIST-08, AC-ASSIST-09,
 
 Друга дія: взяти те, що лишилося у формі після виправлень, і зберегти по одній пропозиції.
 
-- [ ] `saveSuggestions` у `actions.ts` — роль, повторна валідація zod, по одному `supabase.rpc("add_school_closure", …)` на пропозицію
-- [ ] **часткове збереження**: пропозиції, що пройшли, зберігаються; для решти збираються дослівні повідомлення вимоги 04 (`AC-ASSIST-04`)
-- [ ] зведення скороченого дня до однієї дати перед збереженням
-- [ ] `revalidatePath("/calendar")` після успіху, зведення «збережено N, не збережено M» з повідомленнями
-- [ ] тести: збереження без змін (`AC-ASSIST-02`), прибирання й перейменування (`AC-ASSIST-03`), часткова відмова з текстом «2026-12-28 is already closed: Winter break» (`AC-ASSIST-04`)
+- [x] `saveSuggestions` у `actions.ts` — роль, повторна валідація zod, по одному `supabase.rpc("add_school_closure", …)` на пропозицію
+- [x] **часткове збереження**: пропозиції, що пройшли, зберігаються; для решти збираються дослівні повідомлення вимоги 04 (`AC-ASSIST-04`)
+- [x] зведення скороченого дня до однієї дати перед збереженням
+- [x] `revalidatePath("/calendar")` після успіху, зведення «збережено N, не збережено M» з повідомленнями
+- [x] тести розбору форми: виправлення назви, зведення скороченого дня до однієї дати, прибирання (`AC-ASSIST-03`)
+- [ ] тести самого збереження: без змін (`AC-ASSIST-02`) і часткова відмова з текстом «2026-12-28 is already closed: Winter break» (`AC-ASSIST-04`) — лише e2e `@writes`, бо дія ходить у базу
 - [ ] `tests/e2e/assistant.spec.ts` — наскрізний шлях під адміністратором, тег `@writes`, прибирання за собою
 
 Done when: AC-ASSIST-02, AC-ASSIST-03, AC-ASSIST-04

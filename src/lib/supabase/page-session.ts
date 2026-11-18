@@ -24,3 +24,21 @@ export async function requirePageSession() {
 
   return { supabase, claims };
 }
+
+/**
+ * Те саме, плюс роль із `profiles`.
+ *
+ * Сторінки календаря питають про неї однаково: показати екран чи дослівну
+ * відмову PM (`AC-CAL-12`, `AC-ASSIST-11`). Роль беремо з `profiles`, ніколи з
+ * `user_metadata`, і саме тому вона тут, а не в кожній сторінці окремо.
+ *
+ * Останній рубіж — політики `school_closures_insert_admin` і
+ * `school_closures_delete_admin`: прибрати можна лише обидва.
+ */
+export async function requireAdminPage() {
+  const { supabase, claims } = await requirePageSession();
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", claims.sub).maybeSingle();
+
+  return { supabase, isAdmin: profile?.role === "admin" };
+}
