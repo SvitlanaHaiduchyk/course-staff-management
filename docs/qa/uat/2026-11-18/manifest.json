@@ -1,0 +1,318 @@
+{
+  "kind": "uat",
+  "generatedAt": "2026-11-18T21:40:34.787Z",
+  "baseURL": "https://course-staff-management.vercel.app",
+  "deployedSha": "5ebe8cc8dbdfae2ae36a6090a9965883b241d267",
+  "testsCommit": "dd8127da5ac470dad1daf4d14d5ce2262afb0aa1",
+  "reviewer": {
+    "model": "claude-haiku-5-5",
+    "disputes": "claude-sonnet-5-5"
+  },
+  "note": "Відео й траси не в git (test-results/ локально, артефакт CI). check-recordings конвеєра WS9 вимагає відео на диску — для нього цей manifest треба доповнити.",
+  "results": [
+    {
+      "id": "AC-ASSIST-01",
+      "proof": "AC-ASSIST-01",
+      "title": "AC-ASSIST-01: помічник пропонує два закриття, і календар лишається без змін",
+      "screenshot": "docs/qa/uat/2026-11-18/frames/AC-ASSIST-01-then-1.png",
+      "video": "test-results/artifacts/assistant-live-помічник-ка-193e0-календар-лишається-без-змін-chromium/video-1.webm",
+      "trace": "test-results/artifacts/assistant-live-помічник-ка-193e0-календар-лишається-без-змін-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": false,
+        "readable": false,
+        "notes": "Файли критерію та журналу не вдалося прочитати: Read відхилив виклики через підозрілий шаблон шляху Windows, а підтвердити було нікому. Кадрів я не бачив, тому оцінити частини «Тоді» неможливо. Потрібен ручний перегляд або повторний запуск зі шляхом, який не потребує підтвердження."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-sonnet-5-5": "NEEDS-HUMAN"
+      },
+      "escalated": true,
+      "quotesVerified": [],
+      "verdict": "NEEDS-HUMAN",
+      "factoryGate": "NOT-EARNED",
+      "rule": "R3: перевірки пройшли, агент не погоджується — вирішує людина",
+      "playwrightMs": 19715,
+      "reviewCostUsd": 0.03566,
+      "reviewWallMs": 20437
+    },
+    {
+      "id": "AC-ASSIST-02",
+      "proof": "AC-ASSIST-02",
+      "title": "AC-ASSIST-02: збережені без змін пропозиції потрапляють у шкільний календар",
+      "screenshot": "docs/qa/uat/2026-11-18/frames/AC-ASSIST-02-then-1.png",
+      "video": "test-results/artifacts/assistant-live-помічник-ка-3ef59-апляють-у-шкільний-календар-chromium/video.webm",
+      "trace": "test-results/artifacts/assistant-live-помічник-ка-3ef59-апляють-у-шкільний-календар-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": false,
+        "readable": false,
+        "notes": "Жодного файлу прочитати не вдалося, тому кадри не оцінено. Потрібен повторний запуск зі шляхом без скороченого імені (наприклад, C:\\Users\\Developer\\...) або з наданим дозволом на читання."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-sonnet-5-5": "NEEDS-HUMAN"
+      },
+      "escalated": true,
+      "quotesVerified": [],
+      "verdict": "NEEDS-HUMAN",
+      "factoryGate": "NOT-EARNED",
+      "rule": "R3: перевірки пройшли, агент не погоджується — вирішує людина",
+      "playwrightMs": 18599,
+      "reviewCostUsd": 0.037,
+      "reviewWallMs": 18841
+    },
+    {
+      "id": "AC-ASSIST-11",
+      "proof": "AC-ASSIST-11",
+      "title": "AC-ASSIST-11: працівник за прямим посиланням бачить відмову й жодного поля",
+      "screenshot": "docs/qa/uat/2026-11-18/frames/AC-ASSIST-11-then-1.png",
+      "video": "test-results/artifacts/assistant-помічник-календа-a8765-чить-відмову-й-жодного-поля-chromium/video.webm",
+      "trace": "test-results/artifacts/assistant-помічник-календа-a8765-чить-відмову-й-жодного-поля-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": false,
+        "readable": false,
+        "notes": "Я не бачив ані критерію, ані кадрів, бо інструмент Read відхилив доступ до теки. Судити про результат неможливо, тому потрібна людина або доступ до файлів. ac_id невідомий."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-sonnet-5-5": "NEEDS-HUMAN"
+      },
+      "escalated": true,
+      "quotesVerified": [],
+      "verdict": "NEEDS-HUMAN",
+      "factoryGate": "NOT-EARNED",
+      "rule": "R3: перевірки пройшли, агент не погоджується — вирішує людина",
+      "playwrightMs": 5785,
+      "reviewCostUsd": 0.04238,
+      "reviewWallMs": 20301
+    },
+    {
+      "id": "AC-BALANCE-13",
+      "proof": "AC-BALANCE-13",
+      "title": "AC-BALANCE-13: працівник відкриває чужі залишки за прямим посиланням — чисел не бачить",
+      "screenshot": "docs/qa/uat/2026-11-18/frames/AC-BALANCE-13-then-1.png",
+      "video": "test-results/artifacts/balances-forbidden-AC-BALA-48372-осиланням-—-чисел-не-бачить-chromium/video.webm",
+      "trace": "test-results/artifacts/balances-forbidden-AC-BALA-48372-осиланням-—-чисел-не-бачить-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": false,
+        "readable": false,
+        "notes": "Я не прочитав жодного файлу: Read відхилили автоматично через підозрілий шаблон шляху (коротке ім'я DEVELO~1). Кадрів я не бачив, тому оцінити частини «Тоді» не можу. Потрібна людина, або перезапуск із дозволом на читання цієї теки."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-sonnet-5-5": "NEEDS-HUMAN"
+      },
+      "escalated": true,
+      "quotesVerified": [],
+      "verdict": "NEEDS-HUMAN",
+      "factoryGate": "NOT-EARNED",
+      "rule": "R3: перевірки пройшли, агент не погоджується — вирішує людина",
+      "playwrightMs": 6703,
+      "reviewCostUsd": 0.02612,
+      "reviewWallMs": 16729
+    },
+    {
+      "id": "AC-CAL-02",
+      "proof": "AC-CAL-02",
+      "title": "AC-CAL-02: працівник бачить пункт «Шкільний календар» у шапці",
+      "screenshot": "docs/qa/uat/2026-11-18/frames/AC-CAL-02-then-1.png",
+      "video": "test-results/artifacts/calendar-календар-для-авто-26a96-«Шкільний-календар»-у-шапці-chromium/video.webm",
+      "trace": "test-results/artifacts/calendar-календар-для-авто-26a96-«Шкільний-календар»-у-шапці-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": false,
+        "readable": false,
+        "notes": "Я не прочитав жодного файлу, бо доступ до теки відхилила перевірка дозволів. Жодних кадрів я не бачив, тому оцінити критерій неможливо. Щоб повторити перевірку, потрібен доступ до файлів за повним шляхом без скороченої назви DEVELO~1 або підтверджений дозвіл на читання."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-sonnet-5-5": "NEEDS-HUMAN"
+      },
+      "escalated": true,
+      "quotesVerified": [],
+      "verdict": "NEEDS-HUMAN",
+      "factoryGate": "NOT-EARNED",
+      "rule": "R3: перевірки пройшли, агент не погоджується — вирішує людина",
+      "playwrightMs": 7328,
+      "reviewCostUsd": 0.02644,
+      "reviewWallMs": 14923
+    },
+    {
+      "id": "AC-CAL-09",
+      "proof": "AC-CAL-09",
+      "title": "AC-CAL-09: адміністратор бачить форму додавання й перелік закриттів",
+      "screenshot": "docs/qa/uat/2026-11-18/frames/AC-CAL-09-then-1.png",
+      "video": "test-results/artifacts/calendar-адміністратор-від-98dbf-давання-й-перелік-закриттів-chromium/video.webm",
+      "trace": "test-results/artifacts/calendar-адміністратор-від-98dbf-давання-й-перелік-закриттів-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": false,
+        "readable": false,
+        "notes": "Я не прочитав жодного файлу (ac.md, journey.md, кадри), тому перевірити видимий результат неможливо. Потрібен дозвіл на читання теки або повний шлях без короткої назви DEVELO~1."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-sonnet-5-5": "NEEDS-HUMAN"
+      },
+      "escalated": true,
+      "quotesVerified": [],
+      "verdict": "NEEDS-HUMAN",
+      "factoryGate": "NOT-EARNED",
+      "rule": "R3: перевірки пройшли, агент не погоджується — вирішує людина",
+      "playwrightMs": 5820,
+      "reviewCostUsd": 0.02786,
+      "reviewWallMs": 16671
+    },
+    {
+      "id": "AC-CAL-12",
+      "proof": "AC-CAL-12",
+      "title": "AC-CAL-12: працівник за прямим посиланням бачить відмову",
+      "screenshot": "docs/qa/uat/2026-11-18/frames/AC-CAL-12-then-1.png",
+      "video": "test-results/artifacts/calendar-зміна-календаря-—-5955c-м-посиланням-бачить-відмову-chromium/video.webm",
+      "trace": "test-results/artifacts/calendar-зміна-календаря-—-5955c-м-посиланням-бачить-відмову-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": false,
+        "readable": false,
+        "notes": "Я не бачив ні критерію, ні кадрів, бо доступ до файлів заборонено автоматично. Оцінити частини «Тоді» неможливо, тому потрібна людина або повторний запуск із дозволеним доступом до теки."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-sonnet-5-5": "NEEDS-HUMAN"
+      },
+      "escalated": true,
+      "quotesVerified": [],
+      "verdict": "NEEDS-HUMAN",
+      "factoryGate": "NOT-EARNED",
+      "rule": "R3: перевірки пройшли, агент не погоджується — вирішує людина",
+      "playwrightMs": 6469,
+      "reviewCostUsd": 0.02524,
+      "reviewWallMs": 15718
+    },
+    {
+      "id": "AC-CAL-14",
+      "proof": "AC-CAL-14",
+      "title": "AC-CAL-14: відвідувач без входу бачить сторінку входу й жодної назви закриття",
+      "screenshot": "docs/qa/uat/2026-11-18/frames/AC-CAL-14-then-1.png",
+      "video": "test-results/artifacts/calendar-календар-для-неав-2d8fc-оду-й-жодної-назви-закриття-chromium/video.webm",
+      "trace": "test-results/artifacts/calendar-календар-для-неав-2d8fc-оду-й-жодної-назви-закриття-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": false,
+        "readable": false,
+        "notes": "Я не побачив ні критерію, ні кадрів: доступ до файлів було автоматично відхилено. Оцінити видимі частини «Тоді» неможливо, тому потрібна людина. Повторіть перевірку з дозволом на читання теки або з її повним шляхом без короткої назви."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-sonnet-5-5": "NEEDS-HUMAN"
+      },
+      "escalated": true,
+      "quotesVerified": [],
+      "verdict": "NEEDS-HUMAN",
+      "factoryGate": "NOT-EARNED",
+      "rule": "R3: перевірки пройшли, агент не погоджується — вирішує людина",
+      "playwrightMs": 3527,
+      "reviewCostUsd": 0.02648,
+      "reviewWallMs": 15336
+    },
+    {
+      "id": "AC-CAL-15",
+      "proof": "AC-CAL-15",
+      "title": "AC-CAL-15: рік без закриттів показує «No closed days in school year 2026–2027»",
+      "screenshot": "docs/qa/uat/2026-11-18/frames/AC-CAL-15-then-1.png",
+      "video": "test-results/artifacts/calendar-календар-для-авто-2d971-s-in-school-year-2026–2027»-chromium/video.webm",
+      "trace": "test-results/artifacts/calendar-календар-для-авто-2d971-s-in-school-year-2026–2027»-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": false,
+        "readable": false,
+        "notes": "Файли критерію, журналу й кадрів не були прочитані через відмову в дозволі на шлях, тому я не можу оцінити жодну частину «Тоді». Потрібна ручна перевірка, або повторний запуск із дозволом чи з шляхом без коротких імен."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-sonnet-5-5": "NEEDS-HUMAN"
+      },
+      "escalated": true,
+      "quotesVerified": [],
+      "verdict": "NEEDS-HUMAN",
+      "factoryGate": "NOT-EARNED",
+      "rule": "R3: перевірки пройшли, агент не погоджується — вирішує людина",
+      "playwrightMs": 7223,
+      "reviewCostUsd": 0.02746,
+      "reviewWallMs": 16840
+    },
+    {
+      "id": "AC-DECIDE-04",
+      "proof": "AC-DECIDE-04",
+      "title": "AC-DECIDE-04: менеджер повертає запис без коментаря — статус не змінюється, видно «Tell the employee what to fix»",
+      "screenshot": "docs/qa/uat/2026-11-18/frames/AC-DECIDE-04-then-1.png",
+      "video": "test-results/artifacts/decisions-return-no-commen-942cb-l-the-employee-what-to-fix»-chromium/video.webm",
+      "trace": "test-results/artifacts/decisions-return-no-commen-942cb-l-the-employee-what-to-fix»-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": false,
+        "readable": false,
+        "notes": "Файли критерію й кроків не вдалося прочитати через відмову дозволу на шлях, тому кадри не оцінено. Потрібна повторна перевірка з доступом до теки або людська оцінка."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-sonnet-5-5": "NEEDS-HUMAN"
+      },
+      "escalated": true,
+      "quotesVerified": [],
+      "verdict": "NEEDS-HUMAN",
+      "factoryGate": "NOT-EARNED",
+      "rule": "R3: перевірки пройшли, агент не погоджується — вирішує людина",
+      "playwrightMs": 10217,
+      "reviewCostUsd": 0.02728,
+      "reviewWallMs": 19079
+    },
+    {
+      "id": "AC-DECIDE-14",
+      "proof": "AC-DECIDE-14",
+      "title": "AC-DECIDE-14: менеджер без записів на розгляді бачить «No records awaiting decision»",
+      "screenshot": "docs/qa/uat/2026-11-18/frames/AC-DECIDE-14-then-1.png",
+      "video": "test-results/artifacts/decisions-empty-AC-DECIDE--62fd7--records-awaiting-decision»-chromium/video.webm",
+      "trace": "test-results/artifacts/decisions-empty-AC-DECIDE--62fd7--records-awaiting-decision»-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": false,
+        "readable": false,
+        "notes": "Файли критерію, журналу й кадрів не вдалося прочитати через відмову в дозволі, тому оцінити видимий результат неможливо. Потрібна ручна перевірка, або повторний запуск із дозволеним доступом до теки."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-sonnet-5-5": "NEEDS-HUMAN"
+      },
+      "escalated": true,
+      "quotesVerified": [],
+      "verdict": "NEEDS-HUMAN",
+      "factoryGate": "NOT-EARNED",
+      "rule": "R3: перевірки пройшли, агент не погоджується — вирішує людина",
+      "playwrightMs": 6375,
+      "reviewCostUsd": 0.02685,
+      "reviewWallMs": 16980
+    }
+  ],
+  "negativeControls": [],
+  "cleanup": {
+    "at": "2026-11-18T21:39:21.910Z",
+    "deleted": [],
+    "remaining": [],
+    "leftoverRequests": 0
+  }
+}

@@ -7,7 +7,7 @@
 // Використання: node scripts/uat/review.mjs [--only AC-USERS-07] [--model claude-haiku-5-5] [--no-escalate]
 // Потрібен Claude Code (`claude` у PATH) з входом за підпискою або ANTHROPIC_API_KEY.
 import { spawn } from "node:child_process";
-import { cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -32,7 +32,12 @@ function runClaude(caseDir, model) {
     "--max-budget-usd", "0.50",
   ];
   // Окрема тека в системному temp: у cwd немає ні назви випадку (NC-…), ні файлів репо.
-  const blindDir = mkdtempSync(path.join(os.tmpdir(), "uat-review-"));
+  // realpathSync.native — не прикраса. На Windows os.tmpdir() віддає шлях із
+  // КОРОТКИМИ іменами (C:\Users\DEVELO~1\...), а вкладений Claude Code такі шляхи
+  // читати відмовляється й просить підтвердження, якого в сесії `-p` дати нікому.
+  // Прогін 2026-11-18 через це дав NEEDS-HUMAN на всіх 11 AC: агент не прочитав
+  // ні ac.md, ні кадрів і чесно написав, що не бачив нічого.
+  const blindDir = mkdtempSync(path.join(realpathSync.native(os.tmpdir()), "uat-review-"));
   cpSync(path.join(caseDir, "agent"), blindDir, { recursive: true });
   const started = Date.now();
   return new Promise((resolve) => {

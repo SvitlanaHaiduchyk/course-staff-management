@@ -66,6 +66,14 @@ if (!hasAdminKey()) {
           await expect(page.getByRole("button", { name: "Зберегти закриття" })).toBeVisible({ timeout: 120_000 });
         });
 
+        // Кадр «Тоді» знімається з видимої частини сторінки, а дві пропозиції в
+        // неї не вміщаються: рецензент 2026-11-18 побачив лише першу й чесно
+        // сказав «не можу судити». Зменшуємо масштаб, щоб у кадрі було все, що
+        // обіцяє «Тоді».
+        await page.evaluate(() => {
+          document.documentElement.style.zoom = "0.67";
+        });
+
         await thenStep(
           page,
           {
