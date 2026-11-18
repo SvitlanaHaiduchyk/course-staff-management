@@ -101,23 +101,23 @@
 | AC-DECIDE-24 | Погодження з коментарем | `supabase/migrations/20261026201058_leave_decisions.sql` (decide_leave_record) · `src/app/decisions/` | `tests/db/decisions.test.ts` · `tests/leave-decision.test.ts` | реалізовано |
 | AC-BALANCE-21 | Пізнє погодження за минулий навчальний рік | `supabase/migrations/20261102200744_leave_balance.sql` (employee_balance, рік за on_date) · `src/lib/leave/balance.ts` (schoolYearOf) | `tests/db/balance-access.test.ts` · `tests/leave-balance.test.ts` | реалізовано |
 | AC-BALANCE-22 | Заявка через межу навчальних років | `supabase/migrations/20261102202514_decide_with_split.sql` (рік за on_date) · `src/lib/leave/balance.ts` (schoolYearOf) | `tests/db/balance-access.test.ts` · `tests/leave-balance.test.ts` | реалізовано |
-| AC-CAL-01 | Закриття на цілі дні потрапляє в календар | — | — | відкладено (чекає реалізації) |
-| AC-CAL-02 | Працівник бачить закриття в календарі | — | — | відкладено (чекає реалізації) |
+| AC-CAL-01 | Закриття на цілі дні потрапляє в календар | `supabase/migrations/20261118094510_school_calendar.sql` (add_school_closure) | `tests/db/school-calendar.test.ts` | реалізовано |
+| AC-CAL-02 | Працівник бачить закриття в календарі | `supabase/migrations/20261118094510_school_calendar.sql` (school_closures_select_authenticated) | `tests/db/school-calendar.test.ts` | реалізовано |
 | AC-CAL-15 | Навчальний рік без закриттів має власне повідомлення | — | — | відкладено (чекає реалізації) |
-| AC-CAL-14 | Відвідувач без входу календаря не бачить | — | — | відкладено (чекає реалізації) |
+| AC-CAL-14 | Відвідувач без входу календаря не бачить | `supabase/migrations/20261118094510_school_calendar.sql` (revoke all … from anon) | `tests/db/school-calendar.test.ts` | реалізовано |
 | AC-CAL-03 | Закритий день не приймається з назвою закриття | `src/lib/leave/validate.ts` (validateClosedDate) | `tests/leave-closure.test.ts` | відкладено (обрізання розкладу реалізовано й покрито тестами — `src/lib/leave/closure.ts`; бракує таблиці закриттів і екранів: задачі 2–5 impl-school-calendar) |
 | AC-CAL-16 | Скорочений день без решти розкладу не приймається | `src/lib/leave/validate.ts` (validateClosedDate) | `tests/leave-closure.test.ts` | відкладено (правило й повідомлення реалізовано й покрито тестами; бракує таблиці закриттів і екранів: задачі 2–5 impl-school-calendar) |
 | AC-CAL-04 | Цілий день скороченого дня закінчується часом закриття | `src/lib/leave/closure.ts` (blocksAfterClosure) | `tests/leave-closure.test.ts` | відкладено (обрізання розкладу реалізовано й покрито тестами — `src/lib/leave/closure.ts`; бракує таблиці закриттів і екранів: задачі 2–5 impl-school-calendar) |
 | AC-CAL-05 | Години після часу закриття не приймаються | `src/lib/leave/closure.ts` (blocksOnDate) | `tests/leave-closure.test.ts` | відкладено (обрізання розкладу реалізовано й покрито тестами — `src/lib/leave/closure.ts`; бракує таблиці закриттів і екранів: задачі 2–5 impl-school-calendar) |
 | AC-CAL-06 | Цілий день скороченого дня списує 1.00 | — | — | відкладено (чекає реалізації) |
 | AC-CAL-20 | Пізніше закриття не змінює частку погодженого запису | `supabase/migrations/20261102200744_leave_balance.sql` (days_on_type, days_unpaid) · `supabase/migrations/20261102202514_decide_with_split.sql` (decide_leave_record) | — | відкладено (частку вже зберігаємо в момент погодження, а не перераховуємо — рішення зрізу WS6; бракує таблиці закриттів, щоб перевірити тестом: задачі 2–5 impl-school-calendar) |
-| AC-CAL-07 | Погоджений запис не дає закрити день | — | — | відкладено (чекає реалізації) |
-| AC-CAL-08 | Відхилений запис закрити день не заважає | — | — | відкладено (чекає реалізації) |
-| AC-CAL-10 | Дата кінця раніша за дату початку | — | — | відкладено (чекає реалізації) |
-| AC-CAL-11 | Дата вже закрита іншим закриттям | — | — | відкладено (чекає реалізації) |
-| AC-CAL-17 | Перетин із кількома закриттями називає кожне | — | — | відкладено (чекає реалізації) |
-| AC-CAL-09 | Після прибирання закриття дата знову приймається | — | — | відкладено (чекає реалізації) |
-| AC-CAL-12 | Працівник не відкриє сторінку зміни календаря | — | — | відкладено (чекає реалізації) |
-| AC-CAL-13 | Менеджер не закриє день повз сторінки порталу | — | — | відкладено (чекає реалізації) |
-| AC-CAL-18 | Закриття без назви не зберігається | — | — | відкладено (чекає реалізації) |
-| AC-CAL-19 | Назва довша за 100 символів не зберігається | — | — | відкладено (чекає реалізації) |
+| AC-CAL-07 | Погоджений запис не дає закрити день | `supabase/migrations/20261118094510_school_calendar.sql` (add_school_closure) | `tests/db/school-calendar.test.ts` | реалізовано |
+| AC-CAL-08 | Відхилений запис закрити день не заважає | `supabase/migrations/20261118094510_school_calendar.sql` (add_school_closure) | `tests/db/school-calendar.test.ts` | реалізовано |
+| AC-CAL-10 | Дата кінця раніша за дату початку | `supabase/migrations/20261118094510_school_calendar.sql` (add_school_closure) | `tests/db/school-calendar.test.ts` | реалізовано |
+| AC-CAL-11 | Дата вже закрита іншим закриттям | `supabase/migrations/20261118094510_school_calendar.sql` (add_school_closure, school_closures_no_overlap) | `tests/db/school-calendar.test.ts` | реалізовано |
+| AC-CAL-17 | Перетин із кількома закриттями називає кожне | `supabase/migrations/20261118094510_school_calendar.sql` (add_school_closure) | `tests/db/school-calendar.test.ts` | реалізовано |
+| AC-CAL-09 | Після прибирання закриття дата знову приймається | `supabase/migrations/20261118094510_school_calendar.sql` (school_closures_delete_admin) | `tests/db/school-calendar.test.ts` | відкладено (прибирання на рівні бази реалізовано й покрито тестом; бракує екрана адміністратора й заявки: задачі 4–5 impl-school-calendar) |
+| AC-CAL-12 | Працівник не відкриє сторінку зміни календаря | `supabase/migrations/20261118094510_school_calendar.sql` (school_closures_insert_admin) | `tests/db/school-calendar.test.ts` | відкладено (заборона на рівні бази реалізована й покрита тестом; бракує сторінки з текстом «Only an administrator…»: задача 4 impl-school-calendar) |
+| AC-CAL-13 | Менеджер не закриє день повз сторінки порталу | `supabase/migrations/20261118094510_school_calendar.sql` (school_closures_insert_admin, school_closures_delete_admin) | `tests/db/school-calendar.test.ts` | реалізовано |
+| AC-CAL-18 | Закриття без назви не зберігається | `supabase/migrations/20261118094510_school_calendar.sql` (add_school_closure) | `tests/db/school-calendar.test.ts` | реалізовано |
+| AC-CAL-19 | Назва довша за 100 символів не зберігається | `supabase/migrations/20261118094510_school_calendar.sql` (add_school_closure) | `tests/db/school-calendar.test.ts` | реалізовано |

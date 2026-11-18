@@ -25,16 +25,18 @@ Done when: AC-CAL-03, AC-CAL-04, AC-CAL-05, AC-CAL-16
 
 Міграція з таблицею `school_closures`, обмеженням перетину дат, політиками на кожну операцію й функцією `public.add_school_closure`, яка робить перевірку й запис однією транзакцією.
 
-- [ ] Міграція `*_school_calendar.sql`: `btree_gist`, таблиця, `check` на назву, дати й крок 5 хвилин, `exclude using gist` на перетин
-- [ ] RLS: `revoke all … from anon, authenticated`; `select` — усім авторизованим; `insert`, `delete` — лише `private.current_app_role() = 'admin'`; політики `update` немає й `grant update` не видаємо
-- [ ] `private.closure_on(date)`, `private.closed_from(date)` — `security definer`, `set search_path = ''`
-- [ ] `public.add_school_closure(...)` — `security invoker`, дослівні тексти `AC-CAL-07`, `AC-CAL-10`, `AC-CAL-11`; для скороченого дня блокують лише записи з хвилинами після часу закриття
-- [ ] там само — перевірки назви **до** вставки з дослівними текстами: порожня → `AC-CAL-18`, довша за 100 символів → `AC-CAL-19`; плюс «Enter the start and end dates» і «Enter the closing time» (припущення PM без AC)
-- [ ] там само — перетин із **кількома** закриттями: зібрати всі, по одному разу, з першою спільною датою кожного, впорядкувати за датою, з'єднати через «, » (`AC-CAL-17`)
-- [ ] `tests/db/school-calendar.test.ts` — відмовні AC на рівні бази
-- [ ] тест, що саме **функція**, а не `check`/`exclude`, дає ці тексти: помилка Postgres із назвою обмеження тест має валити
+- [x] Міграція `*_school_calendar.sql`: `btree_gist`, таблиця, `check` на назву, дати й крок 5 хвилин, `exclude using gist` на перетин
+- [x] RLS: `revoke all … from anon, authenticated`; `select` — усім авторизованим; `insert`, `delete` — лише `private.current_app_role() = 'admin'`; політики `update` немає й `grant update` не видаємо
+- [x] `private.closure_on(date)`, `private.closed_from(date)` — `security definer`, `set search_path = ''`
+- [x] `public.add_school_closure(...)` — `security invoker`, дослівні тексти `AC-CAL-07`, `AC-CAL-10`, `AC-CAL-11`; для скороченого дня блокують лише записи з хвилинами після часу закриття
+- [x] там само — перевірки назви **до** вставки з дослівними текстами: порожня → `AC-CAL-18`, довша за 100 символів → `AC-CAL-19`; плюс «Enter the start and end dates» і «Enter the closing time» (припущення PM без AC)
+- [x] там само — перетин із **кількома** закриттями: зібрати всі, по одному разу, з першою спільною датою кожного, впорядкувати за датою, з'єднати через «, » (`AC-CAL-17`)
+- [x] `tests/db/school-calendar.test.ts` — відмовні AC на рівні бази
+- [x] тест, що саме **функція**, а не `check`/`exclude`, дає ці тексти: помилка Postgres із назвою обмеження тест має валити
 
 Done when: AC-CAL-07, AC-CAL-08, AC-CAL-10, AC-CAL-11, AC-CAL-13, AC-CAL-17, AC-CAL-18, AC-CAL-19
+
+**Зроблено.** Міграція `20261118094510_school_calendar.sql`. Одна несподіванка: `btree_gist` у PGlite не встановлений за замовчуванням, тож тестовий харнес (`tests/db/supabase-pglite.ts`) тепер підключає його як contrib-розширення — інакше міграція не застосовується й жоден тест бази не запускається.
 
 ## 3. Сторінка календаря
 
