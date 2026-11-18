@@ -182,6 +182,12 @@ test.describe("адміністратор відкриває зміну кале
         await page.goto("/calendar/manage");
       });
 
+      // Форма й перелік закриттів разом не вміщаються у видиму частину:
+      // рецензент 2026-11-18 побачив лише форму й не зміг підтвердити перелік.
+      await page.evaluate(() => {
+        document.documentElement.style.zoom = "0.67";
+      });
+
       await thenStep(
         page,
         {
