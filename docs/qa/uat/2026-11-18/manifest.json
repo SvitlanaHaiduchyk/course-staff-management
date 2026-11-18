@@ -1,0 +1,445 @@
+{
+  "kind": "uat",
+  "generatedAt": "2026-11-18T21:48:55.752Z",
+  "baseURL": "https://course-staff-management.vercel.app",
+  "deployedSha": "5ebe8cc8dbdfae2ae36a6090a9965883b241d267",
+  "testsCommit": "f0792bb12e11f507576e7478fe981884bac8a4e8",
+  "reviewer": {
+    "model": "claude-haiku-5-5",
+    "disputes": "claude-sonnet-5-5"
+  },
+  "note": "Відео й траси не в git (test-results/ локально, артефакт CI). check-recordings конвеєра WS9 вимагає відео на диску — для нього цей manifest треба доповнити.",
+  "results": [
+    {
+      "id": "AC-ASSIST-01",
+      "proof": "AC-ASSIST-01",
+      "title": "AC-ASSIST-01: помічник пропонує два закриття, і календар лишається без змін",
+      "screenshot": "docs/qa/uat/2026-11-18/frames/AC-ASSIST-01-then-1.png",
+      "video": "test-results/artifacts/assistant-live-помічник-ка-193e0-календар-лишається-без-змін-chromium/video-1.webm",
+      "trace": "test-results/artifacts/assistant-live-помічник-ка-193e0-календар-лишається-без-змін-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": false,
+        "readable": false,
+        "notes": "На кадрі дві картки закриттів: «Teachers' meeting» (11/20/2026, 12:00 PM) і «Winter break» (12/28/2026 – 01/08/2027, час порожній), а також підпис «Ще не збережено…». Дати відображені в локальному форматі поля вводу, тому суворої посимвольної відповідності критерію немає — потрібна людина, щоб вирішити, чи це прийнятно."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-sonnet-5-5": "NEEDS-HUMAN"
+      },
+      "escalated": true,
+      "quotesVerified": [
+        {
+          "quote": "Teachers' meeting",
+          "onPage": true
+        },
+        {
+          "quote": "Winter break",
+          "onPage": true
+        },
+        {
+          "quote": "Ще не збережено. Виправте або приберіть зайве, потім збережте.",
+          "onPage": false
+        }
+      ],
+      "verdict": "NEEDS-HUMAN",
+      "factoryGate": "NOT-EARNED",
+      "rule": "R3: перевірки пройшли, агент не погоджується — вирішує людина",
+      "playwrightMs": 20412,
+      "reviewCostUsd": 0.04158,
+      "reviewWallMs": 26756
+    },
+    {
+      "id": "AC-ASSIST-02",
+      "proof": "AC-ASSIST-02",
+      "title": "AC-ASSIST-02: збережені без змін пропозиції потрапляють у шкільний календар",
+      "screenshot": "docs/qa/uat/2026-11-18/frames/AC-ASSIST-02-then-1.png",
+      "video": "test-results/artifacts/assistant-live-помічник-ка-3ef59-апляють-у-шкільний-календар-chromium/video.webm",
+      "trace": "test-results/artifacts/assistant-live-помічник-ка-3ef59-апляють-у-шкільний-календар-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі сторінка «Шкільний календар» (українська локаль, UKR увімкнено) з двома рядками: «Teachers' meeting» із датою 2026-11-20 і часом 12:00 та «Winter break» із датами 2026-12-28 – 2027-01-08. Час на екрані показано як «з 12:00» — це український переклад слова «from» з критерію, а не дослівне повторення; дата, час і назви збігаються за змістом. Частини, що мають цитувати текст, відповідають критерію."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "Teachers' meeting",
+          "onPage": true
+        },
+        {
+          "quote": "2026-11-20, з 12:00",
+          "onPage": true
+        },
+        {
+          "quote": "Winter break",
+          "onPage": true
+        },
+        {
+          "quote": "2026-12-28 – 2027-01-08",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 19520,
+      "reviewCostUsd": 0.00247,
+      "reviewWallMs": 9696
+    },
+    {
+      "id": "AC-ASSIST-11",
+      "proof": "AC-ASSIST-11",
+      "title": "AC-ASSIST-11: працівник за прямим посиланням бачить відмову й жодного поля",
+      "screenshot": "docs/qa/uat/2026-11-18/frames/AC-ASSIST-11-then-1.png",
+      "video": "test-results/artifacts/assistant-помічник-календа-a8765-чить-відмову-й-жодного-поля-chromium/video.webm",
+      "trace": "test-results/artifacts/assistant-помічник-календа-a8765-чить-відмову-й-жодного-поля-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі сторінки «Помічник календаря» видно червоний напис у білому полі: «Only an administrator can change the school calendar». Текст збігається з критерієм посимвольно. Поле календаря, кнопка пропозицій і відсутність закриттів не оцінювалися, бо це частини «Не з кадрів»."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "Only an administrator can change the school calendar",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 5798,
+      "reviewCostUsd": 0.00214,
+      "reviewWallMs": 6467
+    },
+    {
+      "id": "AC-BALANCE-13",
+      "proof": "AC-BALANCE-13",
+      "title": "AC-BALANCE-13: працівник відкриває чужі залишки за прямим посиланням — чисел не бачить",
+      "screenshot": "docs/qa/uat/2026-11-18/frames/AC-BALANCE-13-then-1.png",
+      "video": "test-results/artifacts/balances-forbidden-AC-BALA-48372-осиланням-—-чисел-не-бачить-chromium/video.webm",
+      "trace": "test-results/artifacts/balances-forbidden-AC-BALA-48372-осиланням-—-чисел-не-бачить-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі видно заголовок «Залишки працівника» і червоне повідомлення в білій рамці з текстом, що збігається з критерієм посимвольно. Таблиці залишків на кадрі немає, чисел і чужої адреси теж немає. Це узгоджується з тим, що залишки не показані."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "Залишки працівника",
+          "onPage": true
+        },
+        {
+          "quote": "Залишки працівника бачить він сам, відповідальний менеджер будь-якої його посади й адміністратор.",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 7116,
+      "reviewCostUsd": 0.00218,
+      "reviewWallMs": 6355
+    },
+    {
+      "id": "AC-CAL-02",
+      "proof": "AC-CAL-02",
+      "title": "AC-CAL-02: працівник бачить пункт «Шкільний календар» у шапці",
+      "screenshot": "docs/qa/uat/2026-11-18/frames/AC-CAL-02-then-1.png",
+      "video": "test-results/artifacts/calendar-календар-для-авто-26a96-«Шкільний-календар»-у-шапці-chromium/video.webm",
+      "trace": "test-results/artifacts/calendar-календар-для-авто-26a96-«Шкільний-календар»-у-шапці-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі видно верхню навігацію з пунктом «Шкільний календар», він підсвічений як поточна сторінка, а сторінка має заголовок «Шкільний календар» — це узгоджується з /calendar. Окремо: у картці «Навчальний рік 2026–2027» написано «No closed days in school year 2026–2027», а «Winter break» з датами на кадрі немає, тому варто перевірити людиною, чи канікули мали відобразитися на цьому екрані."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "Шкільний календар",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 6820,
+      "reviewCostUsd": 0.00255,
+      "reviewWallMs": 11034
+    },
+    {
+      "id": "AC-CAL-09",
+      "proof": "AC-CAL-09",
+      "title": "AC-CAL-09: адміністратор бачить форму додавання й перелік закриттів",
+      "screenshot": "docs/qa/uat/2026-11-18/frames/AC-CAL-09-then-1.png",
+      "video": "test-results/artifacts/calendar-адміністратор-від-98dbf-давання-й-перелік-закриттів-chromium/video.webm",
+      "trace": "test-results/artifacts/calendar-адміністратор-від-98dbf-давання-й-перелік-закриттів-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": false,
+        "readable": false,
+        "notes": "На кадрі сторінка «Змінити календар» з формою «Додати закриття»: назва, вид закриття, дата початку, дата кінця, час закриття та кнопка «Додати закриття». Розділ наявних закриттів не видно, бо внизу кадру лише верхній край наступної картки без тексту."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-sonnet-5-5": "NEEDS-HUMAN"
+      },
+      "escalated": true,
+      "quotesVerified": [
+        {
+          "quote": "Додати закриття",
+          "onPage": true
+        },
+        {
+          "quote": "Назва закриття",
+          "onPage": true
+        },
+        {
+          "quote": "Вид закриття",
+          "onPage": true
+        },
+        {
+          "quote": "Дата початку",
+          "onPage": true
+        },
+        {
+          "quote": "Дата кінця (для цілих днів)",
+          "onPage": true
+        },
+        {
+          "quote": "Час закриття (для скороченого дня)",
+          "onPage": true
+        }
+      ],
+      "verdict": "NEEDS-HUMAN",
+      "factoryGate": "NOT-EARNED",
+      "rule": "R3: перевірки пройшли, агент не погоджується — вирішує людина",
+      "playwrightMs": 5973,
+      "reviewCostUsd": 0.03363,
+      "reviewWallMs": 18501
+    },
+    {
+      "id": "AC-CAL-12",
+      "proof": "AC-CAL-12",
+      "title": "AC-CAL-12: працівник за прямим посиланням бачить відмову",
+      "screenshot": "docs/qa/uat/2026-11-18/frames/AC-CAL-12-then-1.png",
+      "video": "test-results/artifacts/calendar-зміна-календаря-—-5955c-м-посиланням-бачить-відмову-chromium/video.webm",
+      "trace": "test-results/artifacts/calendar-зміна-календаря-—-5955c-м-посиланням-бачить-відмову-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі сторінка «Змінити календар» (шапка з пунктом «Шкільний календар») містить червоний напис «Only an administrator can change the school calendar», який збігається з критерієм посимвольно. Форми закриттів на кадрі не видно, тому цю частину не оцінюю; «календар не змінився» кадр не показує і в списку видимих частин її немає."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "Only an administrator can change the school calendar",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 6434,
+      "reviewCostUsd": 0.00195,
+      "reviewWallMs": 6519
+    },
+    {
+      "id": "AC-CAL-14",
+      "proof": "AC-CAL-14",
+      "title": "AC-CAL-14: відвідувач без входу бачить сторінку входу й жодної назви закриття",
+      "screenshot": "docs/qa/uat/2026-11-18/frames/AC-CAL-14-then-1.png",
+      "video": "test-results/artifacts/calendar-календар-для-неав-2d8fc-оду-й-жодної-назви-закриття-chromium/video.webm",
+      "trace": "test-results/artifacts/calendar-календар-для-неав-2d8fc-оду-й-жодної-назви-закриття-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі frame-then-1.png видно сторінку входу: заголовок «Вхід», поля «Email» і «Пароль», кнопка «Увійти». Жодної назви чи дати закриття на кадрі немає, але за правилами це не оцінюється; адресу в адресному рядку на кадрі не видно, тож /login не підтверджено кадром."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "Вхід",
+          "onPage": true
+        },
+        {
+          "quote": "Email",
+          "onPage": true
+        },
+        {
+          "quote": "Пароль",
+          "onPage": true
+        },
+        {
+          "quote": "Увійти",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 3316,
+      "reviewCostUsd": 0.00215,
+      "reviewWallMs": 6254
+    },
+    {
+      "id": "AC-CAL-15",
+      "proof": "AC-CAL-15",
+      "title": "AC-CAL-15: рік без закриттів показує «No closed days in school year 2026–2027»",
+      "screenshot": "docs/qa/uat/2026-11-18/frames/AC-CAL-15-then-1.png",
+      "video": "test-results/artifacts/calendar-календар-для-авто-2d971-s-in-school-year-2026–2027»-chromium/video.webm",
+      "trace": "test-results/artifacts/calendar-календар-для-авто-2d971-s-in-school-year-2026–2027»-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі /calendar заголовок «Шкільний календар» і під карткою «Навчальний рік 2026–2027» написаний текст «No closed days in school year 2026–2027». Рядків із закриттями на кадрі немає, що узгоджується з умовою. Текст читабельний, тире між роками виглядає як у критерії."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "Шкільний календар",
+          "onPage": true
+        },
+        {
+          "quote": "No closed days in school year 2026–2027",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 5970,
+      "reviewCostUsd": 0.00217,
+      "reviewWallMs": 6212
+    },
+    {
+      "id": "AC-DECIDE-04",
+      "proof": "AC-DECIDE-04",
+      "title": "AC-DECIDE-04: менеджер повертає запис без коментаря — статус не змінюється, видно «Tell the employee what to fix»",
+      "screenshot": "docs/qa/uat/2026-11-18/frames/AC-DECIDE-04-then-1.png",
+      "video": "test-results/artifacts/decisions-return-no-commen-942cb-l-the-employee-what-to-fix»-chromium/video.webm",
+      "trace": "test-results/artifacts/decisions-return-no-commen-942cb-l-the-employee-what-to-fix»-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі над списком видно червоний напис «Tell the employee what to fix», а в таблиці «На розгляді» під заголовком «Awaiting decision» лишився запис Sick leave з датою 2027-11-22 і кнопками Approve/Reject. Позначки «Returned for revision» на кадрі немає, але за правилами це не оцінюється."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "Tell the employee what to fix",
+          "onPage": true
+        },
+        {
+          "quote": "Awaiting decision",
+          "onPage": true
+        },
+        {
+          "quote": "2027-11-22",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 10980,
+      "reviewCostUsd": 0.00218,
+      "reviewWallMs": 7244
+    },
+    {
+      "id": "AC-DECIDE-14",
+      "proof": "AC-DECIDE-14",
+      "title": "AC-DECIDE-14: менеджер без записів на розгляді бачить «No records awaiting decision»",
+      "screenshot": "docs/qa/uat/2026-11-18/frames/AC-DECIDE-14-then-1.png",
+      "video": "test-results/artifacts/decisions-empty-AC-DECIDE--62fd7--records-awaiting-decision»-chromium/video.webm",
+      "trace": "test-results/artifacts/decisions-empty-AC-DECIDE--62fd7--records-awaiting-decision»-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі frame-then-1.png (сторінка /decisions) видно заголовок «Awaiting decision» і повідомлення «No records awaiting decision» у картці «На розгляді». Обидві видимі частини «Тоді» збігаються з критерієм посимвольно. Рядків із записами та кнопок рішення на кадрі немає, що відповідає очікуванню."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "Awaiting decision",
+          "onPage": true
+        },
+        {
+          "quote": "No records awaiting decision",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 6578,
+      "reviewCostUsd": 0.00207,
+      "reviewWallMs": 6310
+    }
+  ],
+  "negativeControls": [],
+  "cleanup": {
+    "at": "2026-11-18T21:48:14.018Z",
+    "deleted": [],
+    "remaining": [],
+    "leftoverRequests": 0
+  }
+}

@@ -48,43 +48,7 @@ test.describe("помічник календаря для працівника",
   );
 });
 
-test.describe("помічник календаря для адміністратора", () => {
-  test.use({ storageState: "playwright/.auth/admin.json" });
-
-  test(
-    "AC-ASSIST-01: адміністратор бачить поле тексту, а календар при цьому не змінюється",
-    { tag: ["@uat"], annotation: { type: "ac", description: "AC-ASSIST-01" } },
-    async ({ page }) => {
-      await given("адміністратор admin@example.test — у порталі", async () => {
-        await page.goto("/calendar/manage");
-      });
-
-      await when("відкриває помічника календаря", async () => {
-        await page.goto("/calendar/assistant");
-      });
-
-      await thenStep(
-        page,
-        {
-          clause: "the administrator opens the calendar assistant and pastes the text of the school calendar.",
-          visible: [
-            "поле для тексту календаря",
-            "кнопка, що просить пропозиції",
-            "посилання на ручне додавання закриття",
-          ],
-          hidden: [
-            `повідомлення «${ONLY_ADMIN}»`,
-            "перелік запропонованих закриттів: нічого ще не запропоновано",
-          ],
-        },
-        async () => {
-          await expect(page.locator('textarea[name="text"]')).toBeVisible();
-          await expect(page.getByRole("button", { name: "Запропонувати закриття" })).toBeVisible();
-          await expect(page.getByRole("link", { name: "Змінити календар" })).toBeVisible();
-          await expect(page.getByText(ONLY_ADMIN)).toHaveCount(0);
-          await expect(page.getByRole("button", { name: "Зберегти закриття" })).toHaveCount(0);
-        },
-      );
-    },
-  );
-});
+// AC-ASSIST-01 тут більше немає: його доводить `assistant-live.spec.ts`, де
+// помічника справді просять про пропозиції. Тест, що лише переконувався в
+// наявності поля, займав той самий AC у звіті UAT і показував «пройшло» там,
+// де головного — двох пропозицій із тексту — ніхто не перевіряв.
