@@ -331,11 +331,58 @@ export type Database = {
           },
         ];
       };
+      school_closures: {
+        Row: {
+          id: string;
+          name: string;
+          starts_on: string;
+          ends_on: string;
+          closes_at: string | null;
+          created_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          starts_on: string;
+          ends_on: string;
+          closes_at?: string | null;
+          created_by: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          starts_on?: string;
+          ends_on?: string;
+          closes_at?: string | null;
+          created_by?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "school_closures_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
+      add_school_closure: {
+        Args: {
+          p_name: string;
+          p_starts_on: string;
+          p_ends_on: string;
+          p_closes_at?: string | null;
+        };
+        Returns: string;
+      };
       submit_leave_request: {
         Args: {
           p_leave_type: string;

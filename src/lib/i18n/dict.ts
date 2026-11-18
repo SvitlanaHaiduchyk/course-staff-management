@@ -64,7 +64,13 @@ const UK = {
   "schedule.legend.leave": "Відпустка — тип і статус написано в самій смузі",
   "schedule.asText": "Розклад посад текстом",
 
+  "calendar.title": "Шкільний календар",
+  "calendar.schoolYear": "Навчальний рік",
+  "calendar.yearNav": "Інші навчальні роки",
+  "calendar.from": "з",
+
   "nav.requests": "Мої заявки на відпустку",
+  "nav.calendar": "Шкільний календар",
   "nav.balances": "Мої залишки",
   "nav.main": "Основна навігація",
   "nav.home": "На головну",
@@ -169,7 +175,13 @@ const EN: Record<MessageKey, string> = {
   "schedule.legend.leave": "Leave — the type and the status are written on the bar",
   "schedule.asText": "Positions' schedule as text",
 
+  "calendar.title": "School calendar",
+  "calendar.schoolYear": "School year",
+  "calendar.yearNav": "Other school years",
+  "calendar.from": "from",
+
   "nav.requests": "My requests",
+  "nav.calendar": "School calendar",
   "nav.balances": "My balances",
   "nav.main": "Main navigation",
   "nav.home": "Home",
