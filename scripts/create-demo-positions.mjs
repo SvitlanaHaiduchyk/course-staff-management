@@ -16,29 +16,16 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const secretKey = process.env.SUPABASE_SECRET_KEY;
+import { requireSupabaseEnv, requireSyntheticEmail } from "./lib/demo-env.mjs";
 
-const missing = [
-  ["NEXT_PUBLIC_SUPABASE_URL", url],
-  ["SUPABASE_SECRET_KEY", secretKey],
-]
-  .filter(([, value]) => !value)
-  .map(([name]) => name);
-if (missing.length) {
-  console.error(`Не задано: ${missing.join(", ")}. Додайте їх у .env.local (див. .env.example).`);
-  process.exit(1);
-}
+const [url, secretKey] = requireSupabaseEnv();
 
 const file = path.join(process.cwd(), "supabase", "demo-positions.json");
 const plan = JSON.parse(readFileSync(file, "utf8"));
 
 for (const p of plan.positions) {
   for (const email of [p.employee, ...(p.managers ?? [])]) {
-    if (!/^[^@\s]+@example\.test$/i.test(email ?? "")) {
-      console.error(`Лише синтетичні адреси *@example.test: "${email}" у supabase/demo-positions.json.`);
-      process.exit(1);
-    }
+    requireSyntheticEmail(email, "supabase/demo-positions.json");
   }
 }
 

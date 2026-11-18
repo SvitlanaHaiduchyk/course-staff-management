@@ -19,19 +19,9 @@ import path from "node:path";
 
 import { createClient } from "@supabase/supabase-js";
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const secretKey = process.env.SUPABASE_SECRET_KEY;
+import { requireSupabaseEnv, requireSyntheticEmail } from "./lib/demo-env.mjs";
 
-const missing = [
-  ["NEXT_PUBLIC_SUPABASE_URL", url],
-  ["SUPABASE_SECRET_KEY", secretKey],
-]
-  .filter(([, value]) => !value)
-  .map(([name]) => name);
-if (missing.length) {
-  console.error(`Не задано: ${missing.join(", ")}. Додайте їх у .env.local (див. .env.example).`);
-  process.exit(1);
-}
+const [url, secretKey] = requireSupabaseEnv();
 
 const LEAVE_TYPES = ["sick", "personal", "unpaid", "family_celebration"];
 
@@ -39,10 +29,7 @@ const file = path.join(process.cwd(), "supabase", "demo-carryover.json");
 const plan = JSON.parse(readFileSync(file, "utf8"));
 
 for (const row of plan.carryover) {
-  if (!/^[^@\s]+@example\.test$/i.test(row.employee ?? "")) {
-    console.error(`Лише синтетичні адреси *@example.test: "${row.employee}".`);
-    process.exit(1);
-  }
+  requireSyntheticEmail(row.employee, "supabase/demo-carryover.json");
   if (!LEAVE_TYPES.includes(row.leave_type)) {
     console.error(`Невідомий тип відпустки "${row.leave_type}" у ${row.employee}.`);
     process.exit(1);

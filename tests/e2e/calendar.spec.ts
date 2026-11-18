@@ -69,6 +69,8 @@ test.describe("календар для авторизованого", () => {
         },
         async () => {
           await expect(page.locator('nav a[href="/calendar"]').first()).toBeVisible();
+          // Кнопки зміни календаря працівник не бачить навіть на /calendar.
+          await page.goto("/calendar");
           await expect(page.locator('a[href="/calendar/manage"]')).toHaveCount(0);
         },
       );
@@ -109,6 +111,92 @@ test.describe("календар для неавторизованого", () => 
           await expect(page.getByLabel("Email")).toBeVisible();
           await expect(page.getByTestId("calendar-list")).toHaveCount(0);
           await expect(page.getByTestId("calendar-empty")).toHaveCount(0);
+        },
+      );
+    },
+  );
+});
+
+test.describe("зміна календаря — лише адміністратор", () => {
+  test.use({ storageState: "playwright/.auth/teacher1.json" });
+
+  test(
+    "AC-CAL-12: працівник за прямим посиланням бачить відмову",
+    { tag: ["@uat"], annotation: { type: "ac", description: "AC-CAL-12" } },
+    async ({ page }) => {
+      await given("працівник teacher1@example.test — у порталі й не є адміністратором", async () => {
+        await page.goto("/");
+        await expect(page.getByTestId("user-email")).toHaveText(EMPLOYEE);
+      });
+
+      await when("відкриває сторінку зміни шкільного календаря за прямим посиланням", async () => {
+        await page.goto("/calendar/manage");
+      });
+
+      await thenStep(
+        page,
+        {
+          // «Тоді» — дослівно з AC-CAL-12 (requirements/04-school-calendar.md).
+          clause:
+            'teacher1@example.test sees the message "Only an administrator can change the school calendar", and the school calendar is unchanged.',
+          visible: ["повідомлення «Only an administrator can change the school calendar»"],
+          hidden: [
+            "форми додавання закриття: полів назви, дат і часу немає",
+            "жодної кнопки «Прибрати» біля наявних закриттів",
+          ],
+        },
+        async () => {
+          await expect(
+            page.getByText("Only an administrator can change the school calendar", {
+              exact: true,
+            }),
+          ).toBeVisible();
+          await expect(page.locator('input[name="name"]')).toHaveCount(0);
+          await expect(page.locator('input[name="startsOn"]')).toHaveCount(0);
+          await expect(page.locator('input[name="closesAt"]')).toHaveCount(0);
+          // Саме кнопки форм календаря, а не будь-який submit: перемикач мови
+          // й вихід у шапці — теж submit, і вони на місці для кожного.
+          await expect(page.getByRole("button", { name: "Додати закриття" })).toHaveCount(0);
+          await expect(page.getByRole("button", { name: "Прибрати" })).toHaveCount(0);
+        },
+      );
+    },
+  );
+});
+
+test.describe("адміністратор відкриває зміну календаря", () => {
+  test.use({ storageState: "playwright/.auth/admin.json" });
+
+  test(
+    "AC-CAL-09: адміністратор бачить форму додавання й перелік закриттів",
+    { tag: ["@uat"], annotation: { type: "ac", description: "AC-CAL-09" } },
+    async ({ page }) => {
+      await given("адміністратор admin@example.test — у порталі", async () => {
+        await page.goto("/calendar");
+      });
+
+      await when("переходить до зміни шкільного календаря", async () => {
+        await page.goto("/calendar/manage");
+      });
+
+      await thenStep(
+        page,
+        {
+          clause: "closures are created by the administrator in the portal.",
+          visible: [
+            "форма додавання: назва, вид закриття, дати й час закриття",
+            "розділ наявних закриттів",
+          ],
+          hidden: ["повідомлення «Only an administrator can change the school calendar»"],
+        },
+        async () => {
+          await expect(page.locator('input[name="name"]')).toBeVisible();
+          await expect(page.locator('input[name="startsOn"]')).toBeVisible();
+          await expect(page.locator('input[name="closesAt"]')).toBeVisible();
+          await expect(page.locator('input[name="kind"]')).toHaveCount(2);
+          await expect(
+            page.getByText("Only an administrator can change the school calendar"),
+          ).toHaveCount(0);
         },
       );
     },
