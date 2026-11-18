@@ -1,7 +1,7 @@
 /**
  * Обрізання розкладу закриттями шкільного календаря.
  *
- * Числа — з прикладів PM у requirements/04-school-calendar.md (знімок 2026-11-04).
+ * Числа — з прикладів PM у requirements/04-school-calendar.md (знімок 2026-11-18).
  * Задача 1 зрізу: openspec/changes/impl-school-calendar/tasks.md.
  */
 
@@ -16,7 +16,7 @@ import {
   type Closure,
 } from "@/lib/leave/closure";
 import { scheduleFor, totalMinutes, wholeDayRange, type ScheduleBlock } from "@/lib/leave/schedule";
-import { schoolClosedMessage, validateClosedDate } from "@/lib/leave/validate";
+import { NO_WORKING_HOURS, schoolClosedMessage, validateClosedDate } from "@/lib/leave/validate";
 
 /** П'ятниця 2026-11-20 — дата скороченого дня «Teachers' meeting» з AC-CAL-04. */
 const FRIDAY = "2026-11-20";
@@ -127,7 +127,7 @@ describe("обрізання блоків", () => {
 
 describe("закрита дата в заявці", () => {
   it("AC-CAL-03: закритий на цілий день день не приймається з назвою закриття", () => {
-    const result = validateClosedDate(winterBreak);
+    const result = validateClosedDate(winterBreak, []);
 
     expect(result).toEqual({
       ok: false,
@@ -139,10 +139,46 @@ describe("закрита дата в заявці", () => {
   });
 
   it("AC-CAL-04: дата зі скороченим днем приймається — її розклад лише обрізано", () => {
-    expect(validateClosedDate(earlyDismissal)).toEqual({ ok: true });
+    // Лишився блок 08:30–12:00, тож дата робоча: AC-CAL-16 не спрацьовує.
+    const left = blocksOnDate(scheduleFor(weekdays, FRIDAY), [earlyDismissal], FRIDAY);
+
+    expect(left).toHaveLength(1);
+    expect(validateClosedDate(earlyDismissal, left)).toEqual({ ok: true });
   });
 
   it("AC-CAL-03: дата без закриття приймається", () => {
-    expect(validateClosedDate(null)).toEqual({ ok: true });
+    expect(validateClosedDate(null, scheduleFor(weekdays, FRIDAY))).toEqual({ ok: true });
+  });
+
+  it("AC-CAL-16: скорочений день без решти розкладу не приймається з назвою закриття", () => {
+    // Працівник працює лише по обіді: 13:00–17:00 проти закриття з 12:00.
+    const left = blocksOnDate(scheduleFor(afternoonOnly, FRIDAY), [earlyDismissal], FRIDAY);
+
+    expect(left).toEqual([]);
+    expect(validateClosedDate(earlyDismissal, left)).toEqual({
+      ok: false,
+      message: "The school is closed on this day: Teachers' meeting",
+    });
+  });
+
+  it("AC-CAL-16: назва закриття перемагає «немає робочих годин»", () => {
+    // Межа, заради якої й поставлено питання …spec#22: блоків нуль в обох
+    // випадках, але повідомлення різні. Закриття називають, відсутність
+    // розкладу — ні.
+    const left = blocksOnDate(scheduleFor(afternoonOnly, FRIDAY), [earlyDismissal], FRIDAY);
+    const closed = validateClosedDate(earlyDismissal, left);
+
+    expect(closed.ok).toBe(false);
+    expect(closed.ok === false && closed.message).toBe(schoolClosedMessage("Teachers' meeting"));
+    expect(closed.ok === false && closed.message).not.toBe(NO_WORKING_HOURS);
+  });
+
+  it("AC-CAL-16: хоч один блок до часу закриття — дата приймається", () => {
+    // Дзеркало попереднього тесту: та сама дата й те саме закриття, але
+    // розклад починається зранку, тож 08:30–12:00 лишається.
+    const left = blocksOnDate(scheduleFor(twoBlocksFri, FRIDAY), [earlyDismissal], FRIDAY);
+
+    expect(left).toEqual([{ weekday: 5, startsAt: "08:30", endsAt: "12:00" }]);
+    expect(validateClosedDate(earlyDismissal, left)).toEqual({ ok: true });
   });
 });
