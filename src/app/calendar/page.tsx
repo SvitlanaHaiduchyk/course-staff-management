@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 
+import Link from "next/link";
+
 import { ClosureList } from "@/components/closure-list";
+import { buttonVariants } from "@/components/ui/button";
 import { SchoolYearNav } from "@/components/school-year-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getMessages } from "@/lib/i18n/server";
@@ -44,6 +47,15 @@ export default async function CalendarPage({
 
   const { from, to } = schoolYearRange(year);
 
+  // Роль — із profiles, ніколи з user_metadata. Потрібна лише для того, чи
+  // показувати кнопку зміни календаря; доступ тримають політики.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", claims.sub)
+    .maybeSingle();
+  const isAdmin = profile?.role === "admin";
+
   // Рік фільтруємо в базі, а не в пам'яті: закриттів за всі роки може бути
   // багато, а сторінці потрібен лише один рік.
   const { data: rows } = await supabase
@@ -73,12 +85,20 @@ export default async function CalendarPage({
           <ClosureList closures={closures} year={year} fromLabel={m("calendar.from")} />
 
           {/*
-            Посилання на `/calendar/manage` тут буде — план зрізу, розділ
-            «Навігація»: у шапці його немає, веде кнопка з цієї сторінки й лише
-            адміністраторові. Але самої сторінки ще немає (задача 4), а
-            посилання в нікуди гірше за його відсутність, тож додамо його
-            разом зі сторінкою.
+            Посилання на зміну календаря — лише адміністраторові й лише тут:
+            у шапці його немає (план зрізу, розділ «Навігація»). Працівник
+            бачить сторінку календаря без жодного натяку на кнопку, а якщо
+            відкриє /calendar/manage за прямим посиланням — отримає відмову
+            (AC-CAL-12).
           */}
+          {isAdmin ? (
+            <Link
+              href="/calendar/manage"
+              className={`${buttonVariants({ variant: "outline", size: "sm" })} self-start`}
+            >
+              {m("calendar.manage")}
+            </Link>
+          ) : null}
         </CardContent>
       </Card>
     </main>

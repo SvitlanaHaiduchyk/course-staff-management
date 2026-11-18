@@ -55,13 +55,15 @@ Done when: AC-CAL-01, AC-CAL-02, AC-CAL-14, AC-CAL-15
 
 `/calendar/manage` — форма додавання й кнопка прибирання, обидві лише для адміністратора.
 
-- [ ] `src/app/calendar/manage/page.tsx` — перевірка ролі в самій сторінці, текст «Only an administrator can change the school calendar»
-- [ ] server action `addClosure` — виклик `supabase.rpc("add_school_closure", …)`, помилки `Alert` варіанта `destructive`
-- [ ] server action `removeClosure` — `delete` за `id`
-- [ ] `supabase/demo-closures.json` і `npm run closures:demo` — тестові закриття
-- [ ] тести: відмова не-адміністраторові, успішне додавання й прибирання
+- [x] `src/app/calendar/manage/page.tsx` — перевірка ролі в самій сторінці, текст «Only an administrator can change the school calendar»
+- [x] server action `addClosure` — виклик `supabase.rpc("add_school_closure", …)`, помилки `Alert` варіанта `destructive`
+- [x] server action `removeClosure` — `delete` за `id`
+- [x] `supabase/demo-closures.json` і `npm run closures:demo` — тестові закриття
+- [x] тести: відмова не-адміністраторові, успішне додавання й прибирання
 
 Done when: AC-CAL-09, AC-CAL-12
+
+**Зроблено.** `AC-CAL-12` закрито повністю. `AC-CAL-09` лишається відкладеним: прибирання реалізовано й покрито тестами, але друга половина критерію — «дата **знову приймається** в новій заявці» — перевіряється у формі заявки, тобто в задачі 5.
 
 ## 5. Вплив на заявку
 

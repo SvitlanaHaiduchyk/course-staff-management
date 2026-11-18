@@ -16,6 +16,7 @@
     "db:types": "supabase gen types typescript --linked > src/lib/supabase/database.types.ts",
     "users:demo": "node --env-file=.env.local scripts/create-demo-users.mjs",
     "positions:demo": "node --env-file=.env.local scripts/create-demo-positions.mjs",
+    "closures:demo": "node --env-file=.env.local scripts/create-demo-closures.mjs",
     "check:design": "node scripts/check-design-tokens.mjs",
     "check:boundary": "node scripts/check-server-boundary.mjs",
     "carryover:demo": "node --env-file=.env.local scripts/create-demo-carryover.mjs",

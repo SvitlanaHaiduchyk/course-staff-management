@@ -14,19 +14,13 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const secretKey = process.env.SUPABASE_SECRET_KEY;
+import { requireSupabaseEnv, requireSyntheticEmail } from "./lib/demo-env.mjs";
+
+const [url, secretKey] = requireSupabaseEnv();
 const password = process.env.DEMO_USER_PASSWORD;
 
-const missing = [
-  ["NEXT_PUBLIC_SUPABASE_URL", url],
-  ["SUPABASE_SECRET_KEY", secretKey],
-  ["DEMO_USER_PASSWORD", password],
-]
-  .filter(([, value]) => !value)
-  .map(([name]) => name);
-if (missing.length) {
-  console.error(`Не задано: ${missing.join(", ")}. Додайте їх у .env.local (див. .env.example).`);
+if (!password) {
+  console.error("Не задано: DEMO_USER_PASSWORD. Додайте його у .env.local (див. .env.example).");
   process.exit(1);
 }
 if (password.length < 8) {
@@ -37,10 +31,7 @@ if (password.length < 8) {
 const file = path.join(process.cwd(), "supabase", "demo-users.json");
 const users = JSON.parse(readFileSync(file, "utf8"));
 for (const u of users) {
-  if (!/^[^@\s]+@example\.test$/i.test(u.email ?? "")) {
-    console.error(`Лише синтетичні адреси *@example.test: "${u.email}" у supabase/demo-users.json.`);
-    process.exit(1);
-  }
+  requireSyntheticEmail(u.email, "supabase/demo-users.json");
   if (!u.role) {
     console.error(`Для ${u.email} не вказано role.`);
     process.exit(1);
