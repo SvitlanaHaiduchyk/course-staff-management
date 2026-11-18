@@ -12,6 +12,10 @@
 import { readFileSync, readdirSync } from "node:fs";
 
 import { PGlite } from "@electric-sql/pglite";
+// btree_gist потрібен міграції school_calendar: на ньому тримається
+// exclude using gist, що забороняє двом закриттям ділити дату (AC-CAL-11).
+// У проді це розширення Supabase, тут — contrib-пакет PGlite.
+import { btree_gist } from "@electric-sql/pglite/contrib/btree_gist";
 
 const root = new URL("../../", import.meta.url);
 const read = (path: string) => readFileSync(new URL(path, root), "utf8");
@@ -91,7 +95,7 @@ async function inTransaction<T>(
 }
 
 export async function createLeaveDb(): Promise<LeaveDb> {
-  const db = new PGlite();
+  const db = new PGlite({ extensions: { btree_gist } });
   await db.exec(SUPABASE_SHIM);
 
   const migrations = readdirSync(new URL("supabase/migrations/", root))
