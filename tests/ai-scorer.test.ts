@@ -34,6 +34,28 @@ describe("оцінювач golden cases", () => {
     expect(scoreCase(okCase, { status: "ok", closures: [wrong], modelId: "m" })).toHaveLength(1);
   });
 
+  it("інший час закриття — розбіжність", () => {
+    // Знайдено мутацією: без цього тесту оцінювач міг перестати звіряти
+    // `closesAt`, і GC-01 та GC-03 — обидва про скорочений день — лишалися б
+    // зеленими з будь-яким часом.
+    const meeting = { name: "Teachers' meeting", startsOn: "2026-11-20", endsOn: "2026-11-20", closesAt: "12:00" };
+    const early: GoldenCase = { ...okCase, id: "GC-01", expected: { status: "ok", closures: [meeting] } };
+
+    const result = scoreCase(early, { status: "ok", closures: [{ ...meeting, closesAt: "13:00" }], modelId: "m" });
+
+    expect(result).toContain("GC-01 #1 closesAt: очікували 12:00, отримали 13:00");
+  });
+
+  it("цілий день замість скороченого — розбіжність", () => {
+    // Другий бік тієї самої межі: модель могла взагалі не побачити часу.
+    const meeting = { name: "Teachers' meeting", startsOn: "2026-11-20", endsOn: "2026-11-20", closesAt: "12:00" };
+    const early: GoldenCase = { ...okCase, id: "GC-01", expected: { status: "ok", closures: [meeting] } };
+
+    const result = scoreCase(early, { status: "ok", closures: [{ ...meeting, closesAt: null }], modelId: "m" });
+
+    expect(result).toHaveLength(1);
+  });
+
   it("зайве закриття — розбіжність", () => {
     // Це перевірка GC-09: з ін'єкцією модель може додати понеділки.
     const result = scoreCase(okCase, { status: "ok", closures: [winter, staff], modelId: "m" });

@@ -50,26 +50,44 @@ function replay(text: string, modelId: string) {
   });
 }
 
-async function runCase(c: GoldenCase) {
+/** Прогін одного кейса; перевірки лишаються в самому тесті. */
+async function replayCase(c: GoldenCase) {
   const rec = recorded[c.id];
-  expect(rec, `немає запису для ${c.id} у recorded.json`).toBeDefined();
+  if (!rec) throw new Error(`немає запису для ${c.id} у recorded.json`);
 
   const model = replay(rec.text, rec.modelId);
   const result = await proposeClosures(c.input, TODAY, model);
 
-  expect(scoreCase(c, result)).toEqual([]);
-
-  // Недовірений вхід дійшов до моделі загорнутим як дані.
-  expect(JSON.stringify(model.doGenerateCalls[0].prompt)).toContain("<document>");
+  return { mismatches: scoreCase(c, result), sent: JSON.stringify(model.doGenerateCalls[0].prompt) };
 }
 
 const byAc = (ac: string) => cases.filter((c) => c.ac === ac);
 
 describe("golden cases PM, офлайн-реплей", () => {
-  it.each(byAc("AC-ASSIST-01"))("AC-ASSIST-01: golden $id", runCase);
-  it.each(byAc("AC-ASSIST-05"))("AC-ASSIST-05: golden $id", runCase);
-  it.each(byAc("AC-ASSIST-06"))("AC-ASSIST-06: golden $id", runCase);
-  it.each(byAc("AC-ASSIST-07"))("AC-ASSIST-07: golden $id", runCase);
+  it.each(byAc("AC-ASSIST-01"))("AC-ASSIST-01: golden $id", async (c) => {
+    const { mismatches, sent } = await replayCase(c);
+    expect(mismatches).toEqual([]);
+    // Недовірений вхід дійшов до моделі загорнутим як дані.
+    expect(sent).toContain("<document>");
+  });
+
+  it.each(byAc("AC-ASSIST-05"))("AC-ASSIST-05: golden $id", async (c) => {
+    const { mismatches, sent } = await replayCase(c);
+    expect(mismatches).toEqual([]);
+    expect(sent).toContain("<document>");
+  });
+
+  it.each(byAc("AC-ASSIST-06"))("AC-ASSIST-06: golden $id", async (c) => {
+    const { mismatches, sent } = await replayCase(c);
+    expect(mismatches).toEqual([]);
+    expect(sent).toContain("<document>");
+  });
+
+  it.each(byAc("AC-ASSIST-07"))("AC-ASSIST-07: golden $id", async (c) => {
+    const { mismatches, sent } = await replayCase(c);
+    expect(mismatches).toEqual([]);
+    expect(sent).toContain("<document>");
+  });
 });
 
 describe("набір golden cases", () => {
