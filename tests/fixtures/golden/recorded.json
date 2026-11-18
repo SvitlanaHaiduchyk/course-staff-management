@@ -1,72 +1,62 @@
 {
   "GC-01": {
-    "modelId": "stub",
-    "recordedAt": "2026-11-18",
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-18T20:48:51.597Z",
     "promptVersion": "assist-v1",
-    "stub": true,
-    "text": "{\"status\": \"ok\", \"closures\": [{\"name\": \"Teachers' meeting\", \"startsOn\": \"2026-11-20\", \"endsOn\": \"2026-11-20\", \"closesAt\": \"12:00\"}], \"missing\": null}"
+    "text": "{\"status\":\"ok\",\"closures\":[{\"name\":\"Teachers' meeting\",\"startsOn\":\"2026-11-20\",\"endsOn\":\"2026-11-20\",\"closesAt\":\"12:00\"}],\"missing\":null}"
   },
   "GC-02": {
-    "modelId": "stub",
-    "recordedAt": "2026-11-18",
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-18T20:49:04.751Z",
     "promptVersion": "assist-v1",
-    "stub": true,
-    "text": "{\"status\": \"ok\", \"closures\": [{\"name\": \"Winter break\", \"startsOn\": \"2026-12-28\", \"endsOn\": \"2027-01-08\", \"closesAt\": null}], \"missing\": null}"
+    "text": "{\"status\":\"ok\",\"closures\":[{\"name\":\"Winter break\",\"startsOn\":\"2026-12-28\",\"endsOn\":\"2027-01-08\",\"closesAt\":null}],\"missing\":null}"
   },
   "GC-03": {
-    "modelId": "stub",
-    "recordedAt": "2026-11-18",
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-18T20:49:25.712Z",
     "promptVersion": "assist-v1",
-    "stub": true,
-    "text": "{\"status\": \"ok\", \"closures\": [{\"name\": \"Staff day\", \"startsOn\": \"2027-01-15\", \"endsOn\": \"2027-01-15\", \"closesAt\": null}, {\"name\": \"Spring break\", \"startsOn\": \"2027-03-22\", \"endsOn\": \"2027-03-26\", \"closesAt\": null}, {\"name\": \"Last day of school\", \"startsOn\": \"2027-06-18\", \"endsOn\": \"2027-06-18\", \"closesAt\": \"13:00\"}], \"missing\": null}"
+    "text": "{\"status\":\"ok\",\"closures\":[{\"name\":\"Staff day\",\"startsOn\":\"2027-01-15\",\"endsOn\":\"2027-01-15\",\"closesAt\":null},{\"name\":\"Spring break\",\"startsOn\":\"2027-03-22\",\"endsOn\":\"2027-03-26\",\"closesAt\":null},{\"name\":\"Last day of school\",\"startsOn\":\"2027-06-18\",\"endsOn\":\"2027-06-18\",\"closesAt\":\"13:00\"}],\"missing\":null}"
   },
   "GC-04": {
-    "modelId": "stub",
-    "recordedAt": "2026-11-18",
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-18T20:49:42.081Z",
     "promptVersion": "assist-v1",
-    "stub": true,
-    "text": "{\"status\": \"ok\", \"closures\": [{\"name\": \"Exam day\", \"startsOn\": \"2027-04-05\", \"endsOn\": \"2027-04-05\", \"closesAt\": null}], \"missing\": null}"
+    "text": "{\"status\":\"ok\",\"closures\":[{\"name\":\"Exam day\",\"startsOn\":\"2027-04-05\",\"endsOn\":\"2027-04-05\",\"closesAt\":null}],\"missing\":null}"
   },
   "GC-05": {
-    "modelId": "stub",
-    "recordedAt": "2026-11-18",
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-18T20:49:54.511Z",
     "promptVersion": "assist-v1",
-    "stub": true,
-    "text": "{\"status\": \"ok\", \"closures\": [{\"name\": \"Snow day\", \"startsOn\": \"2026-11-12\", \"endsOn\": \"2026-11-12\", \"closesAt\": null}], \"missing\": null}"
+    "text": "{\"status\":\"ok\",\"closures\":[{\"name\":\"Snow day\",\"startsOn\":\"2026-11-12\",\"endsOn\":\"2026-11-12\",\"closesAt\":null}],\"missing\":null}"
   },
   "GC-06": {
-    "modelId": "stub",
-    "recordedAt": "2026-11-18",
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-18T20:50:09.389Z",
     "promptVersion": "assist-v1",
-    "stub": true,
-    "text": "{\"status\": \"needs_info\", \"closures\": [], \"missing\": \"the closing time for 24 December\"}"
+    "text": "{\"status\":\"needs_info\",\"closures\":[],\"missing\":\"closing time for the half day on 24 December\"}"
   },
   "GC-07": {
-    "modelId": "stub",
-    "recordedAt": "2026-11-18",
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-18T20:50:21.744Z",
     "promptVersion": "assist-v1",
-    "stub": true,
-    "text": "{\"status\": \"needs_info\", \"closures\": [], \"missing\": \"31 February does not exist\"}"
+    "text": "{\"status\":\"needs_info\",\"closures\":[],\"missing\":\"31 February is not a valid date\"}"
   },
   "GC-08": {
-    "modelId": "stub",
-    "recordedAt": "2026-11-18",
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-18T20:50:32.593Z",
     "promptVersion": "assist-v1",
-    "stub": true,
-    "text": "{\"status\": \"refused\", \"closures\": [], \"missing\": null}"
+    "text": "{\"status\":\"refused\",\"closures\":[],\"missing\":null}"
   },
   "GC-09": {
-    "modelId": "stub",
-    "recordedAt": "2026-11-18",
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-18T20:50:46.571Z",
     "promptVersion": "assist-v1",
-    "stub": true,
-    "text": "{\"status\": \"ok\", \"closures\": [{\"name\": \"Winter break\", \"startsOn\": \"2026-12-28\", \"endsOn\": \"2027-01-08\", \"closesAt\": null}], \"missing\": null}"
+    "text": "{\"status\":\"ok\",\"closures\":[{\"name\":\"Winter break\",\"startsOn\":\"2026-12-28\",\"endsOn\":\"2027-01-08\",\"closesAt\":null}],\"missing\":null}"
   },
   "GC-10": {
-    "modelId": "stub",
-    "recordedAt": "2026-11-18",
+    "modelId": "nvidia/nemotron-3.5-super-vl:free",
+    "recordedAt": "2026-11-18T20:50:58.410Z",
     "promptVersion": "assist-v1",
-    "stub": true,
-    "text": "{\"status\": \"refused\", \"closures\": [], \"missing\": null}"
+    "text": "{\"status\":\"refused\",\"closures\":[],\"missing\":null}"
   }
 }

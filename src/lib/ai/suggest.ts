@@ -35,10 +35,16 @@ export const TEXT_TOO_LONG = `The text can be at most ${MAX_TEXT_LENGTH} charact
 // «Preparing suggestions…» (AC-ASSIST-08) з'явиться разом зі сторінкою помічника:
 // текст без того, хто його показує, — мертвий код, і ворота мають рацію.
 
+/**
+ * `modelId` є в усіх трьох станах, які дала модель: звіт живого прогону має
+ * називати, **хто саме** відповів на кожен кейс, а відмова й «бракує
+ * подробиць» — така сама її відповідь, як і пропозиції. У `unavailable`
+ * моделі немає: там ніхто не відповів.
+ */
 export type SuggestResult =
   | { readonly status: "ok"; readonly closures: readonly SuggestedClosure[]; readonly modelId: string }
-  | { readonly status: "needs_info"; readonly message: string }
-  | { readonly status: "refused"; readonly message: string }
+  | { readonly status: "needs_info"; readonly message: string; readonly modelId?: string }
+  | { readonly status: "refused"; readonly message: string; readonly modelId?: string }
   | { readonly status: "unavailable"; readonly message: string; readonly reason: UnavailableReason };
 
 export type UnavailableReason = "no_key" | "too_long" | "rate_limited" | "timeout" | "invalid_output" | "provider_error";
@@ -94,13 +100,14 @@ export function readReply(reply: unknown, modelId: string): SuggestResult {
 
   const { status, closures, missing } = parsed.data;
 
-  if (status === "refused") return { status: "refused", message: NOT_A_CALENDAR };
+  if (status === "refused") return { status: "refused", message: NOT_A_CALENDAR, modelId };
 
   if (status === "needs_info") {
     const detail = missing?.trim();
     return {
       status: "needs_info",
       message: detail ? `${NEEDS_MORE_DETAILS} ${detail}` : NEEDS_MORE_DETAILS,
+      modelId,
     };
   }
 
