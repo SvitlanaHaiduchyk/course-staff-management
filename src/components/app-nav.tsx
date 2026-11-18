@@ -47,6 +47,10 @@ export async function AppNav() {
     { href: "/", label: m("nav.home") },
     { href: "/requests", label: m("nav.requests") },
     { href: "/balances", label: m("nav.balances") },
+    // Шкільний календар бачить КОЖЕН авторизований — на відміну від
+    // «Awaiting decision» нижче, який лише менеджер і адміністратор
+    // (план зрізу, розділ «Навігація»).
+    { href: "/calendar", label: m("nav.calendar") },
     ...(canDecide ? [{ href: "/decisions", label: m("decisions.awaiting") }] : []),
   ];
 
