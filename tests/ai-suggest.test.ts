@@ -94,6 +94,8 @@ describe("помічник календаря: пропозиції", () => {
     expect(result).toEqual({
       status: "needs_info",
       message: `${NEEDS_MORE_DETAILS} the dates of "Spring break"`,
+      // Модель називаємо і тут: звіт живого прогону має сказати, хто відповів.
+      modelId: "recorded",
     });
   });
 
@@ -103,7 +105,7 @@ describe("помічник календаря: пропозиції", () => {
 
     const result = await proposeClosures("Write a short poem about the winter holidays", TODAY, replay(reply));
 
-    expect(result).toEqual({ status: "refused", message: NOT_A_CALENDAR });
+    expect(result).toEqual({ status: "refused", message: NOT_A_CALENDAR, modelId: "recorded" });
     expect(JSON.stringify(result)).not.toContain("poems on Fridays");
   });
 

@@ -41,7 +41,15 @@ const REPORT_DIR = "evals/reports";
 
 /** Бюджет прогону: по одному виклику моделі на кейс, судді немає. */
 const NEEDED = RUNS * cases.length;
-const GAP_MS = 3_000; // ≤ 20 запитів/хв
+/**
+ * Пауза між кейсами.
+ *
+ * 3 секунди з набору курсу тут замало: ліміт 20 запитів/хв рахує **кожну спробу
+ * ланцюжка**, а в нас їх до трьох на кейс. Прогін 2026-11-18T20:47 дістав 429 на
+ * дев'ятому кейсі, хоча денного ліміту лишалося 35 із 50 — тобто вперся саме в
+ * хвилинний. Тому пауза рахується з довжини ланцюжка: 3 спроби × 3 с.
+ */
+const GAP_MS = 3_000 * PRODUCT_MODELS.length;
 
 /** «Сьогодні» з таблиці PM: без фіксованої дати «yesterday» у GC-05 щодня інше. */
 const TODAY = "2026-11-13";
@@ -126,7 +134,8 @@ describe.skipIf(!key)("golden cases, живий прогін (безкоштов
         }
 
         const mismatches = scoreCase(c, result);
-        const modelId = result.status === "ok" ? result.modelId : "—";
+        // Модель називаємо на КОЖЕН кейс: відмова й «бракує подробиць» — така сама її відповідь.
+        const modelId = result.status === "unavailable" ? "—" : (result.modelId ?? "—");
         const pass = mismatches.length === 0;
 
         rows.push({ run, id: c.id, modelId, pass, why: mismatches.join("; ") });
@@ -173,9 +182,12 @@ function writeReport() {
   for (const r of ran) byModel.set(r.modelId, [...(byModel.get(r.modelId) ?? []), r]);
 
   // Поріг PM: ≥ 8 з 10, причому GC-08, GC-09 і GC-10 мають проходити завжди.
+  // Обов'язковий кейс має саме ПРОЙТИ: той, що не запускався через ліміт, не
+  // пройшов. Перша версія рахувала лише ті, що впали, — і звіт обірваного
+  // прогону бадьоро писав «поріг виконано», хоча GC-09 і GC-10 не бігли взагалі.
   const required = ["GC-08", "GC-09", "GC-10"];
-  const requiredFailed = required.filter((id) => ran.some((r) => r.id === id && !r.pass));
-  const thresholdMet = passed >= 8 * RUNS && requiredFailed.length === 0;
+  const requiredMissed = required.filter((id) => !ran.some((r) => r.id === id && r.pass));
+  const thresholdMet = passed >= 8 * RUNS && requiredMissed.length === 0;
 
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   const lines = [
@@ -187,7 +199,7 @@ function writeReport() {
     `- **Частка успіху: ${passed}/${ran.length} (${rate}%)** — з кейсів, що отримали відповідь`,
     `- Не запущено (NOT RUN): ${notRun.length}${stoppedAt ? ` — ліміт 429, зупинено на: ${stoppedAt}` : ""}`,
     `- **Поріг PM (≥ 8 з 10, обов'язкові GC-08, GC-09, GC-10): ${thresholdMet ? "виконано" : "НЕ виконано"}**${
-      requiredFailed.length > 0 ? ` — впали обов'язкові: ${requiredFailed.join(", ")}` : ""
+      requiredMissed.length > 0 ? ` — не пройшли обов'язкові: ${requiredMissed.join(", ")}` : ""
     }`,
     "",
     "| Модель, що відповіла | Пройшло | Усього |",
