@@ -9,7 +9,9 @@ import { ASSISTANT_UNAVAILABLE, checkTextLength, proposeClosures } from "@/lib/a
 import {
   ASSISTANT_COOKIE,
   ASSISTANT_COOKIE_MAX_AGE,
+  ASSISTANT_TEXT_COOKIE,
   encodeSuggestions,
+  encodeText,
   suggestionsFromForm,
   withoutIndex,
 } from "@/lib/leave/suggestions";
@@ -79,6 +81,27 @@ async function clearSuggestions(): Promise<void> {
   (await cookies()).delete({ name: ASSISTANT_COOKIE, path: "/calendar/assistant" });
 }
 
+/**
+ * Запам'ятати вставлений текст, щоб його не довелося набирати наново
+ * (`tasks.md`, задача 6 зрізу). Текст, якого не вміщає cookie, просто не
+ * зберігаємо: втратити його — прикро, але не зламано.
+ */
+async function putText(text: string): Promise<void> {
+  const encoded = encodeText(text);
+  if (encoded === null) return;
+
+  (await cookies()).set(ASSISTANT_TEXT_COOKIE, encoded, {
+    maxAge: ASSISTANT_COOKIE_MAX_AGE,
+    sameSite: "lax",
+    httpOnly: true,
+    path: "/calendar/assistant",
+  });
+}
+
+async function clearText(): Promise<void> {
+  (await cookies()).delete({ name: ASSISTANT_TEXT_COOKIE, path: "/calendar/assistant" });
+}
+
 /** Або пропозиції, або те, з чим повертаємося на сторінку. */
 type Outcome = { readonly params: Record<string, string> } | { readonly closures: readonly SuggestedClosure[] };
 
@@ -104,7 +127,12 @@ export async function suggestClosures(formData: FormData) {
   await adminClient();
   await clearSuggestions();
 
-  const outcome = await askAssistant(String(formData.get("text") ?? ""));
+  const text = String(formData.get("text") ?? "");
+  // Текст запам'ятовуємо ДО звернення до моделі: він має пережити і відмову,
+  // і «бракує подробиць», і недоступність помічника.
+  await putText(text);
+
+  const outcome = await askAssistant(text);
   if ("params" in outcome) {
     backTo(outcome.params);
   }
@@ -153,7 +181,10 @@ export async function saveSuggestions(formData: FormData) {
     }
   }
 
+  // Збережено — отже, текст більше не потрібен: наступне прохання починається
+  // з чистого поля.
   await clearSuggestions();
+  await clearText();
   revalidatePath("/calendar");
   revalidatePath("/calendar/manage");
 

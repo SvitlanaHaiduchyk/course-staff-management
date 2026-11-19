@@ -1,3 +1,4 @@
+import { MAX_TEXT_LENGTH } from "@/lib/ai/prompts/closures";
 import { SuggestedClosureSchema, type SuggestedClosure } from "@/lib/ai/schema";
 
 /**
@@ -20,6 +21,14 @@ import { SuggestedClosureSchema, type SuggestedClosure } from "@/lib/ai/schema";
  */
 
 export const ASSISTANT_COOKIE = "assistant";
+
+/**
+ * Вставлений текст — окрема cookie, а не поле в тій самій.
+ *
+ * Разом вони не вміщаються: 2000 символів тексту плюс до десяти пропозицій дають
+ * більше за межу cookie в 4096 байтів. Нарізно кожна лишається в межах.
+ */
+export const ASSISTANT_TEXT_COOKIE = "assistant_text";
 
 /** Пів години: вистачає на перегляд, і чернетка не висить вічно. */
 export const ASSISTANT_COOKIE_MAX_AGE = 60 * 30;
@@ -86,4 +95,33 @@ export function withoutIndex(
   index: number,
 ): readonly SuggestedClosure[] {
   return closures.filter((_, i) => i !== index);
+}
+
+/**
+ * Вставлений текст між проханнями (`tasks.md`, задача 6 зрізу).
+ *
+ * Знахідка рецензента UAT: після прохання поле було порожнім, і коли помічник
+ * відповідав «бракує подробиць», адміністратор мав вставляти свої дві тисячі
+ * символів наново. Жоден AC цього не вимагає — але це перше, на що людина
+ * наштовхнеться на справжньому календарі.
+ *
+ * Кодуємо так само, як пропозиції: текст приходить від людини, і в ньому є
+ * переноси рядків, крапки з комою й лапки, яких cookie не любить.
+ */
+export function encodeText(text: string): string | null {
+  const encoded = Buffer.from(text, "utf8").toString("base64url");
+  return encoded.length > MAX_ENCODED ? null : encoded;
+}
+
+/** Будь-що зіпсоване — порожній рядок: cookie приходить із браузера. */
+export function decodeText(raw: string | undefined): string {
+  if (!raw) return "";
+  try {
+    const text = Buffer.from(raw, "base64url").toString("utf8");
+    // Довжину тримаємо тією самою межею, що й при поданні (AC-ASSIST-10):
+    // cookie могли підмінити.
+    return text.slice(0, MAX_TEXT_LENGTH);
+  } catch {
+    return "";
+  }
 }

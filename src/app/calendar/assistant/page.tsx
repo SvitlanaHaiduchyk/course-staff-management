@@ -11,7 +11,12 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getMessages } from "@/lib/i18n/server";
 import { ONLY_ADMIN } from "@/lib/leave/calendar";
-import { ASSISTANT_COOKIE, decodeSuggestions } from "@/lib/leave/suggestions";
+import {
+  ASSISTANT_COOKIE,
+  ASSISTANT_TEXT_COOKIE,
+  decodeSuggestions,
+  decodeText,
+} from "@/lib/leave/suggestions";
 import { requireAdminPage } from "@/lib/supabase/page-session";
 
 /**
@@ -50,7 +55,11 @@ export default async function CalendarAssistantPage({
     );
   }
 
-  const closures = decodeSuggestions((await cookies()).get(ASSISTANT_COOKIE)?.value);
+  const jar = await cookies();
+  const closures = decodeSuggestions(jar.get(ASSISTANT_COOKIE)?.value);
+  // Вставлений текст повертаємо у поле: інакше після «бракує подробиць»
+  // адміністратор вставляв би свої дві тисячі символів наново.
+  const text = decodeText(jar.get(ASSISTANT_TEXT_COOKIE)?.value);
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-12">
@@ -66,7 +75,7 @@ export default async function CalendarAssistantPage({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <AssistantTextForm action={suggestClosures} m={m} />
+          <AssistantTextForm action={suggestClosures} m={m} defaultText={text} />
         </CardContent>
       </Card>
 
