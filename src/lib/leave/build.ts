@@ -15,7 +15,8 @@ import {
   scheduleFor,
   wholeDayRange,
 } from "./schedule";
-import { NO_WORKING_HOURS, validateHours } from "./validate";
+import { type Closure, blocksAfterClosure, closedFrom, closureOn } from "./closure";
+import { NO_WORKING_HOURS, validateClosedDate, validateHours } from "./validate";
 
 export type LeaveType = "sick" | "personal" | "unpaid" | "family_celebration";
 
@@ -98,7 +99,126 @@ function fail(message: string): BuildResult {
  * спершу поля самої заявки (тип, спорідненість, коментар), потім кожна дата
  * й кожна включена посада.
  */
-export function buildRecords(input: RequestInput, positions: readonly Position[]): BuildResult {
+/**
+ * `closures` — обов'язковий аргумент, а не значення за замовчуванням.
+ *
+ * Та сама причина, що й у `validateClosedDate`: виклик без закриттів мовчки
+ * повернув би поведінку до шкільного календаря, і дата в канікули знову
+ * створювала б записи. Тип тепер цього не дозволяє — порожній список треба
+ * передати явно.
+ */
+/** Що робити з однією датою заявки. */
+type DayOutcome =
+  | { readonly kind: "records"; readonly records: readonly DraftRecord[] }
+  | { readonly kind: "skip"; readonly message: string }
+  | { readonly kind: "fail"; readonly message: string };
+
+/** Посада з її розкладом на дату: до закриття й після нього. */
+type PlannedPosition = {
+  readonly choice: PositionChoice;
+  readonly position: Position;
+  /** Розклад посади на цю дату, яким він є в її графіку. */
+  readonly onDate: readonly ScheduleBlock[];
+  /** Те саме після шкільного календаря (AC-CAL-04). */
+  readonly blocks: readonly ScheduleBlock[];
+};
+
+function planPositions(
+  day: DateChoice,
+  byId: ReadonlyMap<string, Position>,
+  closure: Closure | null,
+): PlannedPosition[] {
+  return day.positions
+    .filter((p) => p.included)
+    .map((choice) => {
+      const position = byId.get(choice.positionId);
+      if (!position) {
+        throw new TypeError(`Невідома посада "${choice.positionId}" у заявці`);
+      }
+      // AC-CAL-04, AC-CAL-05: далі працюємо з ОБРІЗАНИМ розкладом — «цілий
+      // день» закінчується часом закриття, а години після нього не проходять
+      // перевірку, бо таких блоків уже немає.
+      const onDate = scheduleFor(position.blocks, day.date);
+      return { choice, position, onDate, blocks: blocksAfterClosure(onDate, closedFrom(closure)) };
+    });
+}
+
+/** Записи однієї посади на дату — або причина, чому їх немає. */
+function recordsFor(planned: PlannedPosition, date: string, closure: Closure | null): DayOutcome {
+  const { choice, position, onDate, blocks } = planned;
+
+  // Посада, якій закриття забрало ВЕСЬ розклад цієї дати, просто не дає
+  // запису: на скороченому дні так буває з кожною післяобідньою посадою
+  // (AC-CAL-04). Без цієї гілки одна така посада валила б усю заявку
+  // повідомленням «You have no working hours on this day», хоч інша посада
+  // цього дня працює.
+  //
+  // Умова саме складена: `onDate.length > 0` означає, що розклад був і його
+  // прибрало закриття. Посада, яка цього дня не працює й без календаря,
+  // лишається зі старою поведінкою зрізу 1.
+  if (blocks.length === 0 && closure !== null && onDate.length > 0) {
+    return { kind: "records", records: [] };
+  }
+
+  // AC-LEAVE-01, AC-LEAVE-02: «цілий день» — усі блоки розкладу посади на цю дату.
+  const range = choice.wholeDay ? wholeDayRange(blocks) : (choice.hours ?? null);
+
+  const check = validateHours(blocks, range ?? { startsAt: "00:00", endsAt: "00:01" });
+  if (!check.ok) return { kind: "fail", message: check.message };
+  if (!range) return { kind: "fail", message: CHOOSE_AT_LEAST_ONE_POSITION };
+
+  return {
+    kind: "records",
+    records: [{ positionId: position.id, date, startsAt: range.startsAt, endsAt: range.endsAt }],
+  };
+}
+
+/** Одна дата заявки: її записи, її відмова або причина відпасти. */
+function planDay(day: DateChoice, byId: ReadonlyMap<string, Position>, closures: readonly Closure[]): DayOutcome {
+  const closure = closureOn(closures, day.date);
+  const planned = planPositions(day, byId, closure);
+
+  // AC-LEAVE-10: жодної включеної посади на цю дату.
+  if (planned.length === 0) return { kind: "fail", message: CHOOSE_AT_LEAST_ONE_POSITION };
+
+  // AC-CAL-03, AC-CAL-16: закрита дата відпадає зі своїм повідомленням — і
+  // саме ПЕРЕД перевіркою порожнього розкладу. Інакше скорочений день, що
+  // забрав усі блоки, показував би «You have no working hours on this day»
+  // замість назви закриття, і ми б знову помилилися так само, як до відповіді
+  // PM на `…spec#22`.
+  const closed = validateClosedDate(
+    closure,
+    planned.flatMap((p) => p.blocks),
+  );
+  if (!closed.ok) return { kind: "skip", message: closed.message };
+
+  // AC-LEAVE-21: дата без робочих годин лише відпадає, решта дат заявки
+  // лишаються (припущення PM, знімок 2026-10-21). «Усе або нічого» діє на
+  // прийняті дати.
+  if (planned.every((p) => p.blocks.length === 0)) return { kind: "skip", message: NO_WORKING_HOURS };
+
+  const records: DraftRecord[] = [];
+  for (const one of planned) {
+    const outcome = recordsFor(one, day.date, closure);
+    if (outcome.kind !== "records") return outcome;
+    records.push(...outcome.records);
+  }
+  return { kind: "records", records };
+}
+
+/**
+ * `closures` — обов'язковий аргумент, а не значення за замовчуванням.
+ *
+ * Та сама причина, що й у `validateClosedDate`: виклик без закриттів мовчки
+ * повернув би поведінку до шкільного календаря, і дата в канікули знову
+ * створювала б записи. Тип тепер цього не дозволяє — порожній список треба
+ * передати явно.
+ */
+export function buildRecords(
+  input: RequestInput,
+  positions: readonly Position[],
+  closures: readonly Closure[],
+): BuildResult {
   // AC-LEAVE-12: ступінь спорідненості обов'язковий саме для «Family celebration».
   if (input.leaveType === "family_celebration" && !input.relationship?.trim()) {
     return fail(RELATIONSHIP_REQUIRED);
@@ -114,45 +234,22 @@ export function buildRecords(input: RequestInput, positions: readonly Position[]
   const skipped: SkippedDate[] = [];
 
   for (const day of input.dates) {
-    const included = day.positions.filter((p) => p.included);
-
-    // AC-LEAVE-10: жодної включеної посади на цю дату.
-    if (included.length === 0) return fail(CHOOSE_AT_LEAST_ONE_POSITION);
-
-    const planned = included.map((choice) => {
-      const position = byId.get(choice.positionId);
-      if (!position) {
-        throw new TypeError(`Невідома посада "${choice.positionId}" у заявці`);
-      }
-      return { choice, position, blocks: scheduleFor(position.blocks, day.date) };
-    });
-
-    // AC-LEAVE-21: дата без робочих годин лише відпадає, решта дат заявки лишаються
-    // (припущення PM, знімок 2026-10-21). «Усе або нічого» діє на прийняті дати.
-    if (planned.every((p) => p.blocks.length === 0)) {
-      skipped.push({ date: day.date, message: NO_WORKING_HOURS });
+    const outcome = planDay(day, byId, closures);
+    if (outcome.kind === "fail") return fail(outcome.message);
+    if (outcome.kind === "skip") {
+      skipped.push({ date: day.date, message: outcome.message });
       continue;
     }
-
-    for (const { choice, position, blocks } of planned) {
-      // AC-LEAVE-01, AC-LEAVE-02: «цілий день» — усі блоки розкладу посади на цю дату.
-      const range = choice.wholeDay ? wholeDayRange(blocks) : (choice.hours ?? null);
-
-      const check = validateHours(blocks, range ?? { startsAt: "00:00", endsAt: "00:01" });
-      if (!check.ok) return fail(check.message);
-      if (!range) return fail(CHOOSE_AT_LEAST_ONE_POSITION);
-
-      records.push({
-        positionId: position.id,
-        date: day.date,
-        startsAt: range.startsAt,
-        endsAt: range.endsAt,
-      });
-    }
+    records.push(...outcome.records);
   }
 
-  // AC-LEAVE-06: не лишилось жодної прийнятої дати — заявки немає.
-  if (records.length === 0) return fail(NO_WORKING_HOURS);
+  // Не лишилось жодної прийнятої дати — заявки немає. Повідомлення беремо з
+  // відпалих дат, а не константою: коли єдину дату закрив календар, працівник
+  // має побачити назву закриття (AC-CAL-03), а не «You have no working hours
+  // on this day». Для дати без розкладу цей текст і так NO_WORKING_HOURS.
+  if (records.length === 0) {
+    return fail(skipped.map((s) => s.message).join(" ") || NO_WORKING_HOURS);
+  }
 
   return { ok: true, records, skipped };
 }

@@ -21,7 +21,15 @@ import {
   isBlocking,
   overlapMessage,
 } from "../src/lib/leave/overlap";
+import { type Closure } from "../src/lib/leave/closure";
 import { type ScheduleBlock } from "../src/lib/leave/schedule";
+
+/**
+ * Зріз 1 про шкільний календар не знає: тут його закриттів немає, і це сказано
+ * явно. Аргумент `closures` обовʼязковий саме тому, що значення за
+ * замовчуванням мовчки повертало б поведінку до зрізу 3.
+ */
+const NO_CLOSURES: readonly Closure[] = [];
 
 const MONDAY = "2026-11-02";
 const TUESDAY = "2026-11-03";
@@ -50,7 +58,7 @@ function sick(dates: RequestInput["dates"]): RequestInput {
 
 describe("створення записів із заявки", () => {
   it("AC-LEAVE-01: цілий день на одній посаді дає один запис 08:30–15:30", () => {
-    const result = buildRecords(sick([{ date: MONDAY, positions: [wholeDay(main.id)] }]), [main]);
+    const result = buildRecords(sick([{ date: MONDAY, positions: [wholeDay(main.id)] }]), [main], NO_CLOSURES);
 
     expect(result).toEqual({
       ok: true,
@@ -63,6 +71,7 @@ describe("створення записів із заявки", () => {
     const result = buildRecords(
       sick([{ date: MONDAY, positions: [wholeDay(main.id), wholeDay(additional.id)] }]),
       [main, additional],
+      NO_CLOSURES,
     );
 
     expect(result.ok).toBe(true);
@@ -78,6 +87,7 @@ describe("створення записів із заявки", () => {
         { date: MONDAY, positions: [wholeDay(main.id), wholeDay(additional.id, false)] },
       ]),
       [main, additional],
+      NO_CLOSURES,
     );
 
     expect(result.ok && result.records).toHaveLength(1);
@@ -91,6 +101,7 @@ describe("створення записів із заявки", () => {
         { date: TUESDAY, positions: [wholeDay(main.id)] },
       ]),
       [main],
+      NO_CLOSURES,
     );
 
     expect(result.ok && result.records).toHaveLength(2);
@@ -116,6 +127,7 @@ describe("створення записів із заявки", () => {
         ],
       },
       [main],
+      NO_CLOSURES,
     );
 
     expect(result.ok && result.records[0]).toEqual({
@@ -127,7 +139,7 @@ describe("створення записів із заявки", () => {
   });
 
   it("AC-LEAVE-06: дата без розкладу не створює заявки", () => {
-    const result = buildRecords(sick([{ date: SATURDAY, positions: [wholeDay(main.id)] }]), [main]);
+    const result = buildRecords(sick([{ date: SATURDAY, positions: [wholeDay(main.id)] }]), [main], NO_CLOSURES);
 
     // Єдина обрана дата неробоча, тож прийнятих дат не лишилось і заявки немає.
     expect(result).toEqual({ ok: false, message: "You have no working hours on this day" });
@@ -141,6 +153,7 @@ describe("створення записів із заявки", () => {
         { date: SATURDAY, positions: [wholeDay(main.id)] },
       ]),
       [main],
+      NO_CLOSURES,
     );
 
     // Субота відпадає з повідомленням, але п'ятниця дає запис:
@@ -158,6 +171,7 @@ describe("відмови на рівні заявки", () => {
     const result = buildRecords(
       sick([{ date: MONDAY, positions: [wholeDay(main.id, false)] }]),
       [main],
+      NO_CLOSURES,
     );
 
     expect(result).toEqual({ ok: false, message: CHOOSE_AT_LEAST_ONE_POSITION });
@@ -168,6 +182,7 @@ describe("відмови на рівні заявки", () => {
     const result = buildRecords(
       { leaveType: "family_celebration", dates: [{ date: MONDAY, positions: [wholeDay(main.id)] }] },
       [main],
+      NO_CLOSURES,
     );
 
     expect(result).toEqual({ ok: false, message: RELATIONSHIP_REQUIRED });
@@ -182,7 +197,7 @@ describe("відмови на рівні заявки", () => {
       comment: "Doctor's appointment",
       dates: [{ date: MONDAY, positions: [wholeDay(main.id), wholeDay(additional.id)] }],
     };
-    const result = buildRecords(input, [main, additional]);
+    const result = buildRecords(input, [main, additional], NO_CLOSURES);
 
     // Коментар належить заявці, тож його мають усі її записи.
     expect(result.ok && result.records).toHaveLength(2);
@@ -197,6 +212,7 @@ describe("відмови на рівні заявки", () => {
         dates: [{ date: MONDAY, positions: [wholeDay(main.id)] }],
       },
       [main],
+      NO_CLOSURES,
     );
 
     expect(result).toEqual({ ok: false, message: COMMENT_TOO_LONG });
@@ -210,7 +226,7 @@ describe("відмови на рівні заявки", () => {
 
     // buildRecords лише готує записи зведення; вставки тут немає,
     // тож повернення до редагування нічого не створює і введене лишається в input.
-    const preview = buildRecords(input, [main]);
+    const preview = buildRecords(input, [main], NO_CLOSURES);
 
     expect(preview.ok && preview.records).toHaveLength(2);
     expect(input.dates).toHaveLength(2);
@@ -246,6 +262,7 @@ describe("заборона перетину", () => {
         ],
       },
       [main],
+      NO_CLOSURES,
     );
 
     const clash = findOverlap([awaiting], candidate.ok ? candidate.records : []);
@@ -264,6 +281,7 @@ describe("заборона перетину", () => {
         { date: TUESDAY, positions: [wholeDay(main.id)] },
       ]),
       [main],
+      NO_CLOSURES,
     );
     const records = candidate.ok ? candidate.records : [];
 
@@ -280,7 +298,7 @@ describe("заборона перетину", () => {
   it("AC-LEAVE-13: записи «Rejected» і «Cancelled» нових заявок не блокують", () => {
     const rejected: ExistingRecord = { ...awaiting, id: "rec-3", status: "rejected" };
     const cancelled: ExistingRecord = { ...awaiting, id: "rec-4", status: "cancelled" };
-    const candidate = buildRecords(sick([{ date: MONDAY, positions: [wholeDay(main.id)] }]), [main]);
+    const candidate = buildRecords(sick([{ date: MONDAY, positions: [wholeDay(main.id)] }]), [main], NO_CLOSURES);
 
     expect(isBlocking("rejected")).toBe(false);
     expect(isBlocking("cancelled")).toBe(false);
