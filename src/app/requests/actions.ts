@@ -13,6 +13,7 @@ import {
   workingMinutesOn,
 } from "@/lib/leave/balance";
 import { type DateChoice, type Position, buildRecords } from "@/lib/leave/build";
+import { type Closure } from "@/lib/leave/closure";
 import {
   APPROVED_CANNOT_CHANGE,
   canCancel,
@@ -30,6 +31,37 @@ import { createClient } from "@/lib/supabase/server";
  * розклад, викликає їх і передає готові записи у функцію Postgres, яка
  * створює заявку атомарно (AC-LEAVE-16).
  */
+/**
+ * Закриття шкільного календаря, що перетинаються з обраними датами.
+ *
+ * Бачить їх кожен авторизований користувач (`AC-CAL-02`), тож окремих прав тут
+ * не потрібно. Беремо лише потрібний відрізок: решта навчального року до
+ * заявки стосунку не має.
+ *
+ * Межі порівнюємо як рядки: формат `YYYY-MM-DD` упорядкований лексикографічно
+ * так само, як хронологічно.
+ */
+async function readClosures(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  dates: readonly string[],
+): Promise<Closure[]> {
+  if (dates.length === 0) return [];
+
+  const sorted = [...dates].sort();
+  const { data } = await supabase
+    .from("school_closures")
+    .select("name, starts_on, ends_on, closes_at")
+    .lte("starts_on", sorted[sorted.length - 1])
+    .gte("ends_on", sorted[0]);
+
+  return (data ?? []).map((row) => ({
+    name: row.name,
+    startsOn: row.starts_on,
+    endsOn: row.ends_on,
+    closesAt: row.closes_at === null ? null : row.closes_at.slice(0, 5),
+  }));
+}
+
 export async function submitLeaveRequest(formData: FormData) {
   const supabase = await createClient();
 
@@ -76,9 +108,15 @@ export async function submitLeaveRequest(formData: FormData) {
     positions: positions.map((p) => ({ positionId: p.id, included: true, wholeDay: true })),
   }));
 
+  // Закриття шкільного календаря бачить кожен авторизований користувач
+  // (AC-CAL-02), тож окремих прав тут не потрібно. Беремо лише ті, що
+  // припадають на обрані дати: решта року до заявки стосунку не має.
+  const closures = await readClosures(supabase, dates);
+
   const built = buildRecords(
     { leaveType, relationship, comment, dates: dateChoices },
     positions,
+    closures,
   );
 
   if (!built.ok) {
