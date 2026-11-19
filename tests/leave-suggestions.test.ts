@@ -2,10 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import {
   decodeSuggestions,
+  decodeText,
   encodeSuggestions,
+  encodeText,
   suggestionsFromForm,
   withoutIndex,
 } from "@/lib/leave/suggestions";
+import { MAX_TEXT_LENGTH } from "@/lib/ai/prompts/closures";
 import { todayInKyiv } from "@/lib/leave/today";
 import type { SuggestedClosure } from "@/lib/ai/schema";
 
@@ -101,5 +104,34 @@ describe("сьогодні для помічника", () => {
     // Без пояса помічник рахував би «yesterday» від учорашнього дня.
     expect(todayInKyiv(new Date("2026-11-12T22:30:00Z"))).toBe("2026-11-13");
     expect(todayInKyiv(new Date("2026-11-13T12:00:00Z"))).toBe("2026-11-13");
+  });
+});
+
+describe("вставлений текст між проханнями", () => {
+  it("AC-ASSIST-05: текст повертається без втрат, разом із переносами рядків", () => {
+    // Знахідка рецензента UAT: після «бракує подробиць» поле було порожнім, і
+    // дві тисячі символів доводилося вставляти наново.
+    const text = "Winter break 28.12–08.01;\nTeachers' meeting 20.11 from 12:00";
+
+    const encoded = encodeText(text);
+
+    expect(encoded).not.toBeNull();
+    expect(decodeText(encoded ?? undefined)).toBe(text);
+  });
+
+  it("AC-ASSIST-05: зіпсована cookie дає порожнє поле, а не падіння", () => {
+    expect(decodeText(undefined)).toBe("");
+    expect(decodeText("")).toBe("");
+  });
+
+  it("AC-ASSIST-10: текст із cookie обрізається тією самою межею, що й при поданні", () => {
+    // Cookie приходить із браузера: її могли підмінити довшим текстом.
+    const forged = Buffer.from("x".repeat(MAX_TEXT_LENGTH + 500), "utf8").toString("base64url");
+
+    expect(decodeText(forged)).toHaveLength(MAX_TEXT_LENGTH);
+  });
+
+  it("AC-ASSIST-10: текст, що не вміщається в cookie, не кодується", () => {
+    expect(encodeText("x".repeat(9000))).toBeNull();
   });
 });

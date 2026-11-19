@@ -18,9 +18,12 @@ const PREPARING = "Preparing suggestions…";
 export function AssistantTextForm({
   action,
   m,
+  defaultText = "",
 }: {
   action: (formData: FormData) => void | Promise<void>;
   m: (key: MessageKey) => string;
+  /** Текст попереднього прохання: після «бракує подробиць» його не набирають наново. */
+  defaultText?: string;
 }) {
   return (
     <form action={action} className="flex flex-col gap-4">
@@ -37,6 +40,7 @@ export function AssistantTextForm({
           rows={8}
           maxLength={MAX_TEXT_LENGTH}
           required
+          defaultValue={defaultText}
           className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
         <p className="text-xs text-muted-foreground">{`${m("assistant.textHint")} ${MAX_TEXT_LENGTH}.`}</p>
