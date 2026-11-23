@@ -21,6 +21,13 @@ const CALENDAR_TEXT = "Winter break 28.12–08.01; Teachers' meeting 20.11 from 
 const WINTER = { name: "Winter break", startsOn: "2026-12-28", endsOn: "2027-01-08" };
 const MEETING = { name: "Teachers' meeting", startsOn: "2026-11-20", endsOn: "2026-11-20" };
 
+/** Текст для AC-ASSIST-04: одне закриття вже в календарі, друге — нове. */
+const CLASH_TEXT = "Winter break 28.12–08.01. Staff day 12 January.";
+const STAFF = { name: "Staff day", startsOn: "2027-01-12", endsOn: "2027-01-12" };
+
+/** Повідомлення вимоги 04, дослівно з AC-ASSIST-04. */
+const ALREADY_CLOSED = "2026-12-28 is already closed: Winter break";
+
 // `attachRuntimeErrors` тут НЕ викликаємо, на відміну від решти специфікацій.
 // Він опитує відповідь кожного запиту сторінки, а цей сценарій живе хвилини й
 // робить їх десятки: прогін 2026-11-18 завис саме в цьому хуку й завалив тест,
@@ -40,7 +47,7 @@ if (!hasAdminKey()) {
     // Прибираємо саме свої рядки: назва + обидві дати, а не лише назва.
     test.afterAll(async () => {
       const db = adminClient();
-      for (const c of [WINTER, MEETING]) {
+      for (const c of [WINTER, MEETING, STAFF]) {
         await db
           .from("school_closures")
           .delete()
@@ -156,6 +163,74 @@ if (!hasAdminKey()) {
             await expect(page.getByText("No closed days in school year 2026–2027")).toHaveCount(0);
           },
         );
+      },
+    );
+
+    test(
+      "AC-ASSIST-04: пропозиція на вже закриту дату не зберігається, сусідня зберігається",
+      { tag: ["@uat", "@writes"], annotation: { type: "ac", description: "AC-ASSIST-04" } },
+      async ({ page }) => {
+        await given('шкільний календар уже має «Winter break» 2026-12-28 – 2027-01-08', async () => {
+          // Сіємо секретним ключем, а не через помічника: нам потрібен рівно
+          // один передбачуваний рядок, і жодного зайвого запиту до моделі.
+          const db = adminClient();
+          // `created_by` не має значення за замовчуванням: у застосунку його
+          // ставить `add_school_closure` з `auth.uid()`. Сід ходить повз
+          // функцію, тож автора треба назвати самому.
+          const { data: admin } = await db
+            .from("profiles")
+            .select("id")
+            .eq("email", "admin@example.test")
+            .maybeSingle();
+
+          const { error } = await db.from("school_closures").insert({
+            name: WINTER.name,
+            starts_on: WINTER.startsOn,
+            ends_on: WINTER.endsOn,
+            closes_at: null,
+            created_by: admin?.id ?? "",
+          });
+          expect(error, error?.message).toBeNull();
+
+          await page.goto("/calendar?year=2026");
+          await expect(page.getByText(WINTER.name)).toBeVisible();
+        });
+
+        await when("адміністратор просить пропозиції для тексту з тим самим «Winter break» і новим «Staff day» та зберігає обидві", async () => {
+          await page.goto("/calendar/assistant");
+          await page.locator('textarea[name="text"]').fill(CLASH_TEXT);
+          await page.getByRole("button", { name: "Запропонувати закриття" }).click();
+          await expect(page.locator('input[name="name"]')).toHaveCount(2, { timeout: 120_000 });
+          await page.getByRole("button", { name: "Зберегти закриття" }).click();
+          await expect(page.getByRole("button", { name: "Зберегти закриття" })).toHaveCount(0);
+        });
+
+        await thenStep(
+          page,
+          {
+            // «Тоді» — дослівно з AC-ASSIST-04.
+            clause:
+              '"Staff day" 2027-01-12 is saved, "Winter break" is not saved a second time, and the administrator sees the message "2026-12-28 is already closed: Winter break".',
+            visible: [`повідомлення «${ALREADY_CLOSED}»`],
+            hidden: [
+              "«Staff day» 2027-01-12 збережено — перевіряємо сторінкою календаря",
+              "«Winter break» у календарі лишився в одному примірнику",
+            ],
+          },
+          async () => {
+            await expect(page.getByText(ALREADY_CLOSED)).toBeVisible();
+          },
+        );
+
+        // Часткове збереження: одна пропозиція пройшла, друга — ні.
+        const db = adminClient();
+        const { data: rows } = await db
+          .from("school_closures")
+          .select("name")
+          .in("name", [WINTER.name, STAFF.name]);
+
+        expect(rows?.filter((r) => r.name === STAFF.name)).toHaveLength(1);
+        expect(rows?.filter((r) => r.name === WINTER.name)).toHaveLength(1);
       },
     );
   });
