@@ -21,3 +21,26 @@ export function classifyDbProbe({ status, error }: DbProbe): DbHealth {
   // 0 — мережа (Supabase недоступний або хибний URL), 5xx, PGRST000–003.
   return { db: "down", reason: `status-${status}${code ? `-${code}` : ""}` };
 }
+
+/**
+ * Назва середовища для `/api/health` (WS11, трек A).
+ *
+ * На staging системна `VERCEL_ENV` усе одно дорівнює `preview`, тож сам по собі
+ * прев'ю-деплой гілки від звичайного PR не відрізнити. Тому середовище називає
+ * окрема змінна `APP_ENV`, задана у Vercel **лише для гілки** `staging`.
+ */
+export function appEnvOf(appEnv: string | undefined, vercelEnv: string | undefined): string {
+  const named = appEnv?.trim();
+  return named && named.length > 0 ? named : (vercelEnv ?? "local");
+}
+
+/**
+ * Ref проєкту Supabase з його адреси — `https://<ref>.supabase.co` → `<ref>`.
+ *
+ * Це не секрет: ref є в кожній відповіді API і в клієнтському коді. Саме за ним
+ * у звіті видно, що staging ходить у СВОЮ базу, а не в прод: однакові ref у
+ * двох середовищах означали б, що перевизначення змінних не спрацювало.
+ */
+export function supabaseRefOf(url: string | undefined): string {
+  return url?.match(/^https:\/\/([a-z0-9]+)\.supabase\.(?:co|red)/)?.[1] ?? "unknown";
+}

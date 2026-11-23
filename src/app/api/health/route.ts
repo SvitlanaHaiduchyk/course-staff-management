@@ -4,7 +4,7 @@
 // Читають: scripts/smoke.mjs, .github/workflows/smoke.yml і перевірка розгортань курсу.
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import { classifyDbProbe } from "@/lib/health";
+import { appEnvOf, classifyDbProbe, supabaseRefOf } from "@/lib/health";
 import type { Database } from "@/lib/supabase/database.types";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +13,11 @@ export async function GET() {
   // VERCEL_GIT_COMMIT_SHA є, коли у Vercel увімкнено «Automatically expose System Environment Variables» (типово так).
   const sha = process.env.VERCEL_GIT_COMMIT_SHA ?? "local";
   const env = process.env.VERCEL_ENV ?? "local";
+  // WS11, трек A: яке це середовище і В ЯКУ базу воно ходить. `VERCEL_ENV` на
+  // staging дорівнює `preview`, тож назву дає APP_ENV (змінна лише для гілки),
+  // а `supabaseRef` показує, що база справді окрема. Обидва значення публічні.
+  const appEnv = appEnvOf(process.env.APP_ENV, process.env.VERCEL_ENV);
+  const supabaseRef = supabaseRefOf(process.env.NEXT_PUBLIC_SUPABASE_URL);
   let health: { db: "ok" | "down"; reason: string };
   try {
     // Звичайний supabase-js, не @/lib/supabase/server: перевірка не читає cookie відвідувача.
@@ -28,7 +33,7 @@ export async function GET() {
     health = { db: "down", reason: "exception" };
   }
   return NextResponse.json(
-    { ok: health.db === "ok", sha, env, ...health },
+    { ok: health.db === "ok", sha, env, appEnv, supabaseRef, ...health },
     { status: health.db === "ok" ? 200 : 503, headers: { "cache-control": "no-store" } },
   );
 }
