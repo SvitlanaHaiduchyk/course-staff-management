@@ -4,8 +4,18 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { randomUUID } from "node:crypto";
+
+import { isFallback, logLlmCall } from "@/lib/ai/llm-log";
+import { PRODUCT_MODELS } from "@/lib/ai/models";
 import { productModel } from "@/lib/ai/openrouter";
-import { ASSISTANT_UNAVAILABLE, checkTextLength, proposeClosures } from "@/lib/ai/suggest";
+import { ASSIST_PROMPT_VERSION } from "@/lib/ai/prompts/closures";
+import {
+  ASSISTANT_UNAVAILABLE,
+  checkTextLength,
+  proposeClosures,
+  type SuggestResult,
+} from "@/lib/ai/suggest";
 import {
   ASSISTANT_COOKIE,
   ASSISTANT_COOKIE_MAX_AGE,
@@ -102,6 +112,32 @@ async function clearText(): Promise<void> {
   (await cookies()).delete({ name: ASSISTANT_TEXT_COOKIE, path: "/calendar/assistant" });
 }
 
+/**
+ * Рядок `llm.call` на кожен виклик моделі (WS11, трек B).
+ *
+ * Тексту користувача, промпту й відповіді моделі тут немає й не може бути: у
+ * схемі події таких полів просто немає (`src/lib/ai/llm-log.ts`), а дозволені
+ * мають вузький формат. У `errorKind` іде КОД причини, ніколи не речення.
+ *
+ * Токенів не пишемо: `proposeClosures` їх назовні не віддає, а додавати поле в
+ * продуктовий тип заради журналу неправильно. Поля необов'язкові.
+ */
+function logAssistantCall(result: SuggestResult, startedAt: number): void {
+  const answered = result.status === "unavailable" ? null : (result.modelId ?? null);
+
+  logLlmCall({
+    requestId: randomUUID(),
+    route: "/calendar/assistant",
+    // Відповіді немає — називаємо першу модель ланцюжка: саме до неї йшов запит.
+    model: answered ?? PRODUCT_MODELS[0],
+    fallbackUsed: answered === null ? false : isFallback(answered, PRODUCT_MODELS[0]),
+    state: result.status,
+    latencyMs: Date.now() - startedAt,
+    promptVersion: ASSIST_PROMPT_VERSION,
+    errorKind: result.status === "unavailable" ? result.reason : undefined,
+  });
+}
+
 /** Або пропозиції, або те, з чим повертаємося на сторінку. */
 type Outcome = { readonly params: Record<string, string> } | { readonly closures: readonly SuggestedClosure[] };
 
@@ -114,7 +150,10 @@ async function askAssistant(text: string): Promise<Outcome> {
   const model = productModel();
   if (model === null) return { params: { error: ASSISTANT_UNAVAILABLE } };
 
+  const started = Date.now();
   const result = await proposeClosures(text, todayInKyiv(), model);
+
+  logAssistantCall(result, started);
 
   if (result.status === "ok") return { closures: result.closures };
   if (result.status === "unavailable") return { params: { error: result.message } };
