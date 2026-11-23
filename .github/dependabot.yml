@@ -29,6 +29,13 @@ updates:
     ignore:
       - dependency-name: supabase
         update-types: ["version-update:semver-major"]
+      # @vitest/eslint-plugin 1.6.28 підняв peer typescript з >=5 на >=6 — у ПАТЧ-релізі.
+      # Пауза cooldown від цього не рятує: версія вже була старша за 7 днів. Локально збій не видно
+      # (`npm ci` ставить lockfile), а Vercel робить `npm install`, перераховує залежності й падає
+      # з ERESOLVE — через це прод стояв на старому коміті. Знімемо цей рядок разом із переходом
+      # на TypeScript 6+ (а це вже окремий ADR: шаблон курсу перевірено на ^5).
+      - dependency-name: "@vitest/eslint-plugin"
+        versions: [">=1.6.28"]
     open-pull-requests-limit: 5
 
   - package-ecosystem: github-actions
