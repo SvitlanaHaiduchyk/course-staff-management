@@ -87,9 +87,35 @@ const CLOSED_CELL =
   "rounded-sm bg-accent py-1 font-medium tabular-nums text-accent-foreground ring-1 ring-ring/40";
 const EARLY_CELL =
   "rounded-sm bg-muted py-1 font-medium tabular-nums text-foreground ring-1 ring-dashed ring-ring/40";
-const LEAVE_CELL =
-  "rounded-sm bg-secondary py-1 font-medium tabular-nums text-secondary-foreground ring-1 ring-ring/40";
-const WORK_CELL = "rounded-sm py-1 tabular-nums text-foreground";
+/**
+ * Відпустка — кольором СТАТУСУ, а не окремою заливкою.
+ *
+ * Спершу тут був `bg-secondary`, і у світлій темі він майже зливався з
+ * `bg-accent` закриттів: 0.95 проти 0.94 світлоти (DESIGN.md, розділ 2) —
+ * виміряно у браузері, різниці не видно. Токени статусів для цього й створені,
+ * і заразом видно, чи відпустка вже погоджена. Статус у віконечку — завжди
+ * текстом (вимога PM, …spec#14), колір лише на додачу.
+ *
+ * Класи цілими рядками, а не складені з частин: Tailwind шукає їх у коді
+ * дослівно, тож `bg-status-${status}` не потрапив би у збірку.
+ */
+const LEAVE_CELL_BASE = "rounded-sm py-1 font-medium tabular-nums ring-1 ring-ring/40";
+const LEAVE_TONE: Record<string, string> = {
+  awaiting: "bg-status-awaiting text-status-awaiting-foreground",
+  approved: "bg-status-approved text-status-approved-foreground",
+  returned: "bg-status-returned text-status-returned-foreground",
+};
+
+function leaveCellClass(status: string): string {
+  return cn(LEAVE_CELL_BASE, LEAVE_TONE[status] ?? "bg-secondary text-secondary-foreground");
+}
+/**
+ * Робочий день — легка заливка. Саме легка: таких днів у вчителя ~250 із 365,
+ * і сильна заливка перетворила б сітку на суцільну пляму, у якій закриття й
+ * відпустки загубилися б. Неробочий день лишається без заливки й приглушеним —
+ * різниця видно смугами, а не окремими числами.
+ */
+const WORK_CELL = "rounded-sm bg-muted/50 py-1 tabular-nums text-foreground";
 const OFF_CELL = "rounded-sm py-1 tabular-nums text-muted-foreground/60";
 /**
  * Сьогодні — кільце, а не заливка: заливкою вже позначені закриття й відпустки,
@@ -104,7 +130,8 @@ function Legend({ m }: { m: (key: MessageKey) => string }) {
     { cell: `${WORK_CELL} ${TODAY_RING}`, day: "24", label: m("calendar.gridToday") },
     { cell: CLOSED_CELL, day: "28", label: m("calendar.gridWholeDay") },
     { cell: EARLY_CELL, day: "20", label: m("calendar.gridEarly") },
-    { cell: LEAVE_CELL, day: "12", label: m("calendar.gridLeave") },
+    { cell: leaveCellClass("approved"), day: "12", label: m("calendar.gridLeave") },
+    { cell: WORK_CELL, day: "25", label: m("calendar.gridWorkDay") },
     { cell: OFF_CELL, day: "29", label: m("calendar.gridOffDay") },
   ];
 
@@ -319,7 +346,13 @@ function LeaveDay({ date, dayLeaves, locale, isToday, m }: DayProps) {
     (isToday ? ` (${m("calendar.gridToday")})` : "");
 
   return (
-    <MarkedDay date={date} label={label} cellClass={LEAVE_CELL} isToday={isToday} locale={locale}>
+    <MarkedDay
+      date={date}
+      label={label}
+      cellClass={leaveCellClass(first.status)}
+      isToday={isToday}
+      locale={locale}
+    >
       <LeaveLines dayLeaves={dayLeaves} />
     </MarkedDay>
   );
