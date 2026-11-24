@@ -31,6 +31,7 @@ import { todayInKyiv } from "@/lib/leave/today";
 import type { SuggestedClosure } from "@/lib/ai/schema";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { reportDbError } from "@/lib/observability/report";
 
 /**
  * Помічник шкільного календаря: пропозиції, їх виправлення й збереження.
@@ -213,6 +214,7 @@ export async function saveSuggestions(formData: FormData) {
     });
 
     if (error) {
+      reportDbError(error, "add_school_closure.assistant");
       // Текст приходить із функції бази дослівно, як його задає PM.
       failures.push(error.message);
     } else {

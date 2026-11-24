@@ -7,13 +7,29 @@
 
 import { appEnvOf } from "@/lib/health";
 
+/**
+ * Що саме Sentry **не** збирає. Усе перелічено поіменно, бо замовчування версії 11 —
+ * збирати: `userInfo`, `cookies`, `httpHeaders` і `httpBodies` увімкнені, доки їх не вимкнути.
+ *
+ * `genAI` вимикає запис входу й виходу моделі — окрема вимога до AI-функції: у трекер помилок
+ * не має потрапити ні текст користувача, ні відповідь моделі (те саме правило, що в журналі
+ * `llm.call`).
+ */
+export type SentryDataCollection = {
+  userInfo: false;
+  cookies: false;
+  httpHeaders: false;
+  httpBodies: [];
+  urlQueryParams: false;
+  genAI: { inputs: false; outputs: false };
+};
+
 export type SentryOptions = {
   dsn: string;
   enabled: boolean;
   environment: string;
   release: string | undefined;
-  tracesSampleRate: number;
-  sendDefaultPii: boolean;
+  dataCollection: SentryDataCollection;
 };
 
 export type SentryEnv = {
@@ -30,9 +46,12 @@ export type SentryEnv = {
  * - `environment` — та сама логіка, що в `/api/health`: `APP_ENV` важливіший за `VERCEL_ENV`,
  *   бо на staging системна `VERCEL_ENV` усе одно дорівнює `preview`;
  * - `release` — SHA коміту: у списку помилок одразу видно, який деплой їх приніс;
- * - `tracesSampleRate: 0` — трасування вимкнено навмисно: безкоштовна квота має йти на помилки;
- * - `sendDefaultPii: false` — Sentry не додає до події IP, заголовки з cookie й тіло запиту.
- *   Портал працює з даними працівників школи, тож стектрейс — так, вміст запиту — ні.
+ * - `dataCollection` — усе вимкнено поіменно (див. тип вище);
+ * - `tracesSampleRate` НЕ задаємо навмисно. Нуль його не вимикає: `hasSpansEnabled` у SDK
+ *   перевіряє `options.tracesSampleRate != null`, і для нуля це правда, тож spans писалися б,
+ *   а успадкований `parentSampled=true` міг би протягти транзакцію в Sentry. Запис spans
+ *   вимикає саме відсутність і `tracesSampleRate`, і `tracesSampler`. Помилки від цього не
+ *   страждають: їх захоплення від spans не залежить.
  */
 export function sentryOptions({ dsn, appEnv, vercelEnv, sha }: SentryEnv): SentryOptions {
   const key = dsn?.trim() ?? "";
@@ -42,8 +61,14 @@ export function sentryOptions({ dsn, appEnv, vercelEnv, sha }: SentryEnv): Sentr
     enabled: key.length > 0,
     environment: appEnvOf(appEnv, vercelEnv),
     release: release.length > 0 ? release : undefined,
-    tracesSampleRate: 0,
-    sendDefaultPii: false,
+    dataCollection: {
+      userInfo: false,
+      cookies: false,
+      httpHeaders: false,
+      httpBodies: [],
+      urlQueryParams: false,
+      genAI: { inputs: false, outputs: false },
+    },
   };
 }
 

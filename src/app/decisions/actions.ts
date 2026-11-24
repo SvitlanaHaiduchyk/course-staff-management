@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { checkDecision, isDecision } from "@/lib/leave/decision";
 import { createClient } from "@/lib/supabase/server";
+import { reportDbError } from "@/lib/observability/report";
 
 // Явний тип `never` потрібен, щоб TypeScript знав: далі код не виконується.
 function back(params: string): never {
@@ -98,6 +99,7 @@ export async function decideRecord(formData: FormData) {
   });
 
   if (error) {
+    reportDbError(error, "decide_leave_record");
     // Тексти приходять із функції дослівно, як їх задає PM.
     fail(error.message);
   }

@@ -29,10 +29,23 @@ describe("sentryOptions", () => {
     expect(sentryOptions({ sha: "" }).release).toBeUndefined();
   });
 
-  it("квота йде на помилки, а персональні дані не виїжджають із порталу", () => {
+  it("персональні дані не виїжджають із порталу — кожну категорію вимкнено поіменно", () => {
     const options = sentryOptions({ dsn: "https://key@o1.ingest.de.sentry.io/2" });
 
-    expect(options.tracesSampleRate).toBe(0);
-    expect(options.sendDefaultPii).toBe(false);
+    // Замовчування SDK 11 — збирати. `sendDefaultPii` у цій версії вже немає, тож перевіряємо
+    // саме `dataCollection`: інакше тест підтверджував би налаштування, якого SDK не читає.
+    expect(options.dataCollection).toEqual({
+      userInfo: false,
+      cookies: false,
+      httpHeaders: false,
+      httpBodies: [],
+      urlQueryParams: false,
+      genAI: { inputs: false, outputs: false },
+    });
+  });
+
+  it("частоту вибірки spans не задано — нуль її не вимикає", () => {
+    // hasSpansEnabled у SDK перевіряє `tracesSampleRate != null`, і 0 цю умову проходить.
+    expect("tracesSampleRate" in sentryOptions({})).toBe(false);
   });
 });

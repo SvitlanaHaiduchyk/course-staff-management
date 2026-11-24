@@ -22,6 +22,7 @@ import {
 import { type ScheduleBlock, minutesInsideBlocks, scheduleFor } from "@/lib/leave/schedule";
 import { validateHours } from "@/lib/leave/validate";
 import { createClient } from "@/lib/supabase/server";
+import { reportDbError } from "@/lib/observability/report";
 
 /**
  * Подання заявки на відпустку.
@@ -89,6 +90,7 @@ export async function submitLeaveRequest(formData: FormData) {
     .in("id", positionIds.length > 0 ? positionIds : ["00000000-0000-0000-0000-000000000000"]);
 
   if (readError) {
+    reportDbError(readError, "positions.read");
     redirect("/requests?error=" + encodeURIComponent(readError.message));
   }
 
@@ -136,6 +138,7 @@ export async function submitLeaveRequest(formData: FormData) {
   });
 
   if (error) {
+    reportDbError(error, "submit_leave_request");
     // Текст перетину приходить із функції дослівно, як його задає PM (AC-LEAVE-13).
     redirect("/requests?error=" + encodeURIComponent(error.message));
   }
@@ -287,6 +290,7 @@ export async function changeRecordHours(formData: FormData) {
   });
 
   if (error) {
+    reportDbError(error, "update_record_hours");
     redirect("/requests?error=" + encodeURIComponent(error.message));
   }
 
@@ -338,6 +342,7 @@ export async function cancelRecord(formData: FormData) {
     .eq("id", recordId);
 
   if (error) {
+    reportDbError(error, "leave_records.cancel");
     redirect("/requests?error=" + encodeURIComponent(error.message));
   }
 
