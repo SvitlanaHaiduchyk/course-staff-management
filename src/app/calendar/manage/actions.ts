@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { parseClosureInput } from "@/lib/leave/closure-input";
 import { createClient } from "@/lib/supabase/server";
+import { reportDbError } from "@/lib/observability/report";
 
 /**
  * Додавання й прибирання закриттів шкільного календаря.
@@ -58,6 +59,7 @@ export async function addClosure(formData: FormData) {
   const { error } = await supabase.rpc("add_school_closure", parsed.input);
 
   if (error) {
+    reportDbError(error, "add_school_closure");
     // Текст приходить із функції дослівно, як його задає PM (AC-CAL-07,
     // AC-CAL-10, AC-CAL-11, AC-CAL-17, AC-CAL-18, AC-CAL-19).
     backTo({ error: error.message });
@@ -79,6 +81,7 @@ export async function removeClosure(formData: FormData) {
     .eq("id", String(formData.get("id") ?? ""));
 
   if (error) {
+    reportDbError(error, "school_closures.delete");
     backTo({ error: error.message });
   }
 
