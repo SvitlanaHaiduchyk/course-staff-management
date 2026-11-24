@@ -201,7 +201,8 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
                 />
               </div>
 
-              <div className="flex flex-col gap-2">
+              {/* Видно лише для Family celebration; показ вирішує CSS — див. globals.css. */}
+              <div className="relationship-field flex-col gap-2">
                 <Label htmlFor="relationship">
                   {m("requests.relation")}
                 </Label>

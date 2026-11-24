@@ -253,3 +253,22 @@ export function buildRecords(
 
   return { ok: true, records, skipped };
 }
+
+/**
+ * Ступінь спорідненості, як його приймає база.
+ *
+ * Обмеження `leave_requests_relationship_check` дозволяє значення **лише** для
+ * `family_celebration`, а для решти типів вимагає `null`. Підпис поля у формі
+ * каже те саме («лише для Family celebration»), тож нового правила тут немає —
+ * є приведення введеного до того, що вже вимагають і база, і підпис.
+ *
+ * Без цього заповнене поле з будь-яким іншим типом валило заявку сирим текстом
+ * Postgres: `new row for relation "leave_requests" violates check constraint
+ * "leave_requests_relationship_check"`. Відтворено 24.11.2026 у звичайній формі,
+ * без жодних хитрощів.
+ */
+export function relationshipFor(leaveType: LeaveType, raw: string | null): string | null {
+  if (leaveType !== "family_celebration") return null;
+  const value = raw?.trim() ?? "";
+  return value.length > 0 ? value : null;
+}

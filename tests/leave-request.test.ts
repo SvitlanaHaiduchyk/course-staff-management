@@ -14,6 +14,7 @@ import {
   type Position,
   type RequestInput,
   buildRecords,
+  relationshipFor,
 } from "../src/lib/leave/build";
 import {
   type ExistingRecord,
@@ -311,5 +312,25 @@ describe("заборона перетину", () => {
     // Без виключення запис перетнувся б сам із собою і зміну було б відхилено.
     expect(findOverlap([awaiting], edited)).toBe(awaiting);
     expect(findOverlap([awaiting], edited, "rec-1")).toBeNull();
+  });
+});
+
+describe("relationshipFor: спорідненість лише для Family celebration", () => {
+  it("для інших типів заповнене поле не доходить до бази", () => {
+    // Саме це валило заявку сирим текстом Postgres: обмеження
+    // leave_requests_relationship_check вимагає null для всіх типів, крім
+    // family_celebration, а форма дозволяла заповнити поле за будь-якого типу.
+    expect(relationshipFor("sick", "сестра")).toBeNull();
+    expect(relationshipFor("personal", "сестра")).toBeNull();
+    expect(relationshipFor("unpaid", "сестра")).toBeNull();
+  });
+
+  it("для Family celebration значення зберігається, пробіли обрізано", () => {
+    expect(relationshipFor("family_celebration", "  сестра  ")).toBe("сестра");
+  });
+
+  it("порожнє поле — це null, а не порожній рядок", () => {
+    expect(relationshipFor("family_celebration", "   ")).toBeNull();
+    expect(relationshipFor("family_celebration", null)).toBeNull();
   });
 });
