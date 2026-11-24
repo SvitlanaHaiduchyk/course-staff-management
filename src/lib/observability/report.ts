@@ -8,11 +8,15 @@ import "server-only";
 // CodeRabbit у PR #97, і воно мало рацію.
 //
 // «Слати все» зробило б трекер марним: більшість таких помилок — дослівні тексти PM з
-// функцій бази. Межу проводить `isInfrastructureError` (./db-errors.ts).
+// функцій бази. Межу і вміст події тримає ./db-errors.ts; тут лишилася сама відправка.
 
 import * as Sentry from "@sentry/nextjs";
 
-import { isInfrastructureError, type ReportableError } from "@/lib/observability/db-errors";
+import {
+  dbErrorReport,
+  isInfrastructureError,
+  type ReportableError,
+} from "@/lib/observability/db-errors";
 
 /**
  * Повідомити Sentry про відмову бази чи RPC. Доменні відмови (`P0001`) пропускає мовчки.
@@ -23,10 +27,7 @@ import { isInfrastructureError, type ReportableError } from "@/lib/observability
  */
 export function reportDbError(error: ReportableError, where: string): void {
   if (!isInfrastructureError(error)) return;
-  Sentry.captureException(error, {
-    tags: { area: "db", where },
-    // Повідомлення Postgres технічне (назва обмеження, SQLSTATE), даних користувача в ньому
-    // немає. Введеного тексту заявки сюди не кладемо навмисно.
-    extra: { code: error.code ?? "", details: error.details ?? "" },
-  });
+  const { message, tags, extra } = dbErrorReport(error, where);
+  // Новий Error, а не той, що прийшов: його текст і `details` можуть містити рядок бази.
+  Sentry.captureException(new Error(message), { tags, extra });
 }
