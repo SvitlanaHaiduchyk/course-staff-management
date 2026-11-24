@@ -179,46 +179,70 @@ function DayCell({
   isToday: boolean;
   m: (key: MessageKey) => string;
 }) {
-  const day = Number(date.slice(8, 10));
-
-  if (!closure) {
+  if (closure) {
     return (
-      <span
-        aria-current={isToday ? "date" : undefined}
-        className={cn(
-          "rounded-sm py-1 tabular-nums text-muted-foreground",
-          isToday && `${TODAY_RING} font-medium text-foreground`,
-        )}
-      >
-        {day}
-      </span>
+      <ClosedDayCell date={date} closure={closure} locale={locale} isToday={isToday} m={m} />
     );
   }
 
+  return (
+    <span
+      aria-current={isToday ? "date" : undefined}
+      className={cn(
+        "rounded-sm py-1 tabular-nums text-muted-foreground",
+        isToday && `${TODAY_RING} font-medium text-foreground`,
+      )}
+    >
+      {Number(date.slice(8, 10))}
+    </span>
+  );
+}
+
+/**
+ * Закритий день: число, яке відкриває віконечко з подробицями.
+ *
+ * Віконечко — нативний `<details>`, а не спливання на JavaScript: сторінка
+ * серверна й має лишатися робочою без нього, а `<summary>` уже вміє те, що
+ * інакше довелося б писати руками — фокус, Enter і пробіл, стан «відкрито»
+ * для екранного читача.
+ *
+ * Клікабельні лише позначені дні: у вільного дня календар не знає нічого,
+ * крім «не закрито», а 365 інтерактивних клітинок зробили б прохід
+ * клавіатурою по сторінці нестерпним.
+ */
+function ClosedDayCell({
+  date,
+  closure,
+  locale,
+  isToday,
+  m,
+}: {
+  date: string;
+  closure: ClosureRow;
+  locale: string;
+  isToday: boolean;
+  m: (key: MessageKey) => string;
+}) {
   const wholeDay = closure.closes_at === null;
-  const closureName = wholeDay
-    ? `${date} — ${closure.name}`
-    : `${date} — ${closure.name}, ${m("calendar.from")} ${hhmm(closure.closes_at ?? "")}`;
-  // «Сьогодні» теж словами: кільце саме по собі нічого не повідомляє.
-  const name = isToday ? `${closureName} (${m("calendar.gridToday")})` : closureName;
+  const closesAt = hhmm(closure.closes_at ?? "");
+  const kind = wholeDay
+    ? m("calendar.dayWholeDay")
+    : `${m("calendar.dayEarly")} ${closesAt}.`;
 
-  /*
-    Віконечко над клітинкою — нативний `<details>`, а не спливання на
-    JavaScript: сторінка серверна й має лишатися робочою без нього, а
-    `<summary>` уже вміє те, що інакше довелося б писати руками: фокус,
-    Enter і пробіл, стан «відкрито» для екранного читача.
+  // Назва доступна трьома шляхами — підказка миші, екранний читач і саме
+  // віконечко, — і жоден із них не є кольором.
+  const label =
+    `${date} — ${closure.name}` +
+    (wholeDay ? "" : `, ${m("calendar.from")} ${closesAt}`) +
+    (isToday ? ` (${m("calendar.gridToday")})` : "");
 
-    Клікабельні лише позначені дні: у вільного дня календар не знає нічого,
-    крім «не закрито», а 365 інтерактивних клітинок зробили б прохід
-    клавіатурою по сторінці нестерпним.
-  */
   return (
     <details className="group/day relative">
       <summary
-        aria-label={name}
-        title={name}
-        data-testid="calendar-day-closed"
+        aria-label={label}
+        title={label}
         aria-current={isToday ? "date" : undefined}
+        data-testid="calendar-day-closed"
         className={cn(
           wholeDay ? CLOSED_CELL : EARLY_CELL,
           isToday && TODAY_RING,
@@ -228,7 +252,7 @@ function DayCell({
           "[&::-webkit-details-marker]:hidden",
         )}
       >
-        {day}
+        {Number(date.slice(8, 10))}
       </summary>
 
       {/*
@@ -241,11 +265,7 @@ function DayCell({
       >
         <span className="font-medium tabular-nums">{longDate(date, locale)}</span>
         <span>{closure.name}</span>
-        <span className="text-muted-foreground">
-          {wholeDay
-            ? m("calendar.dayWholeDay")
-            : `${m("calendar.dayEarly")} ${hhmm(closure.closes_at ?? "")}.`}
-        </span>
+        <span className="text-muted-foreground">{kind}</span>
         {closure.starts_on === closure.ends_on ? null : (
           <span className="tabular-nums text-muted-foreground">
             {closure.starts_on} – {closure.ends_on}

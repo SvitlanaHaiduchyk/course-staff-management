@@ -81,14 +81,6 @@ export function monthLabel({ year, month }: MonthKey, locale: string): string {
   });
 }
 
-/** День тижня дати словами мовою інтерфейсу: «пʼятниця» / «Friday». */
-export function weekdayName(date: string, locale: string): string {
-  return new Date(`${date}T00:00:00Z`).toLocaleDateString(locale, {
-    weekday: "long",
-    timeZone: "UTC",
-  });
-}
-
 /** Дата словами: «20 листопада 2026 р.» / «20 November 2026». */
 export function longDate(date: string, locale: string): string {
   return new Date(`${date}T00:00:00Z`).toLocaleDateString(locale, {
