@@ -29,6 +29,7 @@
 | Vercel | проєкт `course-staff-management` → Deployments, Logs |
 | Supabase прод | ref `dolwlriqywfqhnstobei` → Logs, Advisors; змінні Vercel Production |
 | Supabase staging | ref `euwjxwolcxhooqxzgsgp` → Logs, Advisors; міграції — job `db-deploy-staging` **перед** `db-deploy` |
+| Помилки застосунку | Sentry → проєкт `course-staff-management`; фільтр `environment:production` (чи `staging`), `release:<sha>` |
 | Журнал AI-функції | Vercel → Logs, фільтр за `llm.call` (без тексту користувача — лише модель, стан, затримка) |
 | Статус провайдерів | vercel-status.com · status.supabase.com · githubstatus.com · status.openrouter.ai |
 
@@ -102,8 +103,19 @@ npm install --dry-run
 | Прогони GitHub Actions | Actions | 90 днів |
 | Postgres і Auth | Supabase → Logs | 1 день (Free) |
 | `llm.call` | Vercel → Logs, фільтр `llm.call` | 1 година |
+| Помилки в Sentry | Sentry → Issues | найдовше з усього переліку — строк зберігання вашого плану дивіться в Sentry → Settings → Subscription |
 
 **Наслідок:** будь-який доказ, потрібний для postmortem, копіюємо в issue **одразу**, а не «потім подивимось».
+
+## 5a. Помилка застосунку (Sentry)
+
+Сюди доходять помилки, яких **не видно** в smoke: він перевіряє, що сторінка входу відкривається й база відповідає, а не що заявка подається. Помилка в server action — це для smoke зелений прогін.
+
+1. **Sentry → Issues**, сортування за `Last Seen`. У кожній події є `environment` і `release` — тобто одразу видно, прод це чи staging і який саме деплой.
+2. **`release` — це SHA коміту.** `git show <sha>` показує, який PR приніс поломку; якщо остання подія почалася рівно з нього — відкат за розділом 2.
+3. **Одна подія vs потік.** Поодинока помилка в одного користувача — задача на завтра. Десятки за хвилину з одним стектрейсом — інцидент: заводьте issue, копіюйте стектрейс **туди одразу** (журнали Vercel живуть годину, див. розділ 5).
+4. **Чого в події немає навмисно:** IP, заголовків із cookie й тіла запиту — `sendDefaultPii: false` у `src/lib/observability/sentry-options.ts`. Якщо для розбору бракує контексту, додавайте власні теги в коді, а не вмикайте PII: портал працює з даними працівників школи.
+5. **Тиша в Sentry не означає, що все добре.** Перевірте, що DSN узагалі заданий: `NEXT_PUBLIC_SENTRY_DSN` у Vercel (Production і Preview). Без нього SDK мовчки вимкнений — так і задумано для локального запуску.
 
 ## 6. Staging
 
