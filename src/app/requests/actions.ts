@@ -12,7 +12,12 @@ import {
   sumShares,
   workingMinutesOn,
 } from "@/lib/leave/balance";
-import { type DateChoice, type Position, buildRecords } from "@/lib/leave/build";
+import {
+  type DateChoice,
+  type Position,
+  buildRecords,
+  relationshipFor,
+} from "@/lib/leave/build";
 import { type Closure } from "@/lib/leave/closure";
 import {
   APPROVED_CANNOT_CHANGE,
@@ -80,7 +85,9 @@ export async function submitLeaveRequest(formData: FormData) {
 
   const dates = formData.getAll("date").map(String).filter(Boolean);
   const positionIds = formData.getAll("position").map(String).filter(Boolean);
-  const relationship = String(formData.get("relationship") ?? "").trim() || null;
+  // Спорідненість стосується лише Family celebration — так каже і підпис поля,
+  // і обмеження бази `leave_requests_relationship_check`.
+  const relationship = relationshipFor(leaveType, String(formData.get("relationship") ?? ""));
   const comment = String(formData.get("comment") ?? "").trim() || null;
 
   // RLS: працівник бачить лише власні посади та їхні розклади.
