@@ -18,6 +18,7 @@ import {
 } from "@/lib/leave/calendar";
 import { schoolYearOf } from "@/lib/leave/balance";
 import { todayInKyiv } from "@/lib/leave/today";
+import { loadMyYearLayer } from "@/lib/supabase/my-year-layer";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -72,6 +73,9 @@ export default async function CalendarPage({
   // Той самий порядок і ту саму межу року перевіряє юніт-тест — тут лише показ.
   const closures = closuresOfSchoolYear(rows ?? [], year);
 
+  // Особистий шар: робочі дні людини та її відпустки цього навчального року.
+  const layer = await loadMyYearLayer(supabase, claims.sub, from, to);
+
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-12">
       <h1 className="text-2xl font-semibold">{m("calendar.title")}</h1>
@@ -92,6 +96,8 @@ export default async function CalendarPage({
             year={year}
             locale={INTL_LOCALE[lang]}
             today={todayInKyiv()}
+            workingDays={layer.workingDays}
+            leaves={layer.leaves}
             m={m}
           />
 
