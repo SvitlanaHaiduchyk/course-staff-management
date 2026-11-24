@@ -12,7 +12,7 @@ test.describe("календар для авторизованого", () => {
   test.use({ storageState: "playwright/.auth/teacher1.json" });
 
   test(
-    "AC-CAL-15: рік без закриттів показує «No closed days in school year 2026–2027»",
+    "AC-CAL-15: рік без закриттів показує «No closed days in school year …»",
     { tag: ["@uat"], annotation: { type: "ac", description: "AC-CAL-15" } },
     async ({ page }) => {
       await given("працівник teacher1@example.test — у порталі", async () => {
@@ -20,8 +20,16 @@ test.describe("календар для авторизованого", () => {
         await expect(page.getByTestId("user-email")).toHaveText(EMPLOYEE);
       });
 
-      await when("відкриває шкільний календар за навчальний рік 2026–2027", async () => {
-        await page.goto("/calendar?year=2026");
+      // Рік 2025–2026, а не 2026–2027: «Дано» цього AC — рік БЕЗ закриттів, а в
+      // 2026–2027 живуть демо-закриття з прикладів PM (Winter break 2026-12-28,
+      // Teachers' meeting 2026-11-20), на які спираються AC-CAL-01 і AC-CAL-02.
+      // Раніше тест проходив лише тому, що база випадково була порожня — тобто
+      // «Дано» тримався на стані бази, а не на діях тесту.
+      // Дослівний текст PM для 2026–2027 перевіряє модульний тест
+      // (`tests/leave-calendar.test.ts`, `noClosuresMessage(2026)`); тут
+      // перевіряємо поведінку сторінки на році, який порожній за побудовою.
+      await when("відкриває шкільний календар за навчальний рік 2025–2026", async () => {
+        await page.goto("/calendar?year=2025");
       });
 
       await thenStep(
@@ -29,17 +37,17 @@ test.describe("календар для авторизованого", () => {
         {
           // «Тоді» — дослівно з AC-CAL-15 (requirements/04-school-calendar.md).
           clause:
-            'the employee sees the message "No closed days in school year 2026–2027".',
+            'the employee sees the message "No closed days in school year 2025–2026".',
           visible: [
             "заголовок сторінки «Шкільний календар»",
-            "повідомлення «No closed days in school year 2026–2027»",
+            "повідомлення «No closed days in school year 2025–2026»",
           ],
           hidden: ["жодного рядка із закриттям: переліку назв і дат немає"],
         },
         async () => {
           await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
           await expect(
-            page.getByText("No closed days in school year 2026–2027", { exact: true }),
+            page.getByText("No closed days in school year 2025–2026", { exact: true }),
           ).toBeVisible();
           await expect(page.getByTestId("calendar-list")).toHaveCount(0);
         },
