@@ -29,7 +29,16 @@ export function isInfrastructureError(error: ReportableError): boolean {
 const SQLSTATE = /^[0-9A-Z]{5}$/;
 // Назва обмеження — єдине, що ми беремо з тексту Postgres: це ідентифікатор зі схеми,
 // а не дані людини. Усе інше з message і details лишається в базі.
-const CONSTRAINT = /constraint "([a-z0-9_]+)"/;
+//
+// Дві умови замість однієї, бо сам по собі пошук «constraint "…"» будь-де в тексті
+// підробляється введенням: значення з форми `constraint "secret"` у полі id дає помилку
+// 22P02 `invalid input syntax for type uuid: "constraint "secret""`, і з неї ми б дістали
+// чуже слово. Тому: (1) лише клас 23 — порушення цілісності, де Postgres САМ називає
+// обмеження; (2) назва має стояти в кінці повідомлення, як її й ставить Postgres.
+// Список відомих назв тут був би гіршим: нова міграція додає обмеження, а список про це
+// мовчить, і діагностика тихо зникає.
+const INTEGRITY_VIOLATION = /^23/;
+const CONSTRAINT = /constraint "([a-z0-9_]+)"$/;
 
 /**
  * Подія для Sentry з відмови бази.
@@ -47,6 +56,12 @@ export function dbErrorReport(error: ReportableError, where: string): DbErrorRep
   return {
     message: `db ${sqlState} at ${where}`,
     tags: { area: "db", where, sqlState },
-    extra: { constraint: CONSTRAINT.exec(error.message)?.[1] ?? "" },
+    extra: { constraint: constraintOf(error.message, sqlState) },
   };
+}
+
+/** Назва обмеження — лише з повідомлень, які Postgres склав сам (клас 23). */
+function constraintOf(message: string, sqlState: string): string {
+  if (!INTEGRITY_VIOLATION.test(sqlState)) return "";
+  return CONSTRAINT.exec(message.trim())?.[1] ?? "";
 }

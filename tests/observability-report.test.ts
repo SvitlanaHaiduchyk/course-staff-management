@@ -71,3 +71,27 @@ describe("dbErrorReport", () => {
     expect(dbErrorReport({ message: "x", code: "PGRST301" }, "x").tags.sqlState).toBe("unknown");
   });
 })
+
+describe("dbErrorReport: підроблена назва обмеження", () => {
+  it("значення з форми не стає назвою обмеження", () => {
+    // Поле id у removeClosure приходить із форми як є. Таке значення дає помилку 22P02,
+    // і пошук «constraint "…"» будь-де в тексті витяг би звідти чуже слово.
+    const report = dbErrorReport(
+      {
+        message: 'invalid input syntax for type uuid: "constraint "secret_value""',
+        code: "22P02",
+      },
+      "school_closures.delete",
+    );
+
+    expect(report.extra.constraint).toBe("");
+    expect(JSON.stringify(report)).not.toContain("secret_value");
+  });
+
+  it("назва з середини тексту теж не береться — лише та, що в кінці", () => {
+    expect(
+      dbErrorReport({ message: 'constraint "forged" and then prose', code: "23514" }, "x").extra
+        .constraint,
+    ).toBe("");
+  });
+});
