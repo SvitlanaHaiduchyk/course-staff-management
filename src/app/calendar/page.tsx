@@ -17,6 +17,7 @@ import {
   schoolYearRange,
 } from "@/lib/leave/calendar";
 import { schoolYearOf } from "@/lib/leave/balance";
+import { todayInKyiv } from "@/lib/leave/today";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -86,7 +87,13 @@ export default async function CalendarPage({
 
         <CardContent className="flex flex-col gap-6">
           {/* Сітка — «коли зачинено», перелік під нею — «що саме й на які дати». */}
-          <CalendarYearGrid closures={closures} year={year} locale={INTL_LOCALE[lang]} m={m} />
+          <CalendarYearGrid
+            closures={closures}
+            year={year}
+            locale={INTL_LOCALE[lang]}
+            today={todayInKyiv()}
+            m={m}
+          />
 
           <ClosureList closures={closures} year={year} fromLabel={m("calendar.from")} />
 

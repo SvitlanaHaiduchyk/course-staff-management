@@ -1,13 +1,15 @@
+import { cn } from "cn";
+import type { MessageKey } from "@/lib/i18n/dict";
+import type { ClosureRow } from "@/lib/leave/calendar";
 import {
   closureOnDate,
   leadingBlanks,
+  longDate,
   monthDates,
   monthLabel,
   monthsOfSchoolYear,
   type MonthKey,
 } from "@/lib/leave/calendar-grid";
-import type { MessageKey } from "@/lib/i18n/dict";
-import type { ClosureRow } from "@/lib/leave/calendar";
 import { hhmm } from "@/lib/leave/week";
 
 /**
@@ -18,19 +20,22 @@ import { hhmm } from "@/lib/leave/week";
  * (складність `CalendarPage` і так на межі, її стереже `fallow`).
  *
  * **Колір тут не несе сенсу сам по собі.** У кожної позначеної клітинки є
- * `aria-label` з назвою закриття й датою, під сіткою — підписи обох видів
- * позначок словами, а повний перелік назв і дат лишається у `ClosureList`
- * нижче. Тобто людина, яка не розрізняє кольорів, нічого не втрачає.
+ * `aria-label` з назвою закриття й датою, натискання відкриває віконечко з
+ * тим самим текстом, під сіткою — підписи обох видів позначок словами, а
+ * повний перелік назв і дат лишається у `ClosureList` нижче.
  */
 export function CalendarYearGrid({
   closures,
   year,
   locale,
+  today,
   m,
 }: {
   closures: readonly ClosureRow[];
   year: number;
   locale: string;
+  /** Сьогоднішня дата за Києвом — приходить із сервера, не з браузера. */
+  today: string;
   /** Перекладач сторінки — як у `AssistantTextForm`: підписи складає компонент. */
   m: (key: MessageKey) => string;
 }) {
@@ -49,7 +54,8 @@ export function CalendarYearGrid({
             closures={closures}
             locale={locale}
             weekdays={weekdays}
-            fromLabel={m("calendar.from")}
+            today={today}
+            m={m}
           />
         ))}
       </div>
@@ -61,6 +67,12 @@ export function CalendarYearGrid({
         мала абстрактні квадратики — і перше ж питання було «що це?»).
       */}
       <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
+        <li className="flex items-center gap-2">
+          <span aria-hidden="true" className={`${TODAY_RING} w-7 rounded-sm py-1 text-center tabular-nums`}>
+            24
+          </span>
+          {m("calendar.gridToday")}
+        </li>
         <li className="flex items-center gap-2">
           <span aria-hidden="true" className={`${CLOSED_CELL} w-7 text-center`}>
             28
@@ -86,6 +98,12 @@ const CLOSED_CELL =
   "rounded-sm bg-accent py-1 font-medium tabular-nums text-accent-foreground ring-1 ring-ring/40";
 const EARLY_CELL =
   "rounded-sm bg-muted py-1 font-medium tabular-nums text-foreground ring-1 ring-dashed ring-ring/40";
+/**
+ * Сьогодні — кільце, а не заливка: заливкою вже позначені закриття, і якби
+ * сьогоднішній день теж заливався, два різні повідомлення злилися б в одне.
+ * Кільце лягає поверх будь-якої клітинки, зокрема закритої.
+ */
+const TODAY_RING = "ring-2 ring-primary";
 
 /** Підписи днів тижня, з понеділка, мовою інтерфейсу: «пн, вт, …». */
 function weekdayLabels(locale: string): readonly string[] {
@@ -103,13 +121,15 @@ function MonthCard({
   closures,
   locale,
   weekdays,
-  fromLabel,
+  today,
+  m,
 }: {
   monthKey: MonthKey;
   closures: readonly ClosureRow[];
   locale: string;
   weekdays: readonly string[];
-  fromLabel: string;
+  today: string;
+  m: (key: MessageKey) => string;
 }) {
   const dates = monthDates(monthKey);
   const blanks = leadingBlanks(monthKey);
@@ -136,7 +156,9 @@ function MonthCard({
             key={date}
             date={date}
             closure={closureOnDate(closures, date)}
-            fromLabel={fromLabel}
+            locale={locale}
+            isToday={date === today}
+            m={m}
           />
         ))}
       </div>
@@ -147,38 +169,89 @@ function MonthCard({
 function DayCell({
   date,
   closure,
-  fromLabel,
+  locale,
+  isToday,
+  m,
 }: {
   date: string;
   closure: ClosureRow | null;
-  fromLabel: string;
+  locale: string;
+  isToday: boolean;
+  m: (key: MessageKey) => string;
 }) {
   const day = Number(date.slice(8, 10));
 
   if (!closure) {
     return (
-      <span className="rounded-sm py-1 tabular-nums text-muted-foreground">{day}</span>
+      <span
+        aria-current={isToday ? "date" : undefined}
+        className={cn(
+          "rounded-sm py-1 tabular-nums text-muted-foreground",
+          isToday && `${TODAY_RING} font-medium text-foreground`,
+        )}
+      >
+        {day}
+      </span>
     );
   }
 
-  // Те саме, що `isWholeDayClosure`, але без перекладання рядка бази в інший
-  // тип заради одного порівняння: порожній час закриття = закрито цілу добу.
   const wholeDay = closure.closes_at === null;
-
-  // Назва закриття — в `aria-label` і в `title`: екранний читач промовляє її,
-  // а миша показує підказку. Сам колір нічого не повідомляє (див. легенду).
-  const name = wholeDay
+  const closureName = wholeDay
     ? `${date} — ${closure.name}`
-    : `${date} — ${closure.name}, ${fromLabel} ${hhmm(closure.closes_at ?? "")}`;
+    : `${date} — ${closure.name}, ${m("calendar.from")} ${hhmm(closure.closes_at ?? "")}`;
+  // «Сьогодні» теж словами: кільце саме по собі нічого не повідомляє.
+  const name = isToday ? `${closureName} (${m("calendar.gridToday")})` : closureName;
 
+  /*
+    Віконечко над клітинкою — нативний `<details>`, а не спливання на
+    JavaScript: сторінка серверна й має лишатися робочою без нього, а
+    `<summary>` уже вміє те, що інакше довелося б писати руками: фокус,
+    Enter і пробіл, стан «відкрито» для екранного читача.
+
+    Клікабельні лише позначені дні: у вільного дня календар не знає нічого,
+    крім «не закрито», а 365 інтерактивних клітинок зробили б прохід
+    клавіатурою по сторінці нестерпним.
+  */
   return (
-    <span
-      aria-label={name}
-      title={name}
-      data-testid="calendar-day-closed"
-      className={wholeDay ? CLOSED_CELL : EARLY_CELL}
-    >
-      {day}
-    </span>
+    <details className="group/day relative">
+      <summary
+        aria-label={name}
+        title={name}
+        data-testid="calendar-day-closed"
+        aria-current={isToday ? "date" : undefined}
+        className={cn(
+          wholeDay ? CLOSED_CELL : EARLY_CELL,
+          isToday && TODAY_RING,
+          "block cursor-pointer list-none outline-none",
+          "focus-visible:ring-2 focus-visible:ring-ring",
+          "group-open/day:ring-2 group-open/day:ring-ring",
+          "[&::-webkit-details-marker]:hidden",
+        )}
+      >
+        {day}
+      </summary>
+
+      {/*
+        Над клітинкою, по центру. Ширина стала, а не `w-max`: довга назва
+        закриття має переноситися, а не розтягувати віконечко за край екрана.
+      */}
+      <div
+        data-testid="calendar-day-popover"
+        className="absolute bottom-full left-1/2 z-20 mb-1 flex w-44 -translate-x-1/2 flex-col gap-1 rounded-md border border-border bg-popover p-2 text-left text-xs shadow-lg"
+      >
+        <span className="font-medium tabular-nums">{longDate(date, locale)}</span>
+        <span>{closure.name}</span>
+        <span className="text-muted-foreground">
+          {wholeDay
+            ? m("calendar.dayWholeDay")
+            : `${m("calendar.dayEarly")} ${hhmm(closure.closes_at ?? "")}.`}
+        </span>
+        {closure.starts_on === closure.ends_on ? null : (
+          <span className="tabular-nums text-muted-foreground">
+            {closure.starts_on} – {closure.ends_on}
+          </span>
+        )}
+      </div>
+    </details>
   );
 }
