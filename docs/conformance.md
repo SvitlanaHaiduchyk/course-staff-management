@@ -128,7 +128,7 @@
 | AC-ASSIST-05 | Текст без дат просить подробиць | `src/lib/ai/suggest.ts` · `src/app/calendar/assistant/actions.ts` | `tests/ai-suggest.test.ts` · `tests/golden.test.ts` · `tests/e2e/assistant.spec.ts` | реалізовано |
 | AC-ASSIST-06 | Текст не про календар пропозицій не дає | `src/lib/ai/suggest.ts` · `src/app/calendar/assistant/actions.ts` | `tests/ai-suggest.test.ts` · `tests/golden.test.ts` · `tests/e2e/assistant.spec.ts` | реалізовано |
 | AC-ASSIST-07 | Указівку всередині тексту помічник не виконує | `src/lib/ai/prompts/closures.ts` (wrapDocument) | `tests/ai-suggest.test.ts` · `tests/golden.test.ts` · `tests/ai-scorer.test.ts` | реалізовано |
-| AC-ASSIST-08 | Стан очікування забороняє повторне прохання | `src/components/pending-button.tsx` | — | відкладено (кнопка стану реалізована; доказ — e2e з живим помічником у задачі 5: засобів для тестів DOM у репозиторії немає) |
+| AC-ASSIST-08 | Стан очікування забороняє повторне прохання | `src/components/pending-button.tsx` | `tests/e2e/assistant-pending.spec.ts` | реалізовано |
 | AC-ASSIST-09 | Недоступний помічник не заважає ручному додаванню | `src/lib/ai/suggest.ts` (classifyError) · `src/lib/ai/openrouter.ts` · `src/app/calendar/assistant/actions.ts` | `tests/ai-suggest.test.ts` · `tests/e2e/assistant.spec.ts` | реалізовано |
 | AC-ASSIST-10 | Текст на 2001 символ до помічника не доходить | `src/lib/ai/suggest.ts` (checkTextLength) · `src/app/calendar/assistant/actions.ts` | `tests/ai-suggest.test.ts` | реалізовано |
 | AC-ASSIST-11 | Працівник помічника не відкриє | `src/app/calendar/assistant/page.tsx` · `src/app/calendar/assistant/actions.ts` · `src/lib/leave/calendar.ts` (ONLY_ADMIN) | `tests/e2e/assistant.spec.ts` | реалізовано |
