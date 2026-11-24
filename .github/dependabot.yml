@@ -36,6 +36,10 @@ updates:
       # на TypeScript 6+ (а це вже окремий ADR: шаблон курсу перевірено на ^5).
       - dependency-name: "@vitest/eslint-plugin"
         versions: [">=1.6.28"]
+      # @types/node 26.x — це типи Node 26, а в стеку курсу Node 24.x (AGENTS.md). Dependabot пропонує їх
+      # як звичайне оновлення; беремо лише гілку 24.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     open-pull-requests-limit: 5
 
   - package-ecosystem: github-actions

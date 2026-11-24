@@ -69,6 +69,12 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      # Дія з postmortem 2026-11-23 (docs/incidents/2026-11-23-prod-stuck-peer-bump.md).
+      # `npm ci` ставить готовий lockfile і залежності НЕ перераховує, а Vercel робить `npm install` — і
+      # патч-оновлення, що підняло peer typescript з >=5 на >=6, завалило збірку прода, лишившись зеленим у CI.
+      # Цей крок повторює шлях Vercel: розв'язання з нуля, без встановлення. Падає — значить, прод не збереться.
+      - name: Залежності розв'язуються з нуля (шлях Vercel, не lockfile)
+        run: npm install --dry-run
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
