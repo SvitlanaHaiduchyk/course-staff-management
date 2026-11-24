@@ -45,6 +45,7 @@ export async function AppNav() {
 
   const items: NavItem[] = [
     { href: "/", label: m("nav.home") },
+    { href: "/schedule", label: m("schedule.title") },
     { href: "/requests", label: m("nav.requests") },
     { href: "/balances", label: m("nav.balances") },
     // Шкільний календар бачить КОЖЕН авторизований — на відміну від
