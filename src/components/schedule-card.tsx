@@ -6,7 +6,7 @@ import {
   type SchedulePosition,
 } from "@/components/schedule-week";
 import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { INTL_LOCALE, messages, weekdayNames, type Lang } from "@/lib/i18n/dict";
 import { scheduleSummary } from "@/lib/leave/format";
 import { shiftWeeks, weekRangeLabel } from "@/lib/leave/week";
@@ -37,21 +37,25 @@ export function ScheduleCard({
   return (
     <Card>
       <CardHeader className="gap-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle as="h2" className="text-lg">{m("schedule.title")}</CardTitle>
+        {/*
+          Заголовка картки тут немає навмисно: відколи розклад живе окремою
+          сторінкою `/schedule`, її `<h1>` каже те саме, і два однакові
+          заголовки поспіль лише займали місце.
+        */}
+        <div className="flex flex-wrap items-center justify-end gap-3">
           <nav aria-label={m("schedule.week")} className="flex items-center gap-2">
             <Link
-              href={`/?week=${shiftWeeks(mondayIso, -1)}`}
+              href={`/schedule?week=${shiftWeeks(mondayIso, -1)}`}
               aria-label={m("schedule.prev")}
               className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               ←
             </Link>
-            <Link href="/" className={buttonVariants({ variant: "outline", size: "sm" })}>
+            <Link href="/schedule" className={buttonVariants({ variant: "outline", size: "sm" })}>
               {m("schedule.thisWeek")}
             </Link>
             <Link
-              href={`/?week=${shiftWeeks(mondayIso, 1)}`}
+              href={`/schedule?week=${shiftWeeks(mondayIso, 1)}`}
               aria-label={m("schedule.next")}
               className={buttonVariants({ variant: "outline", size: "sm" })}
             >

@@ -10,25 +10,33 @@ import {
   monthsOfSchoolYear,
   type MonthKey,
 } from "@/lib/leave/calendar-grid";
+import { worksOn, type LeaveMark } from "@/lib/leave/calendar-overlay";
+import { statusLabel } from "@/lib/leave/decision";
+import { leaveTypeLabel } from "@/lib/leave/format";
 import { hhmm } from "@/lib/leave/week";
 
 /**
- * Сітка навчального року: дванадцять місяців із позначеними закритими днями.
+ * Сітка навчального року: закриття школи, власні відпустки, робочі дні й
+ * сьогоднішня дата.
  *
- * Окремим компонентом — із тієї самої причини, що й `ClosureList`: сторінка
- * `/calendar` має читати дані й складати блоки, а не малювати клітинки
- * (складність `CalendarPage` і так на межі, її стереже `fallow`).
+ * Три шари навмисно різними засобами, і кожен підписано словами в легенді:
+ * закриття — заливкою, відпустка — іншою заливкою, сьогодні — кільцем,
+ * неробочий день — приглушеним числом. Колір ніде не єдиний носій сенсу:
+ * у кожної позначеної клітинки є `aria-label`, натискання відкриває віконечко
+ * з тим самим текстом, а перелік закриттів лишається під сіткою.
  *
- * **Колір тут не несе сенсу сам по собі.** У кожної позначеної клітинки є
- * `aria-label` з назвою закриття й датою, натискання відкриває віконечко з
- * тим самим текстом, під сіткою — підписи обох видів позначок словами, а
- * повний перелік назв і дат лишається у `ClosureList` нижче.
+ * Чому особисті шари взагалі тут: вимоги PM описують спільні закриття, але
+ * людина дивиться на рік, щоб побачити СВОЮ картину. Жодного правила вимог це
+ * не змінює — додано лише те, що портал і так показує про людину в розкладі
+ * й у заявках.
  */
 export function CalendarYearGrid({
   closures,
   year,
   locale,
   today,
+  workingDays,
+  leaves,
   m,
 }: {
   closures: readonly ClosureRow[];
@@ -36,6 +44,10 @@ export function CalendarYearGrid({
   locale: string;
   /** Сьогоднішня дата за Києвом — приходить із сервера, не з браузера. */
   today: string;
+  /** Дні тижня, коли людина працює (1 — понеділок … 7 — неділя). */
+  workingDays: ReadonlySet<number>;
+  /** Власні відпустки за датами; на одну дату може бути кілька — по посаді. */
+  leaves: ReadonlyMap<string, readonly LeaveMark[]>;
   /** Перекладач сторінки — як у `AssistantTextForm`: підписи складає компонент. */
   m: (key: MessageKey) => string;
 }) {
@@ -55,37 +67,14 @@ export function CalendarYearGrid({
             locale={locale}
             weekdays={weekdays}
             today={today}
+            workingDays={workingDays}
+            leaves={leaves}
             m={m}
           />
         ))}
       </div>
 
-      {/*
-        Легенда: обидва види позначок названо словами, а не лише кольором.
-        Зразок — така сама клітинка з числом, як у сітці: інакше людина не
-        впізнає в кольоровому квадратику те, що бачить у місяці (перша версія
-        мала абстрактні квадратики — і перше ж питання було «що це?»).
-      */}
-      <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
-        <li className="flex items-center gap-2">
-          <span aria-hidden="true" className={`${TODAY_RING} w-7 rounded-sm py-1 text-center tabular-nums`}>
-            24
-          </span>
-          {m("calendar.gridToday")}
-        </li>
-        <li className="flex items-center gap-2">
-          <span aria-hidden="true" className={`${CLOSED_CELL} w-7 text-center`}>
-            28
-          </span>
-          {m("calendar.gridWholeDay")}
-        </li>
-        <li className="flex items-center gap-2">
-          <span aria-hidden="true" className={`${EARLY_CELL} w-7 text-center`}>
-            20
-          </span>
-          {m("calendar.gridEarly")}
-        </li>
-      </ul>
+      <Legend m={m} />
     </div>
   );
 }
@@ -99,11 +88,66 @@ const CLOSED_CELL =
 const EARLY_CELL =
   "rounded-sm bg-muted py-1 font-medium tabular-nums text-foreground ring-1 ring-dashed ring-ring/40";
 /**
- * Сьогодні — кільце, а не заливка: заливкою вже позначені закриття, і якби
- * сьогоднішній день теж заливався, два різні повідомлення злилися б в одне.
- * Кільце лягає поверх будь-якої клітинки, зокрема закритої.
+ * Відпустка — кольором СТАТУСУ, а не окремою заливкою.
+ *
+ * Спершу тут був `bg-secondary`, і у світлій темі він майже зливався з
+ * `bg-accent` закриттів: 0.95 проти 0.94 світлоти (DESIGN.md, розділ 2) —
+ * виміряно у браузері, різниці не видно. Токени статусів для цього й створені,
+ * і заразом видно, чи відпустка вже погоджена. Статус у віконечку — завжди
+ * текстом (вимога PM, …spec#14), колір лише на додачу.
+ *
+ * Класи цілими рядками, а не складені з частин: Tailwind шукає їх у коді
+ * дослівно, тож `bg-status-${status}` не потрапив би у збірку.
+ */
+const LEAVE_CELL_BASE = "rounded-sm py-1 font-medium tabular-nums ring-1 ring-ring/40";
+const LEAVE_TONE: Record<string, string> = {
+  awaiting: "bg-status-awaiting text-status-awaiting-foreground",
+  approved: "bg-status-approved text-status-approved-foreground",
+  returned: "bg-status-returned text-status-returned-foreground",
+};
+
+function leaveCellClass(status: string): string {
+  return cn(LEAVE_CELL_BASE, LEAVE_TONE[status] ?? "bg-secondary text-secondary-foreground");
+}
+/**
+ * Робочий день — легка заливка. Саме легка: таких днів у вчителя ~250 із 365,
+ * і сильна заливка перетворила б сітку на суцільну пляму, у якій закриття й
+ * відпустки загубилися б. Неробочий день лишається без заливки й приглушеним —
+ * різниця видно смугами, а не окремими числами.
+ */
+const WORK_CELL = "rounded-sm bg-muted/50 py-1 tabular-nums text-foreground";
+const OFF_CELL = "rounded-sm py-1 tabular-nums text-muted-foreground/60";
+/**
+ * Сьогодні — кільце, а не заливка: заливкою вже позначені закриття й відпустки,
+ * і якби сьогоднішній день теж заливався, різні повідомлення злилися б в одне.
+ * Кільце лягає поверх будь-якої клітинки.
  */
 const TODAY_RING = "ring-2 ring-primary";
+
+/** Зразки позначок зі словами — колір сам по собі нічого не повідомляє. */
+function Legend({ m }: { m: (key: MessageKey) => string }) {
+  const items: readonly { readonly cell: string; readonly day: string; readonly label: string }[] = [
+    { cell: `${WORK_CELL} ${TODAY_RING}`, day: "24", label: m("calendar.gridToday") },
+    { cell: CLOSED_CELL, day: "28", label: m("calendar.gridWholeDay") },
+    { cell: EARLY_CELL, day: "20", label: m("calendar.gridEarly") },
+    { cell: leaveCellClass("approved"), day: "12", label: m("calendar.gridLeave") },
+    { cell: WORK_CELL, day: "25", label: m("calendar.gridWorkDay") },
+    { cell: OFF_CELL, day: "29", label: m("calendar.gridOffDay") },
+  ];
+
+  return (
+    <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
+      {items.map((item) => (
+        <li key={item.label} className="flex items-center gap-2">
+          <span aria-hidden="true" className={`${item.cell} w-7 text-center`}>
+            {item.day}
+          </span>
+          {item.label}
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 /** Підписи днів тижня, з понеділка, мовою інтерфейсу: «пн, вт, …». */
 function weekdayLabels(locale: string): readonly string[] {
@@ -122,6 +166,8 @@ function MonthCard({
   locale,
   weekdays,
   today,
+  workingDays,
+  leaves,
   m,
 }: {
   monthKey: MonthKey;
@@ -129,11 +175,10 @@ function MonthCard({
   locale: string;
   weekdays: readonly string[];
   today: string;
+  workingDays: ReadonlySet<number>;
+  leaves: ReadonlyMap<string, readonly LeaveMark[]>;
   m: (key: MessageKey) => string;
 }) {
-  const dates = monthDates(monthKey);
-  const blanks = leadingBlanks(monthKey);
-
   return (
     <section className="flex flex-col gap-2 rounded-md border border-border p-3">
       <h3 className="text-sm font-medium first-letter:uppercase">
@@ -147,17 +192,19 @@ function MonthCard({
           </span>
         ))}
 
-        {Array.from({ length: blanks }, (_, index) => (
+        {Array.from({ length: leadingBlanks(monthKey) }, (_, index) => (
           <span key={`blank-${index}`} aria-hidden="true" />
         ))}
 
-        {dates.map((date) => (
+        {monthDates(monthKey).map((date) => (
           <DayCell
             key={date}
             date={date}
             closure={closureOnDate(closures, date)}
+            dayLeaves={leaves.get(date) ?? []}
             locale={locale}
             isToday={date === today}
+            isWorking={worksOn(workingDays, date)}
             m={m}
           />
         ))}
@@ -166,85 +213,79 @@ function MonthCard({
   );
 }
 
-function DayCell({
-  date,
-  closure,
-  locale,
-  isToday,
-  m,
-}: {
+type DayProps = {
   date: string;
   closure: ClosureRow | null;
+  dayLeaves: readonly LeaveMark[];
   locale: string;
   isToday: boolean;
+  isWorking: boolean;
   m: (key: MessageKey) => string;
-}) {
-  if (closure) {
-    return (
-      <ClosedDayCell date={date} closure={closure} locale={locale} isToday={isToday} m={m} />
-    );
-  }
+};
+
+/**
+ * Клітинка дня: лише вибір шару.
+ *
+ * Порядок саме такий: закриття школи важливіше за власну відпустку (воно
+ * стосується всіх і скасовує робочий день), а відпустка важливіша за «просто
+ * робочий день». Коли на дату припало і закриття, і відпустка, віконечко
+ * показує обидва рядки.
+ */
+function DayCell(props: DayProps) {
+  if (props.closure) return <ClosedDay {...props} closure={props.closure} />;
+  if (props.dayLeaves.length > 0) return <LeaveDay {...props} />;
 
   return (
     <span
-      aria-current={isToday ? "date" : undefined}
-      className={cn(
-        "rounded-sm py-1 tabular-nums text-muted-foreground",
-        isToday && `${TODAY_RING} font-medium text-foreground`,
-      )}
+      aria-current={props.isToday ? "date" : undefined}
+      className={cn(props.isWorking ? WORK_CELL : OFF_CELL, props.isToday && TODAY_RING)}
     >
-      {Number(date.slice(8, 10))}
+      {dayNumber(props.date)}
     </span>
   );
 }
 
+/** Число дня без провідного нуля: у клітинці 3 × 3 мм зайвий символ помітний. */
+function dayNumber(date: string): number {
+  return Number(date.slice(8, 10));
+}
+
 /**
- * Закритий день: число, яке відкриває віконечко з подробицями.
+ * Позначений день: число, яке відкриває віконечко з подробицями.
  *
  * Віконечко — нативний `<details>`, а не спливання на JavaScript: сторінка
  * серверна й має лишатися робочою без нього, а `<summary>` уже вміє те, що
  * інакше довелося б писати руками — фокус, Enter і пробіл, стан «відкрито»
  * для екранного читача.
  *
- * Клікабельні лише позначені дні: у вільного дня календар не знає нічого,
- * крім «не закрито», а 365 інтерактивних клітинок зробили б прохід
- * клавіатурою по сторінці нестерпним.
+ * Клікабельні лише позначені дні: у звичайного робочого дня календар не знає
+ * нічого понад розклад, який є на `/schedule`, а 365 інтерактивних клітинок
+ * зробили б прохід клавіатурою по сторінці нестерпним.
  */
-function ClosedDayCell({
+function MarkedDay({
   date,
-  closure,
-  locale,
+  label,
+  cellClass,
   isToday,
-  m,
+  locale,
+  children,
 }: {
   date: string;
-  closure: ClosureRow;
-  locale: string;
+  label: string;
+  cellClass: string;
   isToday: boolean;
-  m: (key: MessageKey) => string;
+  locale: string;
+  children: React.ReactNode;
 }) {
-  const wholeDay = closure.closes_at === null;
-  const closesAt = hhmm(closure.closes_at ?? "");
-  const kind = wholeDay
-    ? m("calendar.dayWholeDay")
-    : `${m("calendar.dayEarly")} ${closesAt}.`;
-
-  // Назва доступна трьома шляхами — підказка миші, екранний читач і саме
-  // віконечко, — і жоден із них не є кольором.
-  const label =
-    `${date} — ${closure.name}` +
-    (wholeDay ? "" : `, ${m("calendar.from")} ${closesAt}`) +
-    (isToday ? ` (${m("calendar.gridToday")})` : "");
-
   return (
     <details className="group/day relative">
       <summary
         aria-label={label}
         title={label}
         aria-current={isToday ? "date" : undefined}
-        data-testid="calendar-day-closed"
+        data-testid="calendar-day-marked"
         className={cn(
-          wholeDay ? CLOSED_CELL : EARLY_CELL,
+          cellClass,
           isToday && TODAY_RING,
           "block cursor-pointer list-none outline-none",
           "focus-visible:ring-2 focus-visible:ring-ring",
@@ -252,26 +293,79 @@ function ClosedDayCell({
           "[&::-webkit-details-marker]:hidden",
         )}
       >
-        {Number(date.slice(8, 10))}
+        {dayNumber(date)}
       </summary>
 
       {/*
         Над клітинкою, по центру. Ширина стала, а не `w-max`: довга назва
         закриття має переноситися, а не розтягувати віконечко за край екрана.
       */}
-      <div
-        data-testid="calendar-day-popover"
-        className="absolute bottom-full left-1/2 z-20 mb-1 flex w-44 -translate-x-1/2 flex-col gap-1 rounded-md border border-border bg-popover p-2 text-left text-xs shadow-lg"
-      >
+      <div className="absolute bottom-full left-1/2 z-20 mb-1 flex w-48 -translate-x-1/2 flex-col gap-1 rounded-md border border-border bg-popover p-2 text-left text-xs shadow-lg">
         <span className="font-medium tabular-nums">{longDate(date, locale)}</span>
-        <span>{closure.name}</span>
-        <span className="text-muted-foreground">{kind}</span>
-        {closure.starts_on === closure.ends_on ? null : (
-          <span className="tabular-nums text-muted-foreground">
-            {closure.starts_on} – {closure.ends_on}
-          </span>
-        )}
+        {children}
       </div>
     </details>
   );
+}
+
+function ClosedDay({ date, closure, dayLeaves, locale, isToday, m }: DayProps & { closure: ClosureRow }) {
+  const wholeDay = closure.closes_at === null;
+  const closesAt = hhmm(closure.closes_at ?? "");
+  const label =
+    `${date} — ${closure.name}` +
+    (wholeDay ? "" : `, ${m("calendar.from")} ${closesAt}`) +
+    (isToday ? ` (${m("calendar.gridToday")})` : "");
+
+  return (
+    <MarkedDay
+      date={date}
+      label={label}
+      cellClass={wholeDay ? CLOSED_CELL : EARLY_CELL}
+      isToday={isToday}
+      locale={locale}
+    >
+      <span>{closure.name}</span>
+      <span className="text-muted-foreground">
+        {wholeDay ? m("calendar.dayWholeDay") : `${m("calendar.dayEarly")} ${closesAt}.`}
+      </span>
+      {closure.starts_on === closure.ends_on ? null : (
+        <span className="tabular-nums text-muted-foreground">
+          {closure.starts_on} – {closure.ends_on}
+        </span>
+      )}
+      <LeaveLines dayLeaves={dayLeaves} />
+    </MarkedDay>
+  );
+}
+
+function LeaveDay({ date, dayLeaves, locale, isToday, m }: DayProps) {
+  // Тип і статус — текстом, дослівно як у решті порталу (вимога PM, …spec#14).
+  const first = dayLeaves[0];
+  const label =
+    `${date} — ${leaveTypeLabel(first.leave_type)}, ${statusLabel(first.status)}` +
+    (isToday ? ` (${m("calendar.gridToday")})` : "");
+
+  return (
+    <MarkedDay
+      date={date}
+      label={label}
+      cellClass={leaveCellClass(first.status)}
+      isToday={isToday}
+      locale={locale}
+    >
+      <LeaveLines dayLeaves={dayLeaves} />
+    </MarkedDay>
+  );
+}
+
+/** Рядки відпусток дня: тип, статус і години — щоразу текстом. */
+function LeaveLines({ dayLeaves }: { dayLeaves: readonly LeaveMark[] }) {
+  return dayLeaves.map((leave, index) => (
+    <span key={`${leave.on_date}-${index}`} className="flex flex-col">
+      <span>{leaveTypeLabel(leave.leave_type)}</span>
+      <span className="tabular-nums text-muted-foreground">
+        {statusLabel(leave.status)} · {hhmm(leave.starts_at)}–{hhmm(leave.ends_at)}
+      </span>
+    </span>
+  ));
 }
