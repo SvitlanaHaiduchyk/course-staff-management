@@ -20,11 +20,19 @@
 //   - x-vercel-set-bypass-cookie НЕ надсилаємо: він потрібен браузеру для наступних запитів і відповідає
 //     редіректом із Set-Cookie, а smoke з redirect:"manual" тоді побачив би 3xx замість сторінки.
 //   - SMOKE_TARGET=deploy (ставить workflow для preview і staging) змінює лише підказки в повідомленнях про збій.
+//   - SMOKE_SHA_ANCESTRY=1 (ставить workflow для прода) — очікуваний коміт має бути ВСЕРЕДИНІ того, що на проді, а не
+//     дорівнювати йому: два злиття поспіль законно лишають на проді новіший коміт (інцидент #95). Чому лише для прода
+//     й як це перевіряє git — scripts/lib/deployed-sha.mjs.
+
+import { commitContains, shaVerdict } from "./lib/deployed-sha.mjs";
+
 const [rawBase = process.env.PROD_URL ?? "", expectSha = ""] = process.argv.slice(2);
 // client_payload.url від Vercel може прийти хостом без схеми — додаємо https://.
 const base = (/^https?:\/\//.test(rawBase) ? rawBase : rawBase ? `https://${rawBase}` : "").replace(/\/+$/, "");
 const bypass = (process.env.VERCEL_AUTOMATION_BYPASS_SECRET ?? "").trim();
 const target = process.env.SMOKE_TARGET === "deploy" ? "deploy" : "prod";
+// Потрібна повна історія в checkout; без неї перевірка чесно каже «не вдалося перевірити», а не мовчки зеленіє.
+const ancestry = process.env.SMOKE_SHA_ANCESTRY === "1";
 
 const headers = { "user-agent": "smoke/2.0 (WS11)" };
 if (bypass) headers["x-vercel-protection-bypass"] = bypass;
@@ -72,6 +80,7 @@ async function main() {
   }
 
   let health = null;
+  let contains = "no";
   for (let attempt = 1; attempt <= (expectSha ? 6 : 1) && login.status === 200; attempt++) {
     const r = await get("/api/health");
     try {
@@ -81,6 +90,10 @@ async function main() {
     }
     // sha=local — Vercel не віддає VERCEL_GIT_COMMIT_SHA: чекати марно.
     if (!expectSha || health.sha === expectSha || health.sha === "local") break;
+    // Прод уже містить очікуваний коміт — чекати нічого: вийшов наступний деплой. Прод позаду — чекаємо перемикання
+    // домену, як і раніше.
+    contains = ancestry ? commitContains(expectSha, String(health.sha)) : "no";
+    if (contains === "yes") break;
     if (attempt < 6) await new Promise((res) => setTimeout(res, 20_000));
   }
   if (!health) {
@@ -101,8 +114,9 @@ async function main() {
   if (expectSha && health?.sha === "local") {
     fail.push(`"/api/health": sha=local — у Vercel увімкніть Settings → Environment Variables → «Automatically expose System Environment Variables» і зробіть Redeploy`);
   } else if (expectSha && health?.sha && health.sha !== expectSha) {
-    const why = target === "deploy" ? "адреса деплою показує інший коміт — чи та адреса в client_payload.url?" : "деплой main не пройшов чи зроблено Instant Rollback?";
-    fail.push(`${base} показує ${String(health.sha).slice(0, 7)}, а очікувався ${expectSha.slice(0, 7)} — ${why}`);
+    const { problem, note } = shaVerdict({ base, expected: expectSha, actual: String(health.sha), contains, target });
+    if (problem) fail.push(problem);
+    if (note) console.log(note);
   }
 
   // Лише статуси й відповідь /api/health (вона публічна й без секретів). Секрет обходу — тільки як true/false.

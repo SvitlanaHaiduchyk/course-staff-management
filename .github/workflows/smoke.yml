@@ -24,6 +24,10 @@
 # - Після перегенерації секрету обходу: оновіть секрет у GitHub і зробіть Redeploy — старі деплої можуть не прийняти
 #   новий секрет (як саме, перевірте в документації Vercel «Protection Bypass for Automation»).
 # - Дії закріплені за повним SHA з коментарем версії (завдання D). Dependabot оновлює і SHA, і коментар.
+# - Job "prod" питає прод «чи містить він очікуваний коміт», а не «чи це рівно той» (інцидент #95: два злиття поспіль
+#   лишили на проді новіший коміт, і перевірка на рівність прочитала це як збій). Тому саме тут checkout з повною
+#   історією: git має знати обидва коміти. Job "deploy" ходить на адресу конкретного деплою — вона попереду бути не
+#   може, там рівність лишається.
 name: smoke
 
 on:
@@ -74,10 +78,15 @@ jobs:
       EXPECT_SHA: ${{ github.event.client_payload.git.sha || github.event.sha || github.sha }}
       # Прод не за захистом (Standard Protection), але заголовок не шкодить, якщо колись увімкнуть All Deployments.
       VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+      # Новіший коміт на проді — не збій, якщо він містить очікуваний (інцидент #95).
+      SMOKE_SHA_ANCESTRY: "1"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           sparse-checkout: scripts
+          # Уся історія всіх гілок: перевірка «чи містить коміт на проді очікуваний» питає про це git, а коміт на
+          # проді може бути новішим за той, що запустив цей прогін.
+          fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
