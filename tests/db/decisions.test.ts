@@ -119,6 +119,8 @@ describe("менеджер вирішує записи своїх посад", (
       "manager2@example.test",
       "teacher1@example.test",
       "teacher2@example.test",
+      // teacher3 з'явився в демо-даних зрізу WS8, і його посаду теж веде manager2.
+      "teacher3@example.test",
     ]);
   });
 

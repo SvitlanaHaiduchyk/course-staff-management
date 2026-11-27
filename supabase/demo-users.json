@@ -23,5 +23,15 @@
     "email": "teacher2@example.test",
     "full_name": "Марія Демо-Вчителька",
     "role": "employee"
+  },
+  {
+    "email": "assistant1@example.test",
+    "full_name": "Леся Демо-Асистентка",
+    "role": "employee"
+  },
+  {
+    "email": "teacher3@example.test",
+    "full_name": "Павло Демо-Вчитель",
+    "role": "employee"
   }
 ]

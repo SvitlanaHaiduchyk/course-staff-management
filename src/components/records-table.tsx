@@ -1,3 +1,4 @@
+import { RecordSubstitute } from "@/components/record-substitute";
 import { RequestActions } from "@/components/request-actions";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -38,6 +39,7 @@ export type MyRecord = {
   status: string;
   days_on_type: number | null;
   days_unpaid: number | null;
+  substitute_id: string | null;
   positions: { job_title: string } | null;
   leave_requests: { leave_type: string; comment: string | null } | null;
 };
@@ -54,11 +56,15 @@ export async function RecordsTable({
   lastDecision,
   lastCancellation,
   today,
+  emailById,
+  substituteJobTitleById,
 }: {
   records: readonly MyRecord[];
   lastDecision: Map<string, { comment: string | null; decision: string }>;
   lastCancellation: Map<string, CancellationRow>;
   today: string;
+  emailById: Map<string, string>;
+  substituteJobTitleById: Map<string, string>;
 }) {
   const { m } = await getMessages();
 
@@ -90,7 +96,18 @@ export async function RecordsTable({
             <TableCell className="tabular-nums">
               {r.starts_at.slice(0, 5)}–{r.ends_at.slice(0, 5)}
             </TableCell>
-            <TableCell>{r.positions?.job_title ?? "—"}</TableCell>
+            <TableCell>
+              {r.positions?.job_title ?? "—"}
+              <RecordSubstitute
+                email={r.substitute_id ? emailById.get(r.substitute_id) : null}
+                absentJobTitle={r.positions?.job_title}
+                substituteJobTitle={
+                  r.substitute_id ? substituteJobTitleById.get(r.substitute_id) : null
+                }
+                startsAt={r.starts_at}
+                endsAt={r.ends_at}
+              />
+            </TableCell>
             <TableCell>{leaveTypeLabel(r.leave_requests?.leave_type)}</TableCell>
             <TableCell>
               <Badge className={STATUS_CLASSES[r.status] ?? ""}>

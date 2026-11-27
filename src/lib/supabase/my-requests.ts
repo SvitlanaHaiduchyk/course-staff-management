@@ -13,6 +13,12 @@ export type MyRequestsData = {
   records: MyRecord[];
   lastDecision: Map<string, { comment: string | null; decision: string }>;
   lastCancellation: Map<string, CancellationRow>;
+  /** Мій список замін (AC-SUBST-04) — у порядку, у якому його віддала база. */
+  substituteIds: string[];
+  /** Адреси замін: і для вибору, і для вже створених записів (AC-SUBST-02). */
+  emailById: Map<string, string>;
+  /** Основні посади замін — від їхніх назв залежить позначка підвищення (AC-SUBST-08). */
+  substituteJobTitleById: Map<string, string>;
 };
 
 /**
@@ -34,7 +40,7 @@ export async function loadMyRequests(supabase: Client, employeeId: string): Prom
   const { data: records } = await supabase
     .from("leave_records")
     .select(
-      "id, on_date, starts_at, ends_at, status, days_on_type, days_unpaid, positions(job_title), leave_requests(leave_type, comment)",
+      "id, on_date, starts_at, ends_at, status, days_on_type, days_unpaid, substitute_id, positions(job_title), leave_requests(leave_type, comment)",
     )
     .order("on_date", { ascending: false });
 
@@ -51,7 +57,38 @@ export async function loadMyRequests(supabase: Client, employeeId: string): Prom
     .select("record_id, reason, decision, comment, requested_at")
     .order("requested_at", { ascending: false });
 
+  // AC-SUBST-04: вибір пропонує рівно мій список; політика віддає лише його.
+  const { data: myList } = await supabase
+    .from("substitutes")
+    .select("substitute_id")
+    .eq("employee_id", employeeId);
+
+  const substituteIds = (myList ?? []).map((row) => row.substitute_id);
+  const neededIds = [
+    ...new Set([
+      ...substituteIds,
+      ...(records ?? []).map((r) => r.substitute_id).filter((id): id is string => Boolean(id)),
+    ]),
+  ];
+
+  const { data: people } = neededIds.length
+    ? await supabase.from("profiles").select("id, email").in("id", neededIds)
+    : { data: [] };
+
+  const { data: substitutePositions } = neededIds.length
+    ? await supabase
+        .from("positions")
+        .select("employee_id, job_title, kind")
+        .in("employee_id", neededIds)
+        .eq("kind", "main")
+    : { data: [] };
+
   return {
+    substituteIds,
+    emailById: new Map((people ?? []).map((p) => [p.id, p.email ?? ""])),
+    substituteJobTitleById: new Map(
+      (substitutePositions ?? []).map((p) => [p.employee_id, p.job_title]),
+    ),
     positions: (positions ?? []) as RequestPosition[],
     records: (records ?? []) as MyRecord[],
     lastDecision: firstByRecord(decisions ?? [], (d) => ({
