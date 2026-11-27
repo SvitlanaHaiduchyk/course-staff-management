@@ -98,6 +98,7 @@ export default async function CalendarPage({
             today={todayInKyiv()}
             positions={layer.positions}
             leaves={layer.leaves}
+            lessons={layer.lessons}
             m={m}
           />
 

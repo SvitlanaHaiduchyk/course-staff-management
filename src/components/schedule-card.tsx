@@ -6,6 +6,7 @@ import {
   type SchedulePosition,
 } from "@/components/schedule-week";
 import { buttonVariants } from "@/components/ui/button";
+import type { LessonRow } from "@/lib/leave/lessons";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { INTL_LOCALE, messages, weekdayNames, type Lang } from "@/lib/i18n/dict";
 import { scheduleSummary } from "@/lib/leave/format";
@@ -21,12 +22,14 @@ import { shiftWeeks, weekRangeLabel } from "@/lib/leave/week";
 export function ScheduleCard({
   positions,
   leaves,
+  lessons,
   mondayIso,
   todayIso,
   lang,
 }: {
   positions: readonly SchedulePosition[];
   leaves: readonly ScheduleLeave[];
+  lessons: readonly LessonRow[];
   mondayIso: string;
   todayIso: string;
   lang: Lang;
@@ -71,6 +74,7 @@ export function ScheduleCard({
         <ScheduleWeek
           positions={positions}
           leaves={leaves}
+          lessons={lessons}
           mondayIso={mondayIso}
           todayIso={todayIso}
           lang={lang}

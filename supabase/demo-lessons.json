@@ -1,0 +1,64 @@
+{
+  "comment": "Синтетичні заняття (уроки й наради) для демопосад із supabase/demo-positions.json. Заняття лежать усередині робочих годин тієї самої посади — шар показу, баланс їх не рахує (docs/decisions/0004-lessons-as-a-layer.md). Застосовує scripts/create-demo-lessons.mjs (npm run lessons:demo) після npm run positions:demo. Заняття кожної посади лежать усередині її блоків розкладу з demo-positions.json — інакше смуга висіла б поза робочими годинами. Дані вигадані; жодної справжньої назви чи імені тут бути не може.",
+  "lessons": [
+    {
+      "employee": "teacher1@example.test",
+      "kind": "main",
+      "week": [
+        {"weekday": 1, "starts_at": "08:30", "ends_at": "09:15", "subject": "Maths", "form": "4-A"},
+        {"weekday": 1, "starts_at": "09:30", "ends_at": "10:15", "subject": "Maths", "form": "5-B"},
+        {"weekday": 1, "starts_at": "10:30", "ends_at": "11:15", "subject": "Reading", "form": "4-A"},
+        {"weekday": 1, "starts_at": "13:00", "ends_at": "13:45", "subject": "Nature study", "form": "4-A"},
+        {"weekday": 2, "starts_at": "08:30", "ends_at": "09:15", "subject": "Reading", "form": "4-A"},
+        {"weekday": 2, "starts_at": "09:30", "ends_at": "10:15", "subject": "Maths", "form": "4-A"},
+        {"weekday": 2, "starts_at": "13:00", "ends_at": "14:00", "subject": "Department meeting", "form": null},
+        {"weekday": 3, "starts_at": "08:30", "ends_at": "09:15", "subject": "Maths", "form": "5-B"},
+        {"weekday": 3, "starts_at": "09:30", "ends_at": "10:15", "subject": "Maths", "form": "4-A"},
+        {"weekday": 3, "starts_at": "11:00", "ends_at": "11:45", "subject": "Art", "form": "4-A"},
+        {"weekday": 4, "starts_at": "08:30", "ends_at": "09:15", "subject": "Reading", "form": "5-B"},
+        {"weekday": 4, "starts_at": "10:30", "ends_at": "11:15", "subject": "Maths", "form": "4-A"},
+        {"weekday": 5, "starts_at": "08:30", "ends_at": "09:15", "subject": "Maths", "form": "4-A"},
+        {"weekday": 5, "starts_at": "09:30", "ends_at": "10:15", "subject": "Nature study", "form": "5-B"},
+        {"weekday": 5, "starts_at": "12:30", "ends_at": "13:15", "subject": "Class hour", "form": "4-A"}
+      ]
+    },
+    {
+      "employee": "teacher1@example.test",
+      "kind": "additional",
+      "week": [
+        {"weekday": 1, "starts_at": "15:45", "ends_at": "16:30", "subject": "Algebra", "form": "8A"}
+      ]
+    },
+    {
+      "employee": "teacher2@example.test",
+      "kind": "main",
+      "week": [
+        {"weekday": 1, "starts_at": "08:30", "ends_at": "09:15", "subject": "Reading", "form": "3-B"},
+        {"weekday": 1, "starts_at": "09:30", "ends_at": "10:15", "subject": "Maths", "form": "3-B"},
+        {"weekday": 2, "starts_at": "08:30", "ends_at": "09:15", "subject": "Maths", "form": "3-B"},
+        {"weekday": 2, "starts_at": "11:00", "ends_at": "12:00", "subject": "Staff briefing", "form": null},
+        {"weekday": 3, "starts_at": "08:30", "ends_at": "09:15", "subject": "Reading", "form": "3-B"},
+        {"weekday": 4, "starts_at": "09:30", "ends_at": "10:15", "subject": "Art", "form": "3-B"},
+        {"weekday": 5, "starts_at": "08:30", "ends_at": "09:15", "subject": "Maths", "form": "3-B"}
+      ]
+    },
+    {
+      "employee": "manager1@example.test",
+      "kind": "main",
+      "week": [
+        {"weekday": 1, "starts_at": "08:00", "ends_at": "08:30", "subject": "Morning briefing", "form": null},
+        {"weekday": 1, "starts_at": "09:30", "ends_at": "10:15", "subject": "Lesson observation", "form": "4-A"},
+        {"weekday": 1, "starts_at": "13:00", "ends_at": "14:00", "subject": "Timetable planning", "form": null},
+        {"weekday": 2, "starts_at": "08:00", "ends_at": "08:30", "subject": "Morning briefing", "form": null},
+        {"weekday": 2, "starts_at": "11:00", "ends_at": "12:00", "subject": "Parents' hour", "form": null},
+        {"weekday": 3, "starts_at": "08:00", "ends_at": "08:30", "subject": "Morning briefing", "form": null},
+        {"weekday": 3, "starts_at": "10:30", "ends_at": "11:15", "subject": "Lesson observation", "form": "3-B"},
+        {"weekday": 3, "starts_at": "14:00", "ends_at": "15:00", "subject": "Department meeting", "form": null},
+        {"weekday": 4, "starts_at": "08:00", "ends_at": "08:30", "subject": "Morning briefing", "form": null},
+        {"weekday": 4, "starts_at": "12:00", "ends_at": "13:00", "subject": "Hall duty", "form": null},
+        {"weekday": 5, "starts_at": "08:00", "ends_at": "08:30", "subject": "Morning briefing", "form": null},
+        {"weekday": 5, "starts_at": "13:00", "ends_at": "14:00", "subject": "Staff meeting", "form": null}
+      ]
+    }
+  ]
+}
