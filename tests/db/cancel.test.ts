@@ -334,7 +334,7 @@ describe("прямий запит повз функцію", () => {
   it("AC-CANCEL-02: підтвердження без скасування запису база не приймає", async () => {
     // Колонковий grant дозволяє менеджеру поставити decision напряму. Якби це
     // проходило, запит виглядав би вирішеним, а дні не повернулися б —
-    // знайшло рев'ю CodeRabbit на PR #112. Тримає відкладений constraint
+    // знайшло рев'ю CodeRabbit на PR 112. Тримає відкладений constraint
     // trigger, тож падає вже на commit.
     const date = await dayShift(9);
     const year = schoolYearOf(date);
