@@ -168,6 +168,47 @@ export type Database = {
           },
         ];
       };
+      lessons: {
+        Row: {
+          id: string;
+          position_id: string;
+          weekday: number;
+          starts_at: string;
+          ends_at: string;
+          subject: string;
+          form: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          position_id: string;
+          weekday: number;
+          starts_at: string;
+          ends_at: string;
+          subject: string;
+          form?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          position_id?: string;
+          weekday?: number;
+          starts_at?: string;
+          ends_at?: string;
+          subject?: string;
+          form?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lessons_position_id_fkey";
+            columns: ["position_id"];
+            isOneToOne: false;
+            referencedRelation: "positions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       leave_requests: {
         Row: {
           id: string;

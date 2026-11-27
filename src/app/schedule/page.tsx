@@ -2,6 +2,7 @@ import { ScheduleCard } from "@/components/schedule-card";
 import { getMessages } from "@/lib/i18n/server";
 import { resolveMonday, weekDates } from "@/lib/leave/week";
 import { loadMyLeaves } from "@/lib/supabase/my-leaves";
+import { loadMyLessons } from "@/lib/supabase/my-lessons";
 import { loadMyPositions } from "@/lib/supabase/my-positions";
 import { requirePageSession } from "@/lib/supabase/page-session";
 
@@ -24,12 +25,10 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
   const todayIso = new Date().toISOString().slice(0, 10);
   const mondayIso = resolveMonday(week, todayIso);
   const dates = weekDates(mondayIso);
-  const leaves = await loadMyLeaves(
-    supabase,
-    myPositions.map((p) => p.id),
-    dates[0],
-    dates[dates.length - 1],
-  );
+  const positionIds = myPositions.map((p) => p.id);
+  const leaves = await loadMyLeaves(supabase, positionIds, dates[0], dates[dates.length - 1]);
+  // Заняття беремо на весь тиждень одразу — вони задані днем тижня, а не датою.
+  const lessons = await loadMyLessons(supabase, positionIds);
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-16">
@@ -38,6 +37,7 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
       <ScheduleCard
         positions={myPositions}
         leaves={leaves}
+        lessons={lessons}
         mondayIso={mondayIso}
         todayIso={todayIso}
         lang={lang}

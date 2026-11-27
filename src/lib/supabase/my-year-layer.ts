@@ -10,7 +10,9 @@ import {
   type LeaveMark,
   type TimedPosition,
 } from "@/lib/leave/calendar-overlay";
+import type { LessonRow } from "@/lib/leave/lessons";
 import { loadMyLeaves } from "@/lib/supabase/my-leaves";
+import { loadMyLessons } from "@/lib/supabase/my-lessons";
 import { loadMyPositions } from "@/lib/supabase/my-positions";
 import type { requirePageSession } from "@/lib/supabase/page-session";
 
@@ -25,6 +27,8 @@ export type MyYearLayer = {
   readonly positions: readonly TimedPosition[];
   /** Власні відпустки за датами; на одну дату може бути кілька — по посаді. */
   readonly leaves: ReadonlyMap<string, readonly LeaveMark[]>;
+  /** Власні заняття тижня; день із них вибирає `lessonsOn` (ADR 0004). */
+  readonly lessons: readonly LessonRow[];
 };
 
 /**
@@ -38,12 +42,9 @@ export async function loadMyYearLayer(
   to: string,
 ): Promise<MyYearLayer> {
   const positions = await loadMyPositions(supabase, employeeId);
-  const leaves = await loadMyLeaves(
-    supabase,
-    positions.map((p) => p.id),
-    from,
-    to,
-  );
+  const positionIds = positions.map((p) => p.id);
+  const leaves = await loadMyLeaves(supabase, positionIds, from, to);
+  const lessons = await loadMyLessons(supabase, positionIds);
 
-  return { positions, leaves: leavesByDate(leaves) };
+  return { positions, leaves: leavesByDate(leaves), lessons };
 }

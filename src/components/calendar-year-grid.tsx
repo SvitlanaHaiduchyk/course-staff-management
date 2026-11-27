@@ -18,6 +18,7 @@ import {
   type TimedPosition,
 } from "@/lib/leave/calendar-overlay";
 import { statusLabel } from "@/lib/leave/decision";
+import { lessonLabel, lessonsOn, type LessonRow } from "@/lib/leave/lessons";
 import { leaveTypeLabel } from "@/lib/leave/format";
 import { hhmm } from "@/lib/leave/week";
 
@@ -39,6 +40,11 @@ import { hhmm } from "@/lib/leave/week";
  * Віконечко дня показує ще й години цього дня — ті самі блоки, які малює
  * тижнева сітка «Мого розкладу»: обидва місця кличуть `blocksOn`, тож другої
  * відповіді на питання «коли я працюю такого-то числа» в порталі немає.
+ *
+ * Під годинами — заняття цього дня (уроки, наради). Це інше поняття, ніж
+ * робочі години, і в тексті вони розділені: години створює адміністратор і з
+ * них рахується баланс, заняття веде сама людина й жодне обчислення їх не
+ * читає (ADR 0004).
  */
 export function CalendarYearGrid({
   closures,
@@ -47,6 +53,7 @@ export function CalendarYearGrid({
   today,
   positions,
   leaves,
+  lessons,
   m,
 }: {
   closures: readonly ClosureRow[];
@@ -58,6 +65,8 @@ export function CalendarYearGrid({
   positions: readonly TimedPosition[];
   /** Власні відпустки за датами; на одну дату може бути кілька — по посаді. */
   leaves: ReadonlyMap<string, readonly LeaveMark[]>;
+  /** Власні заняття тижня; день із них вибирає `lessonsOn`. */
+  lessons: readonly LessonRow[];
   /** Перекладач сторінки — як у `AssistantTextForm`: підписи складає компонент. */
   m: (key: MessageKey) => string;
 }) {
@@ -79,6 +88,7 @@ export function CalendarYearGrid({
             today={today}
             positions={positions}
             leaves={leaves}
+            lessons={lessons}
             m={m}
           />
         ))}
@@ -178,6 +188,7 @@ function MonthCard({
   today,
   positions,
   leaves,
+  lessons,
   m,
 }: {
   monthKey: MonthKey;
@@ -187,6 +198,7 @@ function MonthCard({
   today: string;
   positions: readonly TimedPosition[];
   leaves: ReadonlyMap<string, readonly LeaveMark[]>;
+  lessons: readonly LessonRow[];
   m: (key: MessageKey) => string;
 }) {
   return (
@@ -213,6 +225,7 @@ function MonthCard({
             closure={closureOnDate(closures, date)}
             dayLeaves={leaves.get(date) ?? []}
             blocks={blocksOn(positions, date)}
+            dayLessons={lessonsOn(lessons, date)}
             locale={locale}
             isToday={date === today}
             m={m}
@@ -229,6 +242,8 @@ type DayProps = {
   dayLeaves: readonly LeaveMark[];
   /** Години цього дня за розкладом посад — те саме, що показує «Мій розклад». */
   blocks: readonly DayBlock[];
+  /** Заняття цього дня: уроки й наради всередині робочих годин. */
+  dayLessons: readonly LessonRow[];
   locale: string;
   isToday: boolean;
   m: (key: MessageKey) => string;
@@ -243,7 +258,7 @@ type DayProps = {
  * і закриття, і відпустка, і години розкладу — видно всі три рядки.
  */
 function DayCell(props: DayProps) {
-  const { closure, dayLeaves, blocks, isToday, locale, m } = props;
+  const { closure, dayLeaves, blocks, dayLessons, isToday, locale, m } = props;
   const wholeDay = closure !== null && closure.closes_at === null;
   const open = openBlocks(blocks, closure);
 
@@ -268,6 +283,7 @@ function DayCell(props: DayProps) {
       {closure ? <ClosureLines closure={closure} wholeDay={wholeDay} m={m} /> : null}
       <LeaveLines dayLeaves={dayLeaves} />
       <ScheduleLines blocks={blocks} open={open} closed={closure !== null} m={m} />
+      <LessonLines dayLessons={dayLessons} m={m} />
     </MarkedDay>
   );
 }
@@ -279,31 +295,31 @@ function DayCell(props: DayProps) {
  * (вимога PM, …spec#14), тож усе, що видно оком, має бути й тут словами.
  */
 function dayLabel(
-  { date, closure, dayLeaves, blocks, isToday, m }: DayProps,
+  { date, closure, dayLeaves, blocks, dayLessons, isToday, m }: DayProps,
   open: readonly DayBlock[],
 ): string {
-  const parts = [date];
-
-  if (closure) {
-    parts.push(
-      closure.closes_at === null
-        ? closure.name
-        : `${closure.name}, ${m("calendar.from")} ${hhmm(closure.closes_at)}`,
-    );
-  }
-
-  for (const leave of dayLeaves) {
-    parts.push(`${leaveTypeLabel(leave.leave_type)}, ${statusLabel(leave.status)}`);
-  }
-
-  parts.push(
+  const hours =
     open.length > 0
       ? open.map((block) => `${hhmm(block.starts_at)}–${hhmm(block.ends_at)}`).join(", ")
-      : m(noHoursKey(blocks, closure !== null)),
-  );
+      : m(noHoursKey(blocks, closure !== null));
 
-  if (isToday) parts.push(m("calendar.gridToday"));
-  return parts.join(" — ");
+  return [
+    date,
+    ...closureParts(closure, m),
+    ...dayLeaves.map((leave) => `${leaveTypeLabel(leave.leave_type)}, ${statusLabel(leave.status)}`),
+    hours,
+    ...dayLessons.map(
+      (lesson) => `${hhmm(lesson.starts_at)}–${hhmm(lesson.ends_at)} ${lessonLabel(lesson)}`,
+    ),
+    ...(isToday ? [m("calendar.gridToday")] : []),
+  ].join(" — ");
+}
+
+/** Закриття в підписі: назва, а для скороченого дня ще й час. */
+function closureParts(closure: ClosureRow | null, m: (key: MessageKey) => string): string[] {
+  if (closure === null) return [];
+  if (closure.closes_at === null) return [closure.name];
+  return [`${closure.name}, ${m("calendar.from")} ${hhmm(closure.closes_at)}`];
 }
 
 /** Число дня без провідного нуля: у клітинці 3 × 3 мм зайвий символ помітний. */
@@ -461,4 +477,40 @@ function ScheduleLines({
  */
 function noHoursKey(blocks: readonly DayBlock[], closed: boolean): MessageKey {
   return closed && blocks.length > 0 ? "calendar.dayClosedNoHours" : "calendar.dayNoHours";
+}
+
+/**
+ * Заняття цього дня — окремим розділом під робочими годинами.
+ *
+ * Саме окремим, а не разом із годинами: це різні поняття, і злиті в один
+ * перелік вони читалися б як одне. Години — оплачуваний час посади, з якого
+ * рахується залишок відпустки; заняття — що людина в цей час робить. Коли
+ * занять немає, так і написано: день без занять і день без розкладу — різні
+ * відповіді.
+ */
+function LessonLines({
+  dayLessons,
+  m,
+}: {
+  dayLessons: readonly LessonRow[];
+  m: (key: MessageKey) => string;
+}) {
+  return (
+    <span className="flex flex-col gap-0.5 border-t border-border pt-1">
+      <span className="text-muted-foreground">{m("lessons.dayLabel")}</span>
+
+      {dayLessons.length === 0 ? (
+        <span>{m("lessons.dayNone")}</span>
+      ) : (
+        dayLessons.map((lesson) => (
+          <span key={lesson.id} className="flex flex-col">
+            <span className="tabular-nums">
+              {hhmm(lesson.starts_at)}–{hhmm(lesson.ends_at)}
+            </span>
+            <span className="font-medium">{lessonLabel(lesson)}</span>
+          </span>
+        ))
+      )}
+    </span>
+  );
 }
