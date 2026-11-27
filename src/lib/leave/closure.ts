@@ -73,14 +73,14 @@ export function closedFrom(closure: Closure | null): string | null {
  * закриття (`AC-CAL-16`), а не «You have no working hours on this day», як ми
  * читали до відповіді.
  */
-export function blocksAfterClosure(
-  blocks: readonly ScheduleBlock[],
+export function blocksAfterClosure<T extends ScheduleBlock>(
+  blocks: readonly T[],
   from: string | null,
-): ScheduleBlock[] {
+): T[] {
   if (from === null) return [...blocks];
 
   const limit = toMinutes(from);
-  const kept: ScheduleBlock[] = [];
+  const kept: T[] = [];
   for (const block of blocks) {
     if (toMinutes(block.startsAt) >= limit) continue;
     kept.push(toMinutes(block.endsAt) > limit ? { ...block, endsAt: from } : block);

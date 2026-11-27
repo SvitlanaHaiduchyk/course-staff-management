@@ -5,7 +5,11 @@ import "server-only";
 // сторінкою — читає дані й складає блоки, а не знає, з чого шар зроблено
 // (її складність стереже `fallow`).
 
-import { leavesByDate, workingWeekdays, type LeaveMark } from "@/lib/leave/calendar-overlay";
+import {
+  leavesByDate,
+  type LeaveMark,
+  type TimedPosition,
+} from "@/lib/leave/calendar-overlay";
 import { loadMyLeaves } from "@/lib/supabase/my-leaves";
 import { loadMyPositions } from "@/lib/supabase/my-positions";
 import type { requirePageSession } from "@/lib/supabase/page-session";
@@ -13,8 +17,12 @@ import type { requirePageSession } from "@/lib/supabase/page-session";
 type PageSupabase = Awaited<ReturnType<typeof requirePageSession>>["supabase"];
 
 export type MyYearLayer = {
-  /** Дні тижня, коли людина працює (1 — понеділок … 7 — неділя). */
-  readonly workingDays: ReadonlySet<number>;
+  /**
+   * Власні посади з розкладом. Сітка робить із них і робочі дні тижня, і
+   * години конкретного дня у віконечку — звідси посади, а не готовий набір
+   * днів: із набору днів годин уже не дістати.
+   */
+  readonly positions: readonly TimedPosition[];
   /** Власні відпустки за датами; на одну дату може бути кілька — по посаді. */
   readonly leaves: ReadonlyMap<string, readonly LeaveMark[]>;
 };
@@ -37,5 +45,5 @@ export async function loadMyYearLayer(
     to,
   );
 
-  return { workingDays: workingWeekdays(positions), leaves: leavesByDate(leaves) };
+  return { positions, leaves: leavesByDate(leaves) };
 }

@@ -1,4 +1,5 @@
 import { messages, weekdayNames, type Lang } from "@/lib/i18n/dict";
+import { blocksOn } from "@/lib/leave/calendar-overlay";
 import { statusLabel } from "@/lib/leave/decision";
 import { leaveTypeLabel } from "@/lib/leave/format";
 import {
@@ -77,7 +78,6 @@ export function ScheduleWeek({
   const m = messages(lang);
   const dayNames = weekdayNames(lang);
   const dates = weekDates(mondayIso);
-  const jobTitle = new Map(positions.map((p) => [p.id, p.job_title]));
 
   // Вікно сітки рахуємо і за розкладом, і за відпустками тижня: відпустка на
   // частину дня може починатися раніше за будь-який блок (погоджена зміна годин).
@@ -127,13 +127,10 @@ export function ScheduleWeek({
           </div>
 
           {dates.map((date) => {
-            const weekday = weekdayOf(date);
             const dayLeaves = leaves.filter((l) => l.on_date === date);
-            const dayBlocks = positions.flatMap((p) =>
-              (p.schedule_blocks ?? [])
-                .filter((b) => b.weekday === weekday)
-                .map((b) => ({ ...b, positionId: p.id })),
-            );
+            // Ті самі блоки дня, що їх показує віконечко шкільного календаря:
+            // одна функція на два місця (`blocksOn`).
+            const dayBlocks = blocksOn(positions, date);
             const working = assignLanes(dayBlocks);
             const dayOff = dayBlocks.length === 0;
 
@@ -160,7 +157,7 @@ export function ScheduleWeek({
 
                 {working.map((block) => {
                   const { topPercent, heightPercent } = geometryOf(block, window);
-                  const title = jobTitle.get(block.positionId) ?? "";
+                  const title = block.jobTitle;
                   return (
                     <div
                       key={`${block.positionId}-${block.starts_at}`}

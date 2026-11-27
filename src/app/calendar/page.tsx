@@ -96,7 +96,7 @@ export default async function CalendarPage({
             year={year}
             locale={INTL_LOCALE[lang]}
             today={todayInKyiv()}
-            workingDays={layer.workingDays}
+            positions={layer.positions}
             leaves={layer.leaves}
             m={m}
           />
