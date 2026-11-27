@@ -17,6 +17,9 @@ import {
   exceedsBalance,
   formatDays,
   hasLimit,
+  longPersonalLeaveReminder,
+  LONG_PERSONAL_LEAVE_MIN,
+  LONG_PERSONAL_LEAVE_REMINDER,
   managerSplitWarning,
   overBalanceWarning,
   schoolYearOf,
@@ -280,5 +283,55 @@ describe("тексти PM", () => {
     expect(splitLabel("personal", suggestedSplit(0, 100))).toBe(
       "0.00 Personal leave + 1.00 Unpaid leave",
     );
+  });
+});
+
+/**
+ * Нагадування про довгу «Personal leave» — `AC-LEAVE-23`, `AC-LEAVE-24`.
+ *
+ * Числа не вписуємо руками, а рахуємо тим самим правилом частки дня, що й
+ * решта заявки: розклад PM Пн–Пт 08:30–15:30 — це 420 хвилин на день.
+ */
+describe("нагадування про довгу Personal leave", () => {
+  /** Цілий день за розкладом 08:30–15:30. */
+  const WHOLE_DAY = 420;
+
+  it("AC-LEAVE-23: два цілі дні Personal leave дають нагадування", () => {
+    const requested = sumShares([
+      ...sharesForDate([WHOLE_DAY], WHOLE_DAY),
+      ...sharesForDate([WHOLE_DAY], WHOLE_DAY),
+    ]);
+
+    expect(requested).toBe(200);
+    expect(longPersonalLeaveReminder("personal", requested)).toBe(
+      "Personal leave of 2 days or more: please talk to the administrator before you go",
+    );
+  });
+
+  it("AC-LEAVE-24: півтора дня нагадування не дають", () => {
+    // 2026-12-07 цілий день (420 хв) і 2026-12-08 з 08:30 до 12:00 (210 хв).
+    const requested = sumShares([
+      ...sharesForDate([WHOLE_DAY], WHOLE_DAY),
+      ...sharesForDate([210], WHOLE_DAY),
+    ]);
+
+    expect(requested).toBe(150);
+    expect(longPersonalLeaveReminder("personal", requested)).toBeNull();
+  });
+
+  it("межа «2 days or more» нестрога: 2.00 дає, 1.99 — ні", () => {
+    // Межа з AC PM: «2 days or more». Заміна `>=` на `>` зробила б
+    // AC-LEAVE-23 червоним, і саме цей тест її ловить.
+    expect(longPersonalLeaveReminder("personal", LONG_PERSONAL_LEAVE_MIN)).toBe(
+      LONG_PERSONAL_LEAVE_REMINDER,
+    );
+    expect(longPersonalLeaveReminder("personal", LONG_PERSONAL_LEAVE_MIN - 1)).toBeNull();
+  });
+
+  it("нагадування лише для Personal leave", () => {
+    // PM називає тип дослівно; для решти типів нагадування немає.
+    expect(longPersonalLeaveReminder("sick", 300)).toBeNull();
+    expect(longPersonalLeaveReminder("unpaid", 300)).toBeNull();
+    expect(longPersonalLeaveReminder("family_celebration", 300)).toBeNull();
   });
 });

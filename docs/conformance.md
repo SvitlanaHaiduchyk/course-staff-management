@@ -97,8 +97,8 @@
 | AC-BALANCE-20 | Менеджер додаткової посади бачить повний баланс | `supabase/migrations/20261102200744_leave_balance.sql` (політики *_select_balance_scope) | `tests/db/balance-access.test.ts` · `tests/leave-balance.test.ts` | реалізовано |
 | AC-LEAVE-21 | Неробоча дата відпадає, решта дат лишаються | `src/lib/leave/build.ts` (buildRecords) | `tests/leave-request.test.ts` | реалізовано |
 | AC-LEAVE-22 | Кінець відпустки дорівнює початку наступного блоку | `src/lib/leave/validate.ts` (isBlockStart) | `tests/leave-schedule.test.ts` | реалізовано |
-| AC-LEAVE-23 | Два цілі дні Personal leave дають нагадування | — | — | відкладено (чекає реалізації) |
-| AC-LEAVE-24 | Півтора дня Personal leave нагадування не дають | — | — | відкладено (чекає реалізації) |
+| AC-LEAVE-23 | Два цілі дні Personal leave дають нагадування | `src/lib/leave/balance.ts` (longPersonalLeaveReminder) · `src/app/requests/actions.ts` | `tests/leave-balance.test.ts` | реалізовано |
+| AC-LEAVE-24 | Півтора дня Personal leave нагадування не дають | `src/lib/leave/balance.ts` (longPersonalLeaveReminder) | `tests/leave-balance.test.ts` | реалізовано |
 | AC-DECIDE-23 | Відхилення з коментарем | `supabase/migrations/20261026201058_leave_decisions.sql` (decide_leave_record) · `src/app/decisions/` | `tests/db/decisions.test.ts` · `tests/leave-decision.test.ts` | реалізовано |
 | AC-DECIDE-24 | Погодження з коментарем | `supabase/migrations/20261026201058_leave_decisions.sql` (decide_leave_record) · `src/app/decisions/` | `tests/db/decisions.test.ts` · `tests/leave-decision.test.ts` | реалізовано |
 | AC-BALANCE-21 | Пізнє погодження за минулий навчальний рік | `supabase/migrations/20261102200744_leave_balance.sql` (employee_balance, рік за on_date) · `src/lib/leave/balance.ts` (schoolYearOf) | `tests/db/balance-access.test.ts` · `tests/leave-balance.test.ts` | реалізовано |
