@@ -12,6 +12,12 @@
 
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 
+import {
+  CANCEL_ALREADY_REQUESTED,
+  CANCEL_IN_THE_PAST,
+  CANCEL_ONLY_OWN,
+} from "@/lib/leave/cancel";
+
 import { type LeaveDb, createLeaveDb } from "./supabase-pglite";
 
 let leave: LeaveDb;
@@ -145,7 +151,7 @@ describe("працівник просить скасувати погоджен�
 
     await expect(
       requestCancel("teacher1@example.test", record, "Plans changed"),
-    ).rejects.toThrow("Records in the past cannot be cancelled");
+    ).rejects.toThrow(CANCEL_IN_THE_PAST);
 
     expect(await statusOf(record)).toBe("approved");
   });
@@ -178,7 +184,7 @@ describe("працівник просить скасувати погоджен�
 
     await expect(
       requestCancel("teacher1@example.test", record, "Plans changed again"),
-    ).rejects.toThrow("Cancellation has already been requested");
+    ).rejects.toThrow(CANCEL_ALREADY_REQUESTED);
 
     const [row] = await leave.asService<{ count: string }>(
       "select count(*)::text as count from public.leave_cancellations where record_id = $1",
@@ -196,7 +202,7 @@ describe("працівник просить скасувати погоджен�
 
     await expect(
       requestCancel("teacher2@example.test", record, "Not mine"),
-    ).rejects.toThrow("You can cancel only your own records");
+    ).rejects.toThrow(CANCEL_ONLY_OWN);
 
     expect(await statusOf(record)).toBe("approved");
   });
