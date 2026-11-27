@@ -21,10 +21,21 @@ import { INTL_LOCALE, positionKindKey, weekdayNames } from "@/lib/i18n/dict";
 import { getMessages } from "@/lib/i18n/server";
 import { leaveTypeLabel, scheduleSummary } from "@/lib/leave/format";
 import { formatDays, LEAVE_TYPE_LABELS, splitLabel } from "@/lib/leave/balance";
+import {
+  canRequestCancellation,
+  cancellationNote,
+  type CancellationRow,
+} from "@/lib/leave/cancel";
 import { canCancel, canEditHours, canResubmit } from "@/lib/leave/record-edit";
+import { todayInKyiv } from "@/lib/leave/today";
 import { createClient } from "@/lib/supabase/server";
 
-import { cancelRecord, changeRecordHours, submitLeaveRequest } from "./actions";
+import {
+  cancelRecord,
+  changeRecordHours,
+  requestCancellation,
+  submitLeaveRequest,
+} from "./actions";
 
 /** П'ять статусів запису — перелік остаточний (припущення PM). Текст обов'язковий, колір на додачу. */
 const STATUS_LABELS: Record<string, string> = {
@@ -86,6 +97,27 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
       lastDecision.set(d.record_id, { comment: d.comment, decision: d.decision });
     }
   }
+
+  // AC-CANCEL-01, AC-CANCEL-03, AC-CANCEL-08: позначка запиту, причина відмови
+  // менеджера й його примітка. RLS: політика leave_cancellations_select_visible_records.
+  const { data: cancellations } = await supabase
+    .from("leave_cancellations")
+    .select("record_id, reason, decision, comment, requested_at")
+    .order("requested_at", { ascending: false });
+
+  const lastCancellation = new Map<string, CancellationRow>();
+  for (const c of cancellations ?? []) {
+    if (!lastCancellation.has(c.record_id)) {
+      lastCancellation.set(c.record_id, {
+        reason: c.reason,
+        decision: c.decision === "confirmed" || c.decision === "declined" ? c.decision : null,
+        comment: c.comment,
+      });
+    }
+  }
+
+  // Київська дата — та сама межа «сьогодні або пізніше», що й у базі (AC-CANCEL-05).
+  const today = todayInKyiv();
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-12">
@@ -284,6 +316,15 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
                         </div>
                       ) : null}
                       {lastDecision.get(r.id)?.comment ?? "—"}
+                      {/*
+                        AC-CANCEL-01, AC-CANCEL-03, AC-CANCEL-08: позначка про
+                        скасування — завжди ТЕКСТОМ (DESIGN.md, розділ 7).
+                      */}
+                      {cancellationNote(lastCancellation.get(r.id)) ? (
+                        <div data-testid="cancellation" className="text-foreground">
+                          {cancellationNote(lastCancellation.get(r.id))}
+                        </div>
+                      ) : null}
                     </TableCell>
                     <TableCell>
                       {/*
@@ -339,7 +380,47 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
                           </Button>
                         </form>
                       ) : null}
-                      {!canEditHours(r.status) && !canCancel(r.status) ? (
+                      {/*
+                        AC-CANCEL-01: погоджений запис скасовують ЧЕРЕЗ менеджера —
+                        працівник лише просить і називає причину. Межі «погоджений»,
+                        «сьогодні або пізніше» (AC-CANCEL-05) і «запит уже є»
+                        (AC-CANCEL-06) тримає база; тут вони лише ховають кнопку.
+                      */}
+                      {canRequestCancellation({
+                        status: r.status,
+                        onDate: r.on_date,
+                        today,
+                        hasOpenRequest: lastCancellation.get(r.id)?.decision === null,
+                      }) ? (
+                        <form action={requestCancellation} className="mt-2 flex flex-col gap-1">
+                          <input type="hidden" name="recordId" value={r.id} />
+                          <Label htmlFor={`reason-${r.id}`} className="text-xs">
+                            {m("requests.cancelReason")}
+                          </Label>
+                          <Input
+                            id={`reason-${r.id}`}
+                            name="reason"
+                            required
+                            maxLength={500}
+                            className="w-56"
+                            aria-describedby={`reason-hint-${r.id}`}
+                          />
+                          <span id={`reason-hint-${r.id}`} className="text-xs text-muted-foreground">
+                            {m("requests.cancelReasonHint")}
+                          </span>
+                          <Button type="submit" variant="outline" size="sm" className="self-start">
+                            {m("requests.askCancel")}
+                          </Button>
+                        </form>
+                      ) : null}
+                      {!canEditHours(r.status) &&
+                      !canCancel(r.status) &&
+                      !canRequestCancellation({
+                        status: r.status,
+                        onDate: r.on_date,
+                        today,
+                        hasOpenRequest: lastCancellation.get(r.id)?.decision === null,
+                      }) ? (
                         <span className="text-sm text-muted-foreground">—</span>
                       ) : null}
                     </TableCell>

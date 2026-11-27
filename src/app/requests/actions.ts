@@ -13,6 +13,11 @@ import {
   workingMinutesOn,
 } from "@/lib/leave/balance";
 import {
+  CANCELLATION_REQUESTED,
+  CANCEL_NEEDS_REASON,
+  checkReason,
+} from "@/lib/leave/cancel";
+import {
   type DateChoice,
   type Position,
   buildRecords,
@@ -356,4 +361,49 @@ export async function cancelRecord(formData: FormData) {
   revalidatePath("/requests");
   revalidatePath("/decisions");
   redirect("/requests");
+}
+
+/**
+ * Запит на скасування ПОГОДЖЕНОГО запису (AC-CANCEL-01, AC-CANCEL-05,
+ * AC-CANCEL-06, AC-CANCEL-10).
+ *
+ * Відрізняється від `cancelRecord` вище: там працівник сам скасовує запис,
+ * який ще не погоджено (AC-DECIDE-13). Тут рішення за менеджером, тож дія лише
+ * створює запит, а статус запису не чіпає — запис і далі рахується погодженим
+ * (припущення PM).
+ *
+ * Server Action — публічний POST: усі перевірки тримає функція бази
+ * `public.request_record_cancellation` і політики (`tests/db/cancel.test.ts`),
+ * а тут лише порожня причина, щоб не ходити в базу даремно.
+ */
+export async function requestCancellation(formData: FormData) {
+  const supabase = await createClient();
+
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData?.claims) {
+    redirect("/login");
+  }
+
+  const recordId = String(formData.get("recordId") ?? "");
+  const reason = String(formData.get("reason") ?? "");
+
+  const checked = checkReason(reason, CANCEL_NEEDS_REASON);
+  if (!checked.ok) {
+    redirect("/requests?error=" + encodeURIComponent(checked.message));
+  }
+
+  const { error } = await supabase.rpc("request_record_cancellation", {
+    p_record_id: recordId,
+    p_reason: reason.trim(),
+  });
+
+  if (error) {
+    reportDbError(error, "request_record_cancellation");
+    // Тексти приходять із функції дослівно, як їх задає PM.
+    redirect("/requests?error=" + encodeURIComponent(error.message));
+  }
+
+  revalidatePath("/requests");
+  revalidatePath("/decisions");
+  redirect("/requests?notice=" + encodeURIComponent(CANCELLATION_REQUESTED));
 }

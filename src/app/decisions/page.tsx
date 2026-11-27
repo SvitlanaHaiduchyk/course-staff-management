@@ -3,7 +3,10 @@ import { redirect } from "next/navigation";
 
 import { StatusBadge } from "@/components/status-badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -19,13 +22,16 @@ import {
   schoolYearOf,
   suggestedSplit,
 } from "@/lib/leave/balance";
+import { CANCELLATION_REQUESTED } from "@/lib/leave/cancel";
 import { DECISIONS, NO_RECORDS_AWAITING, statusLabel } from "@/lib/leave/decision";
 import { positionKindKey } from "@/lib/i18n/dict";
 import { getMessages } from "@/lib/i18n/server";
 import { leaveTypeLabel } from "@/lib/leave/format";
 import { minutesInsideBlocks, scheduleFor } from "@/lib/leave/schedule";
+import { todayInKyiv } from "@/lib/leave/today";
 import { createClient } from "@/lib/supabase/server";
 
+import { cancelRecordWithNote, decideCancellation } from "./actions";
 import { DecisionForm } from "./decision-form";
 
 const hhmm = (time: string) => time.slice(0, 5);
@@ -109,6 +115,35 @@ export default async function DecisionsPage({
     )
     .eq("decided_by", claims.sub)
     .order("decided_at", { ascending: false });
+
+  // Зріз WS11: погоджені записи, які ще можна скасувати (AC-CANCEL-08), і
+  // відкриті запити працівників (AC-CANCEL-01). RLS віддає лише записи своїх
+  // посад; фільтра за менеджером тут свідомо немає.
+  const { data: approved } = await supabase
+    .from("leave_records")
+    .select(
+      `id, on_date, starts_at, ends_at, status,
+       positions(job_title, employee_id,
+                 profiles!positions_employee_id_fkey(full_name, email)),
+       leave_requests(leave_type, employee_id)`,
+    )
+    .eq("status", "approved")
+    .gte("on_date", todayInKyiv())
+    .order("on_date");
+
+  const { data: openCancellations } = await supabase
+    .from("leave_cancellations")
+    .select("record_id, reason, decision")
+    .is("decision", null);
+
+  const cancellationByRecord = new Map(
+    (openCancellations ?? []).map((c) => [c.record_id, c.reason]),
+  );
+
+  // AC-DECIDE-18 діє й тут: власний запис менеджера скасовує адміністратор.
+  const cancellable = (approved ?? []).filter(
+    (r) => role === "admin" || r.leave_requests?.employee_id !== claims.sub,
+  );
 
   // AC-DECIDE-18: власні записи менеджера вирішує лише адміністратор, тож
   // кнопок на них не показуємо. Відмову з текстом PM дає дія й база.
@@ -280,6 +315,109 @@ export default async function DecisionsPage({
                             ))}
                           </div>
                         </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/*
+        Зріз WS11: скасування погодженого запису. Запит працівника (AC-CANCEL-01)
+        і скасування самим менеджером із приміткою (AC-CANCEL-08) живуть на одній
+        картці: це той самий список погоджених записів, лише з різними діями.
+      */}
+      <Card>
+        <CardHeader>
+          <CardTitle as="h2" className="text-lg font-medium">
+            {m("decisions.cancellations")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {cancellable.length === 0 ? (
+            <p data-testid="cancellations-empty" className="text-sm text-muted-foreground">
+              {m("decisions.approvedEmpty")}
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{m("table.date")}</TableHead>
+                  <TableHead>{m("table.employeeAndRecord")}</TableHead>
+                  <TableHead>{m("table.actions")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody data-testid="cancellations">
+                {cancellable.map((r) => {
+                  const reason = cancellationByRecord.get(r.id);
+                  return (
+                    <TableRow key={r.id}>
+                      <TableCell className="tabular-nums">
+                        {r.on_date} {hhmm(r.starts_at)}–{hhmm(r.ends_at)}
+                      </TableCell>
+                      <TableCell>
+                        <div>{r.positions?.profiles?.full_name ?? "—"}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {r.positions?.profiles?.email ?? "—"} · {r.positions?.job_title ?? "—"}
+                        </div>
+                        {/*
+                          AC-CANCEL-01: менеджер бачить позначку й причину —
+                          завжди текстом, колір тут нічого не означає.
+                        */}
+                        {reason === undefined ? null : (
+                          <div data-testid="cancellation-requested" className="mt-1 text-sm">
+                            {CANCELLATION_REQUESTED}: {reason}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {reason === undefined ? (
+                          /* AC-CANCEL-08, AC-CANCEL-09: скасування з приміткою. */
+                          <form
+                            action={cancelRecordWithNote}
+                            className="flex flex-col gap-1"
+                          >
+                            <input type="hidden" name="recordId" value={r.id} />
+                            <Label htmlFor={`note-${r.id}`} className="text-xs">
+                              {m("decisions.note")}
+                            </Label>
+                            <Input id={`note-${r.id}`} name="note" required maxLength={500} className="w-56" />
+                            <Button type="submit" variant="outline" size="sm" className="self-start">
+                              {m("decisions.cancelWithNote")}
+                            </Button>
+                          </form>
+                        ) : (
+                          /* AC-CANCEL-02, AC-CANCEL-03, AC-CANCEL-04. */
+                          <div className="flex flex-col gap-2">
+                            <form action={decideCancellation}>
+                              <input type="hidden" name="recordId" value={r.id} />
+                              <input type="hidden" name="decision" value="confirmed" />
+                              <Button type="submit" size="sm">
+                                {m("decisions.confirmCancellation")}
+                              </Button>
+                            </form>
+                            <form action={decideCancellation} className="flex flex-col gap-1">
+                              <input type="hidden" name="recordId" value={r.id} />
+                              <input type="hidden" name="decision" value="declined" />
+                              <Label htmlFor={`decline-${r.id}`} className="text-xs">
+                                {m("decisions.comment")}
+                              </Label>
+                              <Input
+                                id={`decline-${r.id}`}
+                                name="comment"
+                                required
+                                maxLength={500}
+                                className="w-56"
+                              />
+                              <Button type="submit" variant="outline" size="sm" className="self-start">
+                                {m("decisions.declineCancellation")}
+                              </Button>
+                            </form>
+                          </div>
+                        )}
                       </TableCell>
                     </TableRow>
                   );
