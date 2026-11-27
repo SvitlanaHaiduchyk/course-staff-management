@@ -11,13 +11,9 @@
  * перетворення, яке перевіряє тест.
  */
 
-import { weekdayOf } from "./week";
+import { blocksAfterClosure, closedFrom } from "./closure";
+import { hhmm, minutesOfTime, weekdayOf } from "./week";
 
-/** Блок розкладу так, як його віддає база. */
-export type ScheduleBlock = { readonly weekday: number };
-
-/** Посада з блоками розкладу. */
-export type PositionBlocks = { readonly schedule_blocks?: readonly ScheduleBlock[] | null };
 
 /** Запис відпустки так, як його віддає база, з типом із заявки. */
 export type LeaveMark = {
@@ -28,29 +24,6 @@ export type LeaveMark = {
   readonly leave_type: string | null;
 };
 
-/**
- * Дні тижня, коли людина взагалі працює (1 — понеділок … 7 — неділя).
- *
- * Рахуємо по всіх посадах разом: вівторок у додатковій посаді робить вівторок
- * робочим, навіть якщо в головній його немає.
- */
-export function workingWeekdays(positions: readonly PositionBlocks[]): ReadonlySet<number> {
-  const days = new Set<number>();
-  for (const position of positions) {
-    for (const block of position.schedule_blocks ?? []) days.add(block.weekday);
-  }
-  return days;
-}
-
-/**
- * Чи працює людина цього дня за розкладом.
- *
- * Це про розклад, а не про календар: закриття школи й відпустка — окремі шари,
- * і вони накладаються поверх (`closureOnDate`, `leavesByDate`).
- */
-export function worksOn(weekdays: ReadonlySet<number>, date: string): boolean {
-  return weekdays.has(weekdayOf(date));
-}
 
 /**
  * Відпустки за датами. На одну дату може припасти кілька записів — по одному
@@ -66,4 +39,83 @@ export function leavesByDate(
     else byDate.set(record.on_date, [record]);
   }
   return byDate;
+}
+
+/** Блок розкладу з часом — так, як його віддає база. */
+export type TimedBlock = {
+  readonly weekday: number;
+  readonly starts_at: string;
+  readonly ends_at: string;
+};
+
+/** Посада з розкладом і назвою: все, що потрібно, щоб підписати блок дня. */
+export type TimedPosition = {
+  readonly id: string;
+  readonly job_title: string;
+  readonly schedule_blocks?: readonly TimedBlock[] | null;
+};
+
+/** Блок розкладу на конкретний день разом із посадою, якій він належить. */
+export type DayBlock = TimedBlock & {
+  readonly positionId: string;
+  readonly jobTitle: string;
+};
+
+/**
+ * Блоки розкладу всіх посад людини на дату, у порядку часу.
+ *
+ * Одна функція на два показники: тижнева сітка «Мого розкладу»
+ * (`ScheduleWeek`) і віконечко дня у шкільному календарі. Доки це жило лише в
+ * сітці, календар мусив би написати те саме вдруге — а дві реалізації «які в
+ * мене години цього дня» розійшлися б на першій же посаді без розкладу.
+ *
+ * Збираємо по всіх посадах разом: у додатковій посаді можуть бути свої години
+ * того самого дня (`AC-LEAVE-02`), і показати лише головну означало б
+ * приховати половину дня.
+ */
+export function blocksOn(positions: readonly TimedPosition[], date: string): DayBlock[] {
+  const weekday = weekdayOf(date);
+  return positions
+    .flatMap((position) =>
+      (position.schedule_blocks ?? [])
+        .filter((block) => block.weekday === weekday)
+        .map((block) => ({ ...block, positionId: position.id, jobTitle: position.job_title })),
+    )
+    .sort((a, b) => minutesOfTime(a.starts_at) - minutesOfTime(b.starts_at));
+}
+
+/** Закриття школи так, як його віддає база: час початку закриття або `null`. */
+export type ClosureTimes = { readonly closes_at: string | null };
+
+/**
+ * Блоки, які лишаються відкритими після закриття школи (`AC-CAL-04`).
+ *
+ * Правило не переписуємо: рахує його `blocksAfterClosure` — та сама функція,
+ * якою користується перевірка заявки, і та сама, що продубльована в SQL. Тут
+ * лише перейменування полів: доменний модуль говорить `startsAt`, а рядки
+ * бази — `starts_at`.
+ *
+ * Навіщо це календарю: у день канікул показати «08:30–15:30» означало б
+ * сказати неправду просто під рядком «Школа зачинена цілий день».
+ */
+export function openBlocks(blocks: readonly DayBlock[], closure: ClosureTimes | null): DayBlock[] {
+  const from = closedFrom(
+    closure === null
+      ? null
+      : {
+          name: "",
+          startsOn: "",
+          endsOn: "",
+          closesAt: closure.closes_at === null ? null : hhmm(closure.closes_at),
+        },
+  );
+
+  return blocksAfterClosure(
+    blocks.map((block) => ({
+      ...block,
+      startsAt: hhmm(block.starts_at),
+      endsAt: hhmm(block.ends_at),
+    })),
+    from,
+  ).map(({ startsAt, endsAt, ...block }) => ({ ...block, starts_at: startsAt, ends_at: endsAt }));
 }

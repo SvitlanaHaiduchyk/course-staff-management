@@ -10,7 +10,13 @@ import {
   monthsOfSchoolYear,
   type MonthKey,
 } from "@/lib/leave/calendar-grid";
-import { worksOn, type LeaveMark } from "@/lib/leave/calendar-overlay";
+import {
+  blocksOn,
+  openBlocks,
+  type DayBlock,
+  type LeaveMark,
+  type TimedPosition,
+} from "@/lib/leave/calendar-overlay";
 import { statusLabel } from "@/lib/leave/decision";
 import { leaveTypeLabel } from "@/lib/leave/format";
 import { hhmm } from "@/lib/leave/week";
@@ -29,13 +35,17 @@ import { hhmm } from "@/lib/leave/week";
  * людина дивиться на рік, щоб побачити СВОЮ картину. Жодного правила вимог це
  * не змінює — додано лише те, що портал і так показує про людину в розкладі
  * й у заявках.
+ *
+ * Віконечко дня показує ще й години цього дня — ті самі блоки, які малює
+ * тижнева сітка «Мого розкладу»: обидва місця кличуть `blocksOn`, тож другої
+ * відповіді на питання «коли я працюю такого-то числа» в порталі немає.
  */
 export function CalendarYearGrid({
   closures,
   year,
   locale,
   today,
-  workingDays,
+  positions,
   leaves,
   m,
 }: {
@@ -44,8 +54,8 @@ export function CalendarYearGrid({
   locale: string;
   /** Сьогоднішня дата за Києвом — приходить із сервера, не з браузера. */
   today: string;
-  /** Дні тижня, коли людина працює (1 — понеділок … 7 — неділя). */
-  workingDays: ReadonlySet<number>;
+  /** Власні посади з розкладом: з них і робочі дні тижня, і години дня. */
+  positions: readonly TimedPosition[];
   /** Власні відпустки за датами; на одну дату може бути кілька — по посаді. */
   leaves: ReadonlyMap<string, readonly LeaveMark[]>;
   /** Перекладач сторінки — як у `AssistantTextForm`: підписи складає компонент. */
@@ -67,7 +77,7 @@ export function CalendarYearGrid({
             locale={locale}
             weekdays={weekdays}
             today={today}
-            workingDays={workingDays}
+            positions={positions}
             leaves={leaves}
             m={m}
           />
@@ -166,7 +176,7 @@ function MonthCard({
   locale,
   weekdays,
   today,
-  workingDays,
+  positions,
   leaves,
   m,
 }: {
@@ -175,7 +185,7 @@ function MonthCard({
   locale: string;
   weekdays: readonly string[];
   today: string;
-  workingDays: ReadonlySet<number>;
+  positions: readonly TimedPosition[];
   leaves: ReadonlyMap<string, readonly LeaveMark[]>;
   m: (key: MessageKey) => string;
 }) {
@@ -202,9 +212,9 @@ function MonthCard({
             date={date}
             closure={closureOnDate(closures, date)}
             dayLeaves={leaves.get(date) ?? []}
+            blocks={blocksOn(positions, date)}
             locale={locale}
             isToday={date === today}
-            isWorking={worksOn(workingDays, date)}
             m={m}
           />
         ))}
@@ -217,32 +227,83 @@ type DayProps = {
   date: string;
   closure: ClosureRow | null;
   dayLeaves: readonly LeaveMark[];
+  /** Години цього дня за розкладом посад — те саме, що показує «Мій розклад». */
+  blocks: readonly DayBlock[];
   locale: string;
   isToday: boolean;
-  isWorking: boolean;
   m: (key: MessageKey) => string;
 };
 
 /**
- * Клітинка дня: лише вибір шару.
+ * Клітинка дня: заливка за шаром, віконечко — з усім, що про день відомо.
  *
- * Порядок саме такий: закриття школи важливіше за власну відпустку (воно
- * стосується всіх і скасовує робочий день), а відпустка важливіша за «просто
- * робочий день». Коли на дату припало і закриття, і відпустка, віконечко
- * показує обидва рядки.
+ * Порядок заливки саме такий: закриття школи важливіше за власну відпустку
+ * (воно стосується всіх і скасовує робочий день), а відпустка важливіша за
+ * «просто робочий день». Віконечко ж нічого не витісняє: коли на дату припали
+ * і закриття, і відпустка, і години розкладу — видно всі три рядки.
  */
 function DayCell(props: DayProps) {
-  if (props.closure) return <ClosedDay {...props} closure={props.closure} />;
-  if (props.dayLeaves.length > 0) return <LeaveDay {...props} />;
+  const { closure, dayLeaves, blocks, isToday, locale, m } = props;
+  const wholeDay = closure !== null && closure.closes_at === null;
+  const open = openBlocks(blocks, closure);
+
+  const cellClass = closure
+    ? wholeDay
+      ? CLOSED_CELL
+      : EARLY_CELL
+    : dayLeaves.length > 0
+      ? leaveCellClass(dayLeaves[0].status)
+      : blocks.length > 0
+        ? WORK_CELL
+        : OFF_CELL;
 
   return (
-    <span
-      aria-current={props.isToday ? "date" : undefined}
-      className={cn(props.isWorking ? WORK_CELL : OFF_CELL, props.isToday && TODAY_RING)}
+    <MarkedDay
+      date={props.date}
+      label={dayLabel(props, open)}
+      cellClass={cellClass}
+      isToday={isToday}
+      locale={locale}
     >
-      {dayNumber(props.date)}
-    </span>
+      {closure ? <ClosureLines closure={closure} wholeDay={wholeDay} m={m} /> : null}
+      <LeaveLines dayLeaves={dayLeaves} />
+      <ScheduleLines blocks={blocks} open={open} closed={closure !== null} m={m} />
+    </MarkedDay>
   );
+}
+
+/**
+ * Підпис клітинки одним рядком — для екранного читача й підказки миші.
+ *
+ * Той самий зміст, що й у віконечку: колір клітинки нічого не повідомляє сам
+ * (вимога PM, …spec#14), тож усе, що видно оком, має бути й тут словами.
+ */
+function dayLabel(
+  { date, closure, dayLeaves, blocks, isToday, m }: DayProps,
+  open: readonly DayBlock[],
+): string {
+  const parts = [date];
+
+  if (closure) {
+    parts.push(
+      closure.closes_at === null
+        ? closure.name
+        : `${closure.name}, ${m("calendar.from")} ${hhmm(closure.closes_at)}`,
+    );
+  }
+
+  for (const leave of dayLeaves) {
+    parts.push(`${leaveTypeLabel(leave.leave_type)}, ${statusLabel(leave.status)}`);
+  }
+
+  parts.push(
+    open.length > 0
+      ? open.map((block) => `${hhmm(block.starts_at)}–${hhmm(block.ends_at)}`).join(", ")
+      : m(noHoursKey(blocks, closure !== null)),
+  );
+
+  if (isToday) parts.push(m("calendar.gridToday"));
+  return parts.join(" — ");
 }
 
 /** Число дня без провідного нуля: у клітинці 3 × 3 мм зайвий символ помітний. */
@@ -251,16 +312,20 @@ function dayNumber(date: string): number {
 }
 
 /**
- * Позначений день: число, яке відкриває віконечко з подробицями.
+ * День сітки: число, яке відкриває віконечко з подробицями.
  *
  * Віконечко — нативний `<details>`, а не спливання на JavaScript: сторінка
  * серверна й має лишатися робочою без нього, а `<summary>` уже вміє те, що
  * інакше довелося б писати руками — фокус, Enter і пробіл, стан «відкрито»
  * для екранного читача.
  *
- * Клікабельні лише позначені дні: у звичайного робочого дня календар не знає
- * нічого понад розклад, який є на `/schedule`, а 365 інтерактивних клітинок
- * зробили б прохід клавіатурою по сторінці нестерпним.
+ * Відкривається тепер КОЖЕН день, а не лише позначений. Спершу клікабельними
+ * були тільки закриття й відпустки: у звичайного дня календар не знав нічого
+ * понад розклад. Відколи віконечко показує й години цього дня, це перестало
+ * бути правдою — саме у «звичайний» день людина й питає, коли вона працює.
+ * Платимо за це 365 зупинками табуляції на сторінку, і це справді багато, тож
+ * кожна клітинка має власний `aria-label` з усім змістом віконечка: голосом
+ * рік можна пройти, не розкриваючи жодного дня.
  */
 function MarkedDay({
   date,
@@ -283,7 +348,7 @@ function MarkedDay({
         aria-label={label}
         title={label}
         aria-current={isToday ? "date" : undefined}
-        data-testid="calendar-day-marked"
+        data-testid="calendar-day"
         className={cn(
           cellClass,
           isToday && TODAY_RING,
@@ -308,22 +373,20 @@ function MarkedDay({
   );
 }
 
-function ClosedDay({ date, closure, dayLeaves, locale, isToday, m }: DayProps & { closure: ClosureRow }) {
-  const wholeDay = closure.closes_at === null;
+/** Рядки закриття школи: назва й що саме воно означає для цього дня. */
+function ClosureLines({
+  closure,
+  wholeDay,
+  m,
+}: {
+  closure: ClosureRow;
+  wholeDay: boolean;
+  m: (key: MessageKey) => string;
+}) {
   const closesAt = hhmm(closure.closes_at ?? "");
-  const label =
-    `${date} — ${closure.name}` +
-    (wholeDay ? "" : `, ${m("calendar.from")} ${closesAt}`) +
-    (isToday ? ` (${m("calendar.gridToday")})` : "");
 
   return (
-    <MarkedDay
-      date={date}
-      label={label}
-      cellClass={wholeDay ? CLOSED_CELL : EARLY_CELL}
-      isToday={isToday}
-      locale={locale}
-    >
+    <>
       <span>{closure.name}</span>
       <span className="text-muted-foreground">
         {wholeDay ? m("calendar.dayWholeDay") : `${m("calendar.dayEarly")} ${closesAt}.`}
@@ -333,28 +396,7 @@ function ClosedDay({ date, closure, dayLeaves, locale, isToday, m }: DayProps & 
           {closure.starts_on} – {closure.ends_on}
         </span>
       )}
-      <LeaveLines dayLeaves={dayLeaves} />
-    </MarkedDay>
-  );
-}
-
-function LeaveDay({ date, dayLeaves, locale, isToday, m }: DayProps) {
-  // Тип і статус — текстом, дослівно як у решті порталу (вимога PM, …spec#14).
-  const first = dayLeaves[0];
-  const label =
-    `${date} — ${leaveTypeLabel(first.leave_type)}, ${statusLabel(first.status)}` +
-    (isToday ? ` (${m("calendar.gridToday")})` : "");
-
-  return (
-    <MarkedDay
-      date={date}
-      label={label}
-      cellClass={leaveCellClass(first.status)}
-      isToday={isToday}
-      locale={locale}
-    >
-      <LeaveLines dayLeaves={dayLeaves} />
-    </MarkedDay>
+    </>
   );
 }
 
@@ -368,4 +410,55 @@ function LeaveLines({ dayLeaves }: { dayLeaves: readonly LeaveMark[] }) {
       </span>
     </span>
   ));
+}
+
+/**
+ * Години розкладу цього дня — те, заради чого віконечко й відкривають.
+ *
+ * `open` — блоки після закриття школи (`openBlocks`), `blocks` — повний
+ * розклад дня. Різниця між ними й вирішує, що написати, коли годин немає:
+ * «розкладу цього дня немає» (вихідний, день без блоків) — це зовсім не те
+ * саме, що «школа зачинена», і людина має бачити, яка з двох причин її
+ * цього дня стосується.
+ */
+function ScheduleLines({
+  blocks,
+  open,
+  closed,
+  m,
+}: {
+  blocks: readonly DayBlock[];
+  open: readonly DayBlock[];
+  closed: boolean;
+  m: (key: MessageKey) => string;
+}) {
+  return (
+    <span className="flex flex-col gap-0.5 border-t border-border pt-1">
+      <span className="text-muted-foreground">{m("calendar.daySchedule")}</span>
+
+      {open.length === 0 ? (
+        <span>{m(noHoursKey(blocks, closed))}</span>
+      ) : (
+        open.map((block) => (
+          <span key={`${block.positionId}-${block.starts_at}`} className="flex flex-col">
+            <span className="tabular-nums">
+              {hhmm(block.starts_at)}–{hhmm(block.ends_at)}
+            </span>
+            <span className="text-muted-foreground">{block.jobTitle}</span>
+          </span>
+        ))
+      )}
+    </span>
+  );
+}
+
+/**
+ * Чому годин немає: день без розкладу чи закрита школа.
+ *
+ * Дивимося на повний розклад дня, а не на залишок: у суботу канікул годин
+ * немає тому, що субота й так вихідна, і сказати «школа зачинена» було б
+ * відповіддю не на те питання.
+ */
+function noHoursKey(blocks: readonly DayBlock[], closed: boolean): MessageKey {
+  return closed && blocks.length > 0 ? "calendar.dayClosedNoHours" : "calendar.dayNoHours";
 }

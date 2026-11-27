@@ -1,47 +1,71 @@
-// Особистий шар шкільного календаря: робочі дні людини та її відпустки.
+// Особистий шар шкільного календаря: години розкладу дня та власні відпустки.
 // Дані лише синтетичні.
 
 import { describe, expect, it } from "vitest";
 
-import {
-  leavesByDate,
-  workingWeekdays,
-  worksOn,
-  type LeaveMark,
-} from "../src/lib/leave/calendar-overlay";
+import { blocksOn, leavesByDate, openBlocks, type LeaveMark } from "../src/lib/leave/calendar-overlay";
 
-const MAIN = { schedule_blocks: [{ weekday: 1 }, { weekday: 3 }, { weekday: 5 }] };
-const EXTRA = { schedule_blocks: [{ weekday: 2 }] };
+const MAIN = {
+  id: "p-main",
+  job_title: "Math teacher",
+  schedule_blocks: [
+    { weekday: 1, starts_at: "08:30:00", ends_at: "12:00:00" },
+    { weekday: 1, starts_at: "12:30:00", ends_at: "15:30:00" },
+    { weekday: 3, starts_at: "09:00:00", ends_at: "13:00:00" },
+  ],
+};
+const EXTRA = {
+  id: "p-extra",
+  job_title: "Librarian",
+  schedule_blocks: [{ weekday: 1, starts_at: "16:00:00", ends_at: "18:00:00" }],
+};
 
 function leave(on_date: string, status = "approved"): LeaveMark {
   return { on_date, status, starts_at: "08:30:00", ends_at: "15:30:00", leave_type: "sick" };
 }
 
-describe("workingWeekdays", () => {
-  it("рахує дні всіх посад разом", () => {
-    expect([...workingWeekdays([MAIN, EXTRA])].sort()).toEqual([1, 2, 3, 5]);
+// 2026-11-23 — понеділок, 2026-11-25 — середа, 2026-11-26 — четвер,
+// 2026-11-28 — субота.
+describe("blocksOn", () => {
+  it("збирає блоки всіх посад дня в порядку часу", () => {
+    const blocks = blocksOn([MAIN, EXTRA], "2026-11-23");
+
+    expect(blocks.map((b) => b.starts_at)).toEqual(["08:30:00", "12:30:00", "16:00:00"]);
+    expect(blocks.map((b) => b.jobTitle)).toEqual(["Math teacher", "Math teacher", "Librarian"]);
   });
 
-  it("посада без розкладу не додає днів", () => {
-    expect(workingWeekdays([{ schedule_blocks: [] }, { schedule_blocks: null }]).size).toBe(0);
-    expect(workingWeekdays([{}]).size).toBe(0);
+  it("бере лише той день тижня, про який питають", () => {
+    expect(blocksOn([MAIN, EXTRA], "2026-11-25").map((b) => b.ends_at)).toEqual(["13:00:00"]);
+  });
+
+  it("день без блоків і посада без розкладу дають порожній список", () => {
+    expect(blocksOn([MAIN, EXTRA], "2026-11-26")).toEqual([]);
+    expect(blocksOn([MAIN, EXTRA], "2026-11-28")).toEqual([]);
+    expect(blocksOn([{ id: "p", job_title: "Cleaner", schedule_blocks: null }], "2026-11-23")).toEqual([]);
+    expect(blocksOn([{ id: "p", job_title: "Cleaner" }], "2026-11-23")).toEqual([]);
   });
 });
 
-describe("worksOn", () => {
-  const days = workingWeekdays([MAIN, EXTRA]);
+describe("openBlocks", () => {
+  const monday = blocksOn([MAIN, EXTRA], "2026-11-23");
 
-  it("робочий день за розкладом — робочий", () => {
-    // 2026-11-23 — понеділок, 2026-11-24 — вівторок.
-    expect(worksOn(days, "2026-11-23")).toBe(true);
-    expect(worksOn(days, "2026-11-24")).toBe(true);
+  it("без закриття розклад лишається цілим", () => {
+    expect(openBlocks(monday, null)).toHaveLength(3);
   });
 
-  it("день без блоків розкладу й вихідні — не робочі", () => {
-    // 2026-11-26 — четвер (у розкладі його немає), 2026-11-28 — субота.
-    expect(worksOn(days, "2026-11-26")).toBe(false);
-    expect(worksOn(days, "2026-11-28")).toBe(false);
-    expect(worksOn(days, "2026-11-29")).toBe(false);
+  it("закриття на цілий день не лишає жодного блоку", () => {
+    expect(openBlocks(monday, { closes_at: null })).toEqual([]);
+  });
+
+  // Саме правило обрізання (AC-CAL-04) перевіряє tests/leave-closure.test.ts —
+  // тут лише те, що календар кличе його, а не рахує по-своєму.
+  it("скорочений день обрізає блок часом закриття", () => {
+    const open = openBlocks(monday, { closes_at: "13:00:00" });
+
+    // 08:30–12:00 лишився цілим, 12:30–15:30 закінчується о 13:00,
+    // 16:00–18:00 починається після закриття — його немає.
+    expect(open.map((b) => `${b.starts_at}–${b.ends_at}`)).toEqual(["08:30–12:00", "12:30–13:00"]);
+    expect(open.map((b) => b.jobTitle)).toEqual(["Math teacher", "Math teacher"]);
   });
 });
 
