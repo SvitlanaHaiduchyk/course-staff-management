@@ -149,16 +149,16 @@
 | AC-SUBST-12 | Працівник за прямим посиланням списку не змінить | — | — | відкладено (чекає реалізації) |
 | AC-SUBST-13 | Менеджер чужих позицій повз сторінки порталу | — | — | відкладено (чекає реалізації) |
 | AC-SUBST-14 | Неавторизований «Моїх замін» не бачить | — | — | відкладено (чекає реалізації) |
-| AC-CANCEL-01 | Запит на скасування майбутнього запису | — | — | відкладено (чекає реалізації) |
-| AC-CANCEL-02 | Дні повертаються в залишок | — | — | відкладено (чекає реалізації) |
-| AC-CANCEL-07 | Розділений запис повертає обидві частини | — | — | відкладено (чекає реалізації) |
-| AC-CANCEL-03 | Відхилення з коментарем | — | — | відкладено (чекає реалізації) |
-| AC-CANCEL-04 | Відхилення без коментаря не приймається | — | — | відкладено (чекає реалізації) |
-| AC-CANCEL-05 | Запис у минулому не скасовується | — | — | відкладено (чекає реалізації) |
-| AC-CANCEL-06 | Повторний запит не створюється | — | — | відкладено (чекає реалізації) |
-| AC-CANCEL-08 | Скасування менеджером із приміткою | — | — | відкладено (чекає реалізації) |
-| AC-CANCEL-09 | Скасування без примітки не приймається | — | — | відкладено (чекає реалізації) |
-| AC-CANCEL-10 | Чужий запис скасувати не можна | — | — | відкладено (чекає реалізації) |
-| AC-CANCEL-11 | Менеджер чужої позиції повз сторінки порталу | — | — | відкладено (чекає реалізації) |
-| AC-CANCEL-12 | Скасування лише для авторизованих | — | — | відкладено (чекає реалізації) |
-| AC-CANCEL-13 | Закриття на звільнену дату | — | — | відкладено (чекає реалізації) |
+| AC-CANCEL-01 | Запит на скасування майбутнього запису | `supabase/migrations/20261127103118_cancel_approved.sql` (request_record_cancellation) · `src/app/requests/actions.ts` (requestCancellation) | `tests/db/cancel.test.ts` · `tests/leave-cancel.test.ts` | реалізовано |
+| AC-CANCEL-02 | Дні повертаються в залишок | `supabase/migrations/20261127103118_cancel_approved.sql` (decide_record_cancellation, private.set_record_cancelled) | `tests/db/cancel.test.ts` | реалізовано |
+| AC-CANCEL-07 | Розділений запис повертає обидві частини | `supabase/migrations/20261127103118_cancel_approved.sql` (decide_record_cancellation) | `tests/db/cancel.test.ts` | реалізовано |
+| AC-CANCEL-03 | Відхилення з коментарем | `supabase/migrations/20261127103118_cancel_approved.sql` (decide_record_cancellation) · `src/lib/leave/cancel.ts` (cancellationNote) | `tests/db/cancel.test.ts` · `tests/leave-cancel.test.ts` | реалізовано |
+| AC-CANCEL-04 | Відхилення без коментаря не приймається | `supabase/migrations/20261127103118_cancel_approved.sql` · `src/app/decisions/actions.ts` (decideCancellation) | `tests/db/cancel.test.ts` | реалізовано |
+| AC-CANCEL-05 | Запис у минулому не скасовується | `supabase/migrations/20261127103118_cancel_approved.sql` (request_record_cancellation) · `src/lib/leave/cancel.ts` (canRequestCancellation) | `tests/db/cancel.test.ts` · `tests/leave-cancel.test.ts` | реалізовано |
+| AC-CANCEL-06 | Повторний запит не створюється | `supabase/migrations/20261127103118_cancel_approved.sql` (leave_cancellations_one_open_idx) | `tests/db/cancel.test.ts` · `tests/leave-cancel.test.ts` | реалізовано |
+| AC-CANCEL-08 | Скасування менеджером із приміткою | `supabase/migrations/20261127103118_cancel_approved.sql` (cancel_record_with_note) · `src/app/decisions/actions.ts` (cancelRecordWithNote) | `tests/db/cancel.test.ts` · `tests/leave-cancel.test.ts` | реалізовано |
+| AC-CANCEL-09 | Скасування без примітки не приймається | `supabase/migrations/20261127103118_cancel_approved.sql` (cancel_record_with_note) · `src/lib/leave/cancel.ts` (checkReason) | `tests/db/cancel.test.ts` · `tests/leave-cancel.test.ts` | реалізовано |
+| AC-CANCEL-10 | Чужий запис скасувати не можна | `supabase/migrations/20261127103118_cancel_approved.sql` (request_record_cancellation, leave_cancellations_insert_own) | `tests/db/cancel.test.ts` | реалізовано |
+| AC-CANCEL-11 | Менеджер чужої позиції повз сторінки порталу | `supabase/migrations/20261127103118_cancel_approved.sql` (leave_cancellations_select_visible_records, private.set_record_cancelled) | `tests/db/cancel.test.ts` | реалізовано |
+| AC-CANCEL-12 | Скасування лише для авторизованих | `src/proxy.ts` · `supabase/migrations/20261127103118_cancel_approved.sql` (revoke all from anon) | `tests/db/cancel.test.ts` | реалізовано |
+| AC-CANCEL-13 | Закриття на звільнену дату | `supabase/migrations/20261127103118_cancel_approved.sql` (private.set_record_cancelled) · `supabase/migrations/20261118094510_school_calendar.sql` (add_school_closure) | `tests/db/cancel.test.ts` | реалізовано |

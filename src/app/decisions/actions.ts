@@ -3,6 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import {
+  CANCEL_NEEDS_NOTE,
+  DECLINE_NEEDS_COMMENT,
+  checkReason,
+  isCancellationDecision,
+} from "@/lib/leave/cancel";
 import { checkDecision, isDecision } from "@/lib/leave/decision";
 import { createClient } from "@/lib/supabase/server";
 import { reportDbError } from "@/lib/observability/report";
@@ -108,4 +114,99 @@ export async function decideRecord(formData: FormData) {
   revalidatePath("/requests");
   revalidatePath("/balances");
   back("notice=" + encodeURIComponent("Decision saved"));
+}
+
+/**
+ * Рішення менеджера по запиту на скасування (AC-CANCEL-02, AC-CANCEL-03,
+ * AC-CANCEL-04, AC-CANCEL-07, AC-CANCEL-11).
+ *
+ * Статус запису й рядок рішення міняє одна функція бази: у supabase-js немає
+ * транзакцій, а підтвердження — це два записи. Право вирішувати перевіряє той
+ * самий `private.decides_record`, що й для звичайних рішень, тож власний запис
+ * менеджера й тут вирішує лише адміністратор (AC-DECIDE-18).
+ */
+export async function decideCancellation(formData: FormData) {
+  const supabase = await createClient();
+
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData?.claims) {
+    redirect("/login");
+  }
+
+  const recordId = String(formData.get("recordId") ?? "");
+  const decision = String(formData.get("decision") ?? "");
+  const comment = String(formData.get("comment") ?? "");
+
+  if (!recordId) {
+    fail("Record not found");
+  }
+  if (!isCancellationDecision(decision)) {
+    fail("Unknown decision");
+  }
+
+  // AC-CANCEL-04: без коментаря відхилення до бази не йде.
+  if (decision === "declined") {
+    const checked = checkReason(comment, DECLINE_NEEDS_COMMENT);
+    if (!checked.ok) {
+      fail(checked.message);
+    }
+  }
+
+  const { error } = await supabase.rpc("decide_record_cancellation", {
+    p_record_id: recordId,
+    p_decision: decision,
+    p_comment: comment.trim() || null,
+  });
+
+  if (error) {
+    reportDbError(error, "decide_record_cancellation");
+    fail(error.message);
+  }
+
+  revalidatePath("/decisions");
+  revalidatePath("/requests");
+  revalidatePath("/balances");
+  revalidatePath("/calendar");
+  back("notice=" + encodeURIComponent("Cancellation decided"));
+}
+
+/**
+ * Скасування погодженого запису самим менеджером, із приміткою працівникові
+ * (AC-CANCEL-08, AC-CANCEL-09).
+ */
+export async function cancelRecordWithNote(formData: FormData) {
+  const supabase = await createClient();
+
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData?.claims) {
+    redirect("/login");
+  }
+
+  const recordId = String(formData.get("recordId") ?? "");
+  const note = String(formData.get("note") ?? "");
+
+  if (!recordId) {
+    fail("Record not found");
+  }
+
+  const checked = checkReason(note, CANCEL_NEEDS_NOTE);
+  if (!checked.ok) {
+    fail(checked.message);
+  }
+
+  const { error } = await supabase.rpc("cancel_record_with_note", {
+    p_record_id: recordId,
+    p_note: note.trim(),
+  });
+
+  if (error) {
+    reportDbError(error, "cancel_record_with_note");
+    fail(error.message);
+  }
+
+  revalidatePath("/decisions");
+  revalidatePath("/requests");
+  revalidatePath("/balances");
+  revalidatePath("/calendar");
+  back("notice=" + encodeURIComponent("Record cancelled"));
 }

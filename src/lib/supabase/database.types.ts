@@ -3,7 +3,7 @@
 // й описує міграції 20261012000000_profiles_and_roles.sql, 20261020203434_leave_schema.sql
 // 20261021080359_submit_leave_request.sql і 20261026201058_leave_decisions.sql
 // 20261026202444_record_hours_and_cancel.sql, 20261026211459_decision_permission_fixes.sql
-// і 20261102200744_leave_balance.sql.
+// 20261102200744_leave_balance.sql і 20261127103118_cancel_approved.sql.
 
 export type Json =
   | string
@@ -340,6 +340,52 @@ export type Database = {
           },
         ];
       };
+      leave_cancellations: {
+        Row: {
+          id: string;
+          record_id: string;
+          requested_by: string;
+          reason: string;
+          requested_at: string;
+          decision: string | null;
+          decided_by: string | null;
+          comment: string | null;
+          decided_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          record_id: string;
+          requested_by: string;
+          reason: string;
+          requested_at?: string;
+          decision?: string | null;
+          decided_by?: string | null;
+          comment?: string | null;
+          decided_at?: string | null;
+        };
+        Update: {
+          decision?: string | null;
+          decided_by?: string | null;
+          comment?: string | null;
+          decided_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "leave_cancellations_record_id_fkey";
+            columns: ["record_id"];
+            isOneToOne: false;
+            referencedRelation: "leave_records";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "leave_cancellations_requested_by_fkey";
+            columns: ["requested_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       leave_carryover: {
         Row: {
           employee_id: string;
@@ -438,6 +484,28 @@ export type Database = {
           p_record_id: string;
           p_decision: string;
           p_comment: string | null;
+        };
+        Returns: undefined;
+      };
+      request_record_cancellation: {
+        Args: {
+          p_record_id: string;
+          p_reason: string;
+        };
+        Returns: undefined;
+      };
+      decide_record_cancellation: {
+        Args: {
+          p_record_id: string;
+          p_decision: string;
+          p_comment: string | null;
+        };
+        Returns: undefined;
+      };
+      cancel_record_with_note: {
+        Args: {
+          p_record_id: string;
+          p_note: string;
         };
         Returns: undefined;
       };
