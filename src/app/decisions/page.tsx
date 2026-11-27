@@ -128,7 +128,6 @@ export default async function DecisionsPage({
        leave_requests(leave_type, employee_id)`,
     )
     .eq("status", "approved")
-    .gte("on_date", todayInKyiv())
     .order("on_date");
 
   const { data: openCancellations } = await supabase
@@ -141,8 +140,16 @@ export default async function DecisionsPage({
   );
 
   // AC-DECIDE-18 діє й тут: власний запис менеджера скасовує адміністратор.
+  //
+  // Межа за датою — лише для скасування менеджером наперед. Записи з ВІДКРИТИМ
+  // запитом лишаються в списку, навіть коли їхня дата вже минула: інакше
+  // 28 листопада зник би запит, поданий на 27-ме, і менеджер не мав би чим його
+  // вирішити (знайшло рев'ю CodeRabbit на PR #112).
+  const today = todayInKyiv();
   const cancellable = (approved ?? []).filter(
-    (r) => role === "admin" || r.leave_requests?.employee_id !== claims.sub,
+    (r) =>
+      (role === "admin" || r.leave_requests?.employee_id !== claims.sub) &&
+      (r.on_date >= today || cancellationByRecord.has(r.id)),
   );
 
   // AC-DECIDE-18: власні записи менеджера вирішує лише адміністратор, тож

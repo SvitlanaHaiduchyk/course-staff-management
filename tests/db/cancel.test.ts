@@ -330,6 +330,36 @@ describe("менеджер вирішує запит на скасування",
   });
 });
 
+describe("прямий запит повз функцію", () => {
+  it("AC-CANCEL-02: підтвердження без скасування запису база не приймає", async () => {
+    // Колонковий grant дозволяє менеджеру поставити decision напряму. Якби це
+    // проходило, запит виглядав би вирішеним, а дні не повернулися б —
+    // знайшло рев'ю CodeRabbit на PR #112. Тримає відкладений constraint
+    // trigger, тож падає вже на commit.
+    const date = await dayShift(9);
+    const year = schoolYearOf(date);
+    const record = await seedApproved({
+      employee: "teacher1@example.test",
+      positionKey: "teacher1@example.test:main",
+      date,
+    });
+    await requestCancel("teacher1@example.test", record, "Plans changed");
+
+    await expect(
+      leave.asUser(
+        leave.users["manager1@example.test"],
+        `update public.leave_cancellations
+            set decision = 'confirmed', decided_by = $2, decided_at = now()
+          where record_id = $1 and decision is null`,
+        [record, leave.users["manager1@example.test"]],
+      ),
+    ).rejects.toThrow("A confirmed cancellation must cancel the record");
+
+    expect(await statusOf(record)).toBe("approved");
+    expect(await used("teacher1@example.test", "personal", year)).toBe(1);
+  });
+});
+
 describe("менеджер скасовує запис сам", () => {
   it("AC-CANCEL-08: скасування з приміткою видно працівникові", async () => {
     const date = await dayShift(9);
