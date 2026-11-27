@@ -359,3 +359,41 @@ comment on function public.cancel_record_with_note(uuid, text) is
 
 revoke execute on function public.cancel_record_with_note(uuid, text) from public, anon;
 grant execute on function public.cancel_record_with_note(uuid, text) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Підтверджене скасування без скасованого запису неможливе
+-- ---------------------------------------------------------------------------
+-- Колонковий grant і політика update дозволяють відповідальному менеджеру
+-- поставити decision = 'confirmed' ПРЯМИМ запитом, повз
+-- public.decide_record_cancellation. Тоді запит виглядав би вирішеним, а запис
+-- лишався б «Approved» — і дні не повернулися б (знайшло рев'ю CodeRabbit
+-- на PR #112).
+--
+-- Відкладений constraint trigger спрацьовує на commit, тобто вже після того,
+-- як функція скасувала запис, і валить транзакцію, якщо цього не сталося.
+create or replace function private.require_cancelled_record()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.decision = 'confirmed'
+     and (TG_OP = 'INSERT' or new.decision is distinct from old.decision)
+     and not exists (
+       select 1 from public.leave_records as rec
+       where rec.id = new.record_id
+         and rec.status = 'cancelled'
+     )
+  then
+    raise exception 'A confirmed cancellation must cancel the record' using errcode = 'P0001';
+  end if;
+  return null;
+end;
+$$;
+
+create constraint trigger leave_cancellations_confirmed_cancels_record
+  after insert or update on public.leave_cancellations
+  deferrable initially deferred
+  for each row
+  execute function private.require_cancelled_record();
