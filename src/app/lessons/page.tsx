@@ -5,43 +5,63 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DICT, weekdayNames, type MessageKey } from "@/lib/i18n/dict";
 import { getMessages } from "@/lib/i18n/server";
-import { positionLabel, positionLabels } from "@/lib/leave/lessons";
+import { ownedPositionLabel } from "@/lib/leave/lessons";
+import { loadAllPositions } from "@/lib/supabase/all-positions";
 import { loadMyLessons } from "@/lib/supabase/my-lessons";
-import { loadMyPositions } from "@/lib/supabase/my-positions";
-import { requirePageSession } from "@/lib/supabase/page-session";
+import { requireAdminPage } from "@/lib/supabase/page-session";
 
 /**
- * «Мої заняття» — уроки й наради всередині робочих годин.
+ * «Заняття» — уроки й наради всередині робочих годин. Веде АДМІНІСТРАТОР.
  *
- * Вимог PM на це немає; рішення, межі й розглянуті варіанти —
- * `docs/decisions/0004-lessons-as-a-layer.md`, питання до PM —
- * `docs/spec-reading.md` (2026-11-27).
+ * Вимог PM на заняття немає; рішення, межі й розглянуті варіанти —
+ * `docs/decisions/0004-lessons-as-a-layer.md`.
  *
- * Окрема сторінка, а не форма на `/schedule`: там людина ЧИТАЄ свій тиждень, і
- * форма введення поряд із сіткою перетворила б погляд на розклад на роботу з
- * даними. Заняття ж вводять рідко — здебільшого раз на півріччя.
+ * Чому не працівник: матриця прав PM (`requirements/product.md`) віддає
+ * розклади адміністраторові, а роль `admin` описано як ту, що «manages
+ * employees, positions, schedules…». Доки PM не відповів, чи заняття є
+ * частиною розкладу, тримаємося суворішого прочитання.
  *
- * Вступний рядок на сторінці каже прямо, що робочих годин заняття не змінюють:
- * два поняття часу поруч інакше зіллються в одне, і людина вирішить, що урок
- * впливає на залишок відпустки.
+ * ОКРЕМА сторінка з власною відмовою, а не схована кнопка: сторінка — це
+ * публічний GET, і працівник, який відкриє її за прямим посиланням, має
+ * побачити пояснення, а не чужі дані. Те саме рішення й з тієї ж причини вже
+ * прийнято для `/calendar/manage` (`AC-CAL-12`). Останній рубіж — політики
+ * `lessons_insert_admin`, `lessons_update_admin`, `lessons_delete_admin`.
  *
  * Сторінка читає cookies, тому рендериться динамічно.
  */
 export default async function LessonsPage({ searchParams }: PageProps<"/lessons">) {
   const { lang, m } = await getMessages();
-  const { supabase, claims } = await requirePageSession();
+  const { supabase, isAdmin } = await requireAdminPage();
   const { error } = await searchParams;
 
-  const positions = await loadMyPositions(supabase, claims.sub);
+  if (!isAdmin) {
+    // Відмова на сторінці: жодного заняття тут не показано й не змінено.
+    return (
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-16">
+        <h1 className="text-2xl font-semibold">{m("lessons.title")}</h1>
+        <Alert variant="destructive">
+          <AlertDescription>{m("lessons.onlyAdmin")}</AlertDescription>
+        </Alert>
+      </main>
+    );
+  }
+
+  const positions = await loadAllPositions(supabase);
   const lessons = await loadMyLessons(
     supabase,
     positions.map((p) => p.id),
   );
 
   const dayNames = weekdayNames(lang);
-  const positionTitles = positionLabels(positions);
-  // У виборі посади — той самий підпис, що й на смузі заняття.
-  const choices = positions.map((p) => ({ id: p.id, job_title: positionLabel(p) }));
+  // У переліку — хто саме, бо посад однакової назви в школі багато; у виборі
+  // форми — той самий підпис, щоб рядок і поле читалися однаково.
+  const positionTitles = new Map(
+    positions.map((p) => [p.id, ownedPositionLabel(p.owner, p)]),
+  );
+  const choices = positions.map((p) => ({
+    id: p.id,
+    job_title: ownedPositionLabel(p.owner, p),
+  }));
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-12">
@@ -70,12 +90,7 @@ export default async function LessonsPage({ searchParams }: PageProps<"/lessons"
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <LessonForm
-                action={addLesson}
-                positions={choices}
-                dayNames={dayNames}
-                m={m}
-              />
+              <LessonForm action={addLesson} positions={choices} dayNames={dayNames} m={m} />
             </CardContent>
           </Card>
 

@@ -81,6 +81,24 @@ export function positionLabels(
   return new Map(positions.map((position) => [position.id, positionLabel(position)]));
 }
 
+/**
+ * Підпис посади разом із працівником: «Teacher One — Elementary school / Teacher».
+ *
+ * Потрібен лише адміністраторові: він веде заняття всіх посад школи, і без
+ * імені власника два «Elementary school / Teacher» у списку не розрізнити.
+ * Працівникові його не показуємо — він і так дивиться на свої.
+ *
+ * Тире, а не дужки: у дужках ім'я читається як примітка, хоча тут воно —
+ * перше, за чим шукають рядок.
+ */
+export function ownedPositionLabel(
+  owner: string | null | undefined,
+  position: LabelledPosition,
+): string {
+  const name = owner?.trim();
+  return name ? `${name} — ${positionLabel(position)}` : positionLabel(position);
+}
+
 /** Поля форми заняття, як їх віддає `FormData`. */
 export type LessonFields = {
   readonly positionId: string;

@@ -9,6 +9,7 @@ import {
   lessonLabel,
   lessonsOn,
   parseLessonInput,
+  ownedPositionLabel,
   positionLabel,
   positionLabels,
   type LessonFields,
@@ -88,6 +89,21 @@ describe("positionLabel", () => {
 
     expect(labels.get("p-extra")).toBe("High school / Math teacher");
     expect(labels.get("p-none")).toBeUndefined();
+  });
+});
+
+describe("ownedPositionLabel", () => {
+  const position = { id: "p", job_title: "Teacher", divisions: { name: "Elementary school" } };
+
+  it("ім'я власника перед посадою", () => {
+    expect(ownedPositionLabel("Teacher One", position)).toBe(
+      "Teacher One — Elementary school / Teacher",
+    );
+  });
+
+  it("без власника лишається сама посада", () => {
+    expect(ownedPositionLabel(null, position)).toBe("Elementary school / Teacher");
+    expect(ownedPositionLabel("  ", position)).toBe("Elementary school / Teacher");
   });
 });
 

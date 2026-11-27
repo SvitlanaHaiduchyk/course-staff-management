@@ -3,6 +3,7 @@ import { LanguageSwitch } from "@/components/language-switch";
 import { NavLinks, type NavItem } from "@/components/nav-links";
 import { Button } from "@/components/ui/button";
 import { getMessages } from "@/lib/i18n/server";
+import type { MessageKey } from "@/lib/i18n/dict";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -41,20 +42,7 @@ export async function AppNav() {
     .select("role")
     .eq("id", claims.sub)
     .maybeSingle();
-  const canDecide = profile?.role === "manager" || profile?.role === "admin";
-
-  const items: NavItem[] = [
-    { href: "/", label: m("nav.home") },
-    { href: "/schedule", label: m("schedule.title") },
-    { href: "/lessons", label: m("lessons.nav") },
-    { href: "/requests", label: m("nav.requests") },
-    { href: "/balances", label: m("nav.balances") },
-    // Шкільний календар бачить КОЖЕН авторизований — на відміну від
-    // «Awaiting decision» нижче, який лише менеджер і адміністратор
-    // (план зрізу, розділ «Навігація»).
-    { href: "/calendar", label: m("nav.calendar") },
-    ...(canDecide ? [{ href: "/decisions", label: m("decisions.awaiting") }] : []),
-  ];
+  const items = navItems(profile?.role, m);
 
   return (
     <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-6 py-2">
@@ -70,4 +58,32 @@ export async function AppNav() {
       </div>
     </header>
   );
+}
+
+/**
+ * Набір пунктів шапки за роллю.
+ *
+ * Окремою функцією, щоб `AppNav` лишався тим, чим є, — він читає сесію й
+ * малює шапку, а не перебирає ролі (його складність стереже `fallow`).
+ *
+ * Хто що бачить — це UX, а не захист: кожна сторінка перевіряє роль сама, а
+ * останній рубіж — політики бази.
+ */
+function navItems(role: string | undefined, m: (key: MessageKey) => string): NavItem[] {
+  const canDecide = role === "manager" || role === "admin";
+
+  return [
+    { href: "/", label: m("nav.home") },
+    { href: "/schedule", label: m("schedule.title") },
+    // Заняття веде лише адміністратор; решта бачить їх у своєму розкладі й
+    // календарі.
+    ...(role === "admin" ? [{ href: "/lessons", label: m("lessons.nav") }] : []),
+    { href: "/requests", label: m("nav.requests") },
+    { href: "/balances", label: m("nav.balances") },
+    // Шкільний календар бачить КОЖЕН авторизований — на відміну від
+    // «Awaiting decision» нижче, який лише менеджер і адміністратор
+    // (план зрізу, розділ «Навігація»).
+    { href: "/calendar", label: m("nav.calendar") },
+    ...(canDecide ? [{ href: "/decisions", label: m("decisions.awaiting") }] : []),
+  ];
 }

@@ -51,8 +51,8 @@ alter table public.lessons enable row level security;
 revoke all on table public.lessons from anon, authenticated;
 
 -- Автогрантів немає — видаємо явно. update лише по колонках вмісту: ні id, ні
--- position_id змінити не можна, тож уроком не можна «переїхати» на чужу посаду
--- навіть у межах власного рядка.
+-- position_id змінити не можна, тож заняття не «переїде» на іншу посаду навіть
+-- у межах уже дозволеного рядка.
 grant select, insert, delete on table public.lessons to authenticated;
 grant update (weekday, starts_at, ends_at, subject, form) on table public.lessons to authenticated;
 grant select, insert, update, delete on table public.lessons to service_role;
@@ -69,17 +69,26 @@ create policy lessons_select_own_managed_or_admin
     or (select private.current_app_role()) = 'admin'
   );
 
--- Веде уроки сам працівник — це його власний розклад занять, а не оплачувані
--- години (їх створює адміністратор). Кожна операція — окрема політика.
-create policy lessons_insert_own
+-- Веде заняття АДМІНІСТРАТОР — як і решту розкладів.
+--
+-- Спершу тут стояли політики «власник посади», і це суперечило матриці прав
+-- PM: рядок «Create employees, positions, schedules; assign managers and
+-- deputies» у requirements/product.md віддає розклади лише адміністраторові, і
+-- роль `admin` описано як ту, що «manages employees, positions, schedules…».
+-- Доки PM не відповів, чи заняття взагалі є частиною розкладу, тримаємося
+-- суворішого прочитання: право віддати працівникові легко, забрати — ні.
+--
+-- Роль беремо з profiles через хелпер, ніколи з user_metadata. Кожна операція
+-- — окрема політика, як у school_closures.
+create policy lessons_insert_admin
   on public.lessons for insert to authenticated
-  with check ((select private.owns_position(position_id)));
+  with check ((select private.current_app_role()) = 'admin');
 
-create policy lessons_update_own
+create policy lessons_update_admin
   on public.lessons for update to authenticated
-  using ((select private.owns_position(position_id)))
-  with check ((select private.owns_position(position_id)));
+  using ((select private.current_app_role()) = 'admin')
+  with check ((select private.current_app_role()) = 'admin');
 
-create policy lessons_delete_own
+create policy lessons_delete_admin
   on public.lessons for delete to authenticated
-  using ((select private.owns_position(position_id)));
+  using ((select private.current_app_role()) = 'admin');

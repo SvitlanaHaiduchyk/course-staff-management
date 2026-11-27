@@ -8,16 +8,17 @@ import { reportDbError } from "@/lib/observability/report";
 import { createClient } from "@/lib/supabase/server";
 
 /**
- * Додавання й прибирання власних занять (уроків, нарад).
+ * Додавання й прибирання занять (уроків, нарад). Обидві — для адміністратора.
  *
  * Вимог PM на заняття немає — рішення й межі в `docs/decisions/0004-lessons-as-a-layer.md`.
- * Жодне з цих дій не торкається `schedule_blocks` і не впливає на баланс.
+ * Жодна з цих дій не торкається `schedule_blocks` і не впливає на баланс.
  *
- * Право тут не перевіряємо, і це навмисно: кому можна писати в `lessons`,
- * вирішують політики `lessons_insert_own`, `lessons_update_own` і
- * `lessons_delete_own` через `private.owns_position`. Перевірка ще й тут була б
- * другим джерелом правди, і одне з них відстало б. Дія лише розбирає форму —
- * те, чого база не побачить (порожні поля, порядок часу) — і передає рядок.
+ * Роль тут не перевіряємо, і це навмисно: кому можна писати в `lessons`,
+ * вирішують політики `lessons_insert_admin`, `lessons_update_admin` і
+ * `lessons_delete_admin` через `private.current_app_role()`. Перевірка ще й тут
+ * була б другим джерелом правди, і одне з них відстало б; сторінка ж свою
+ * перевірку має, бо вона публічний GET. Дія лише розбирає форму — те, чого
+ * база не побачить (порожні поля, порядок часу) — і передає рядок.
  */
 
 /** Куди повертаємося з повідомленням. Ключ словника, а не готовий текст. */
@@ -72,7 +73,7 @@ export async function addLesson(formData: FormData) {
 export async function removeLesson(formData: FormData) {
   const supabase = await clientForAction();
 
-  // Прибирання — одна дія. Чуже заняття не прибереться: `lessons_delete_own`
+  // Прибирання — одна дія. Не адміністратор нічого не прибере: `lessons_delete_admin`
   // просто не знайде рядка, і база поверне «прибрано 0 рядків», а не помилку.
   const { error } = await supabase
     .from("lessons")
