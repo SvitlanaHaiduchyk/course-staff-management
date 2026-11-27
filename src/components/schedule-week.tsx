@@ -1,49 +1,35 @@
-import { messages, weekdayNames, type Lang } from "@/lib/i18n/dict";
-import { blocksOn } from "@/lib/leave/calendar-overlay";
-import {
-  lessonLabel,
-  lessonsOn,
-  positionLabels,
-  type LessonRow,
-} from "@/lib/leave/lessons";
+import { messages, weekdayNames, type Lang, type MessageKey } from "@/lib/i18n/dict";
+import { blocksOn, type DayBlock } from "@/lib/leave/calendar-overlay";
+import { daySegments, hoursLabel, spanLabel, type DaySegment } from "@/lib/leave/day-plan";
 import { statusLabel } from "@/lib/leave/decision";
 import { leaveTypeLabel } from "@/lib/leave/format";
-import {
-  assignLanes,
-  dayNumber,
-  geometryOf,
-  hhmm,
-  hourTicks,
-  hourWindow,
-  tickPercent,
-  weekDates,
-  weekdayOf,
-} from "@/lib/leave/week";
+import { lessonLabel, lessonsOn, positionLabel, type LessonRow } from "@/lib/leave/lessons";
+import { dayNumber, weekDates, weekdayOf } from "@/lib/leave/week";
 
 /**
- * Тиждень розкладу: робочі години смугами, відпустки поверх них, вихідні — порожні.
+ * Тиждень розкладу: день — це блоки посад, усередині блоку — підблоки занять.
  *
- * Чому сітка, а не рядок тексту: розклад читають, щоб зрозуміти «коли я вільний»
- * і «що вже погоджено» (основний сценарій `requirements/01-leave-request.md`, крок 2).
- * Рядок `Пн 08:00–16:00 · Вт 08:00–16:00 · …` відповідає на перше питання й ніяк —
- * на друге. Той самий рядок лишився під сіткою: він коротший, його зручно читати
- * з екранним читачем, і на нього спирається сторінка `/requests`.
+ * Було: смуги на пропорційній шкалі годин. Чому більше ні — пояснено в
+ * `day-plan.ts`: у стовпці завширшки 60 px назва уроку обрізалася завжди
+ * («Nature study, 4-A» → «Nature s…»), а пропорційну висоту й достатню ширину
+ * одночасно екран не вміщав. Тепер блок росте під вміст, тож обрізати нічого
+ * не треба: назву підрозділу видно цілком, назву уроку — теж.
  *
- * Колір тут нічого не означає сам: у кожній смузі відпустки написано тип і статус
- * словами — пряма вимога PM (…spec#14, DESIGN.md розділ 6). Токени — з DESIGN.md,
- * жодного власного кольору.
+ * Що це коштує: тривалість більше не видно оком — урок на 45 хвилин і нарада
+ * на годину виглядають однаково. Тому кожен підблок підписано часом, а
+ * проміжки названо словами: «вільно» всередині робочих годин і «перерва» між
+ * блоками розкладу. Це різні речі, і плутати їх не можна.
  *
- * Три шари в стовпці дня, знизу вгору: робочі години посади (їх створює
- * адміністратор, із них рахується баланс), заняття всередині них (уроки й
- * наради, їх веде сама людина) і відпустка поверх усього. Заняття — шар
- * показу: жодне обчислення його не читає (ADR 0004).
+ * Колір тут нічого не означає сам: у кожному підблоці відпустки написано тип і
+ * статус словами — пряма вимога PM (…spec#14, DESIGN.md розділ 6). Токени — з
+ * DESIGN.md, жодного власного кольору.
  */
 
 /** Посада з тижневим розкладом, як її віддає база. */
 export type SchedulePosition = {
   readonly id: string;
   readonly job_title: string;
-  /** Підрозділ посади — його видно на смузі заняття. */
+  /** Підрозділ посади — його видно в заголовку блоку дня. */
   readonly divisions?: { readonly name: string } | null;
   readonly schedule_blocks?: readonly {
     readonly weekday: number;
@@ -72,15 +58,24 @@ const STATUS_TONE: Record<string, string> = {
   cancelled: "bg-status-cancelled text-status-cancelled-foreground",
 };
 
-/**
- * Висота однієї години сітки.
- *
- * Було 2.75rem, стало 4: у смузі заняття три рядки — час, предмет із класом і
- * підрозділ із посадою, — а в 45 хвилин при 2.75rem влазило два. Сітка стала
- * вищою, і це свідома плата: вона й існує заради того, щоб ці три рядки було
- * видно, а не щоб уміститися в екран без прокручування.
- */
-const HOUR_HEIGHT_REM = 4;
+/** Вигляд підблоків. У константах, бо ті самі класи потрібні легенді. */
+const LESSON_BOX = "rounded-sm border border-input bg-card px-1.5 py-1 text-card-foreground";
+const POSITION_BOX = "rounded-md bg-muted/50 p-1.5";
+
+/** Підблок дня: або заняття, або запис відпустки. Тег вирішує, як малювати. */
+type DayEntry =
+  | {
+      readonly tag: "lesson";
+      readonly starts_at: string;
+      readonly ends_at: string;
+      readonly lesson: LessonRow;
+    }
+  | {
+      readonly tag: "leave";
+      readonly starts_at: string;
+      readonly ends_at: string;
+      readonly leave: ScheduleLeave;
+    };
 
 export function ScheduleWeek({
   positions,
@@ -100,198 +95,221 @@ export function ScheduleWeek({
 }) {
   const m = messages(lang);
   const dayNames = weekdayNames(lang);
-  const dates = weekDates(mondayIso);
-  // Заняття знає лише `position_id`, а показати треба підрозділ і посаду.
-  const labels = positionLabels(positions);
-
-  // Вікно сітки рахуємо і за розкладом, і за відпустками тижня: відпустка на
-  // частину дня може починатися раніше за будь-який блок (погоджена зміна годин).
-  const allBlocks = positions.flatMap((p) => [...(p.schedule_blocks ?? [])]);
-  const window = hourWindow([...allBlocks, ...leaves]);
-  const ticks = hourTicks(window);
-  const gridHeight = `${(window.toHour - window.fromHour) * HOUR_HEIGHT_REM}rem`;
 
   return (
     <div className="flex flex-col gap-4">
       <div className="overflow-x-auto pb-2">
-        <div
-          className="grid min-w-xl gap-x-1.5"
-          style={{ gridTemplateColumns: "3.25rem repeat(7, minmax(0, 1fr))" }}
-        >
-          <div aria-hidden="true" />
-          {dates.map((date) => {
-            const isToday = date === todayIso;
-            return (
-              <div
-                key={date}
-                className={`mb-2 rounded-md py-1 text-center ${
-                  isToday ? "bg-primary text-primary-foreground" : "text-muted-foreground"
-                }`}
-              >
-                <div className="text-xs">{dayNames[weekdayOf(date)]}</div>
-                <div
-                  className={`text-sm tabular-nums ${isToday ? "font-semibold" : "text-foreground"}`}
-                >
-                  {dayNumber(date)}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Шкала годин. Підписи висять на тих самих відсотках, що й лінії в стовпцях. */}
-          <div className="relative" style={{ height: gridHeight }}>
-            {ticks.map((hour) => (
-              <span
-                key={hour}
-                className="absolute right-1.5 -translate-y-1/2 text-xs tabular-nums text-muted-foreground"
-                style={{ top: `${tickPercent(hour, window)}%` }}
-              >
-                {String(hour).padStart(2, "0")}:00
-              </span>
-            ))}
-          </div>
-
-          {dates.map((date) => {
-            const dayLeaves = leaves.filter((l) => l.on_date === date);
-            // Ті самі блоки дня, що їх показує віконечко шкільного календаря:
-            // одна функція на два місця (`blocksOn`).
-            const dayBlocks = blocksOn(positions, date);
-            const working = assignLanes(dayBlocks);
-            const dayOff = dayBlocks.length === 0;
-
-            return (
-              <div
-                key={date}
-                className="relative overflow-hidden rounded-md bg-muted/40 ring-1 ring-border"
-                style={{ height: gridHeight }}
-              >
-                {ticks.slice(1, -1).map((hour) => (
-                  <div
-                    key={hour}
-                    aria-hidden="true"
-                    className="absolute inset-x-0 border-t border-border/60"
-                    style={{ top: `${tickPercent(hour, window)}%` }}
-                  />
-                ))}
-
-                {dayOff ? (
-                  <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-xs text-muted-foreground">
-                    {m("schedule.dayOff")}
-                  </span>
-                ) : null}
-
-                {working.map((block) => {
-                  const { topPercent, heightPercent } = geometryOf(block, window);
-                  const title = block.jobTitle;
-                  return (
-                    <div
-                      key={`${block.positionId}-${block.starts_at}`}
-                      title={`${title}: ${hhmm(block.starts_at)}–${hhmm(block.ends_at)}`}
-                      className="absolute overflow-hidden rounded-sm bg-accent px-1.5 py-1 text-accent-foreground ring-1 ring-ring/40"
-                      style={{
-                        top: `${topPercent}%`,
-                        height: `${heightPercent}%`,
-                        left: `${(block.lane / block.lanes) * 100}%`,
-                        width: `${100 / block.lanes}%`,
-                      }}
-                    >
-                      <div className="text-xs tabular-nums">
-                        {hhmm(block.starts_at)}–{hhmm(block.ends_at)}
-                      </div>
-                      <div className="truncate text-xs opacity-80">{title}</div>
-                    </div>
-                  );
-                })}
-
-                {/*
-                  Заняття лежать усередині робочих годин і нічого в них не
-                  змінюють: де заняття є, видно, що саме людина робить, а де
-                  його немає — лишається смуга робочих годин під ним.
-                */}
-                {assignLanes(lessonsOn(lessons, date)).map((lesson) => {
-                  const { topPercent, heightPercent } = geometryOf(lesson, window);
-                  const label = lessonLabel(lesson);
-                  return (
-                    <div
-                      key={lesson.id}
-                      title={`${label}, ${hhmm(lesson.starts_at)}–${hhmm(lesson.ends_at)}`}
-                      className="absolute overflow-hidden rounded-sm bg-secondary px-1.5 py-0.5 text-secondary-foreground ring-1 ring-ring/40"
-                      style={{
-                        top: `${topPercent}%`,
-                        height: `${heightPercent}%`,
-                        left: `${(lesson.lane / lesson.lanes) * 100}%`,
-                        width: `${100 / lesson.lanes}%`,
-                      }}
-                    >
-                      <div className="text-xs tabular-nums">
-                        {hhmm(lesson.starts_at)}–{hhmm(lesson.ends_at)}
-                      </div>
-                      <div className="truncate text-xs font-medium">{label}</div>
-                      {/*
-                        Третій рядок — де саме: підрозділ і посада. Для людини
-                        з двома посадами це половина відповіді на питання
-                        «куди мені зараз іти».
-                      */}
-                      <div className="truncate text-xs">
-                        {labels.get(lesson.position_id) ?? ""}
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {/*
-                  Відпустка лежить поверх робочих годин: вона їх і замінює.
-                  Текст типу й статусу — обов'язковий, колір лише на додачу (…spec#14).
-                */}
-                {dayLeaves.map((leave) => {
-                  const { topPercent, heightPercent } = geometryOf(leave, window);
-                  const label = `${leaveTypeLabel(leave.leave_type)} · ${statusLabel(leave.status)}`;
-                  return (
-                    <div
-                      key={leave.id}
-                      title={`${label}, ${hhmm(leave.starts_at)}–${hhmm(leave.ends_at)}`}
-                      className={`absolute inset-x-0 overflow-hidden rounded-sm px-1.5 py-1 text-xs ring-1 ring-border ${
-                        STATUS_TONE[leave.status] ?? "bg-muted text-muted-foreground"
-                      }`}
-                      style={{ top: `${topPercent}%`, height: `${heightPercent}%` }}
-                    >
-                      {/* Тип і статус — окремими рядками: в один рядок вони не влазять
-                          у стовпець дня, а обрізаний статус — це статус, якого не видно. */}
-                      <div className="font-medium">{leaveTypeLabel(leave.leave_type)}</div>
-                      <div>{statusLabel(leave.status)}</div>
-                      <div className="tabular-nums opacity-80">
-                        {hhmm(leave.starts_at)}–{hhmm(leave.ends_at)}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
+        <div className="grid min-w-4xl grid-cols-7 items-start gap-2">
+          {weekDates(mondayIso).map((date) => (
+            <DayColumn
+              key={date}
+              date={date}
+              dayName={dayNames[weekdayOf(date)]}
+              isToday={date === todayIso}
+              positions={positions}
+              lessons={lessonsOn(lessons, date)}
+              leaves={leaves.filter((leave) => leave.on_date === date)}
+              m={m}
+            />
+          ))}
         </div>
       </div>
 
-      <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-        <li className="flex items-center gap-1.5">
-          <span aria-hidden="true" className="size-3 rounded-xs bg-accent ring-1 ring-ring/40" />
-          {m("schedule.legend.work")}
-        </li>
-        <li className="flex items-center gap-1.5">
-          <span aria-hidden="true" className="size-3 rounded-xs bg-secondary ring-1 ring-ring/40" />
-          {m("lessons.legend")}
-        </li>
-        <li className="flex items-center gap-1.5">
-          <span
-            aria-hidden="true"
-            className="size-3 rounded-xs bg-status-approved ring-1 ring-border"
-          />
-          {m("schedule.legend.leave")}
-        </li>
-        <li className="flex items-center gap-1.5">
-          <span aria-hidden="true" className="size-3 rounded-xs bg-muted ring-1 ring-border" />
+      <Legend m={m} />
+    </div>
+  );
+}
+
+function Legend({ m }: { m: (key: MessageKey) => string }) {
+  return (
+    <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+      <li className="flex items-center gap-1.5">
+        <span aria-hidden="true" className="size-3 rounded-xs bg-muted ring-1 ring-border" />
+        {m("schedule.legend.work")}
+      </li>
+      <li className="flex items-center gap-1.5">
+        <span aria-hidden="true" className="size-3 rounded-xs border border-input bg-card" />
+        {m("lessons.legend")}
+      </li>
+      <li className="flex items-center gap-1.5">
+        <span
+          aria-hidden="true"
+          className="size-3 rounded-xs bg-status-approved ring-1 ring-border"
+        />
+        {m("schedule.legend.leave")}
+      </li>
+    </ul>
+  );
+}
+
+/**
+ * Один день: шапка з датою і блок на кожну посаду, що працює цього дня.
+ *
+ * Посад може бути дві в різних підрозділах (`AC-LEAVE-02`), і тоді блоків теж
+ * два — кожен зі своєю назвою й своїми годинами. Саме це й відповідає на
+ * питання «де я і з котрої по котру».
+ */
+function DayColumn({
+  date,
+  dayName,
+  isToday,
+  positions,
+  lessons,
+  leaves,
+  m,
+}: {
+  date: string;
+  dayName: string;
+  isToday: boolean;
+  positions: readonly SchedulePosition[];
+  lessons: readonly LessonRow[];
+  leaves: readonly ScheduleLeave[];
+  m: (key: MessageKey) => string;
+}) {
+  const working = positions
+    .map((position) => ({ position, blocks: blocksOn([position], date) }))
+    .filter((entry) => entry.blocks.length > 0);
+
+  return (
+    <section className="flex flex-col gap-2">
+      <DayHeader date={date} dayName={dayName} isToday={isToday} />
+
+      {working.length === 0 ? (
+        <p className="rounded-md bg-muted/30 py-6 text-center text-xs text-muted-foreground">
           {m("schedule.dayOff")}
-        </li>
-      </ul>
+        </p>
+      ) : (
+        working.map(({ position, blocks }) => (
+          <PositionBlock
+            key={position.id}
+            position={position}
+            blocks={blocks}
+            lessons={lessons.filter((lesson) => lesson.position_id === position.id)}
+            leaves={leaves.filter((leave) => leave.position_id === position.id)}
+            m={m}
+          />
+        ))
+      )}
+    </section>
+  );
+}
+
+/** Шапка дня: назва дня тижня й число, сьогодні — заливкою й `aria-current`. */
+function DayHeader({
+  date,
+  dayName,
+  isToday,
+}: {
+  date: string;
+  dayName: string;
+  isToday: boolean;
+}) {
+  return (
+    <header
+      aria-current={isToday ? "date" : undefined}
+      className={`rounded-md py-1 text-center ${
+        isToday ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+      }`}
+    >
+      <div className="text-xs">{dayName}</div>
+      <div className={`text-sm tabular-nums ${isToday ? "font-semibold" : "text-foreground"}`}>
+        {dayNumber(date)}
+      </div>
+    </header>
+  );
+}
+
+/**
+ * Блок посади: назва з годинами всередині, підблоки занять і відпусток під нею.
+ *
+ * Години перелічено блоками розкладу, а не загальним проміжком: «08:30–15:30»
+ * на день із перервою сказало б, що людина працює й о 12:15.
+ */
+function PositionBlock({
+  position,
+  blocks,
+  lessons,
+  leaves,
+  m,
+}: {
+  position: SchedulePosition;
+  blocks: readonly DayBlock[];
+  lessons: readonly LessonRow[];
+  leaves: readonly ScheduleLeave[];
+  m: (key: MessageKey) => string;
+}) {
+  const entries: DayEntry[] = [
+    ...lessons.map((lesson) => ({
+      tag: "lesson" as const,
+      starts_at: lesson.starts_at,
+      ends_at: lesson.ends_at,
+      lesson,
+    })),
+    ...leaves.map((leave) => ({
+      tag: "leave" as const,
+      starts_at: leave.starts_at,
+      ends_at: leave.ends_at,
+      leave,
+    })),
+  ];
+
+  return (
+    <div className={`${POSITION_BOX} flex flex-col gap-1`}>
+      <p className="text-xs text-muted-foreground">
+        {positionLabel(position)}
+        <br />
+        <span className="tabular-nums">{hoursLabel(blocks)}</span>
+      </p>
+
+      {daySegments(blocks, entries).map((segment) => (
+        <DaySegmentView key={`${segment.kind}-${segment.starts_at}`} segment={segment} m={m} />
+      ))}
+    </div>
+  );
+}
+
+/** Один відрізок дня: заняття, відпустка, вільний час або перерва. */
+function DaySegmentView({
+  segment,
+  m,
+}: {
+  segment: DaySegment<DayEntry>;
+  m: (key: MessageKey) => string;
+}) {
+  if (segment.kind !== "entry") {
+    // Вільний час і перерву малюємо рядком, а не коробкою: вони нічого не
+    // містять, і коробка навколо порожнечі читалася б як ще одна подія дня.
+    return (
+      <p className="px-1.5 text-xs text-muted-foreground">
+        <span className="tabular-nums">{spanLabel(segment)}</span>{" "}
+        {m(segment.kind === "free" ? "schedule.free" : "schedule.break")}
+      </p>
+    );
+  }
+
+  if (segment.entry.tag === "lesson") {
+    return (
+      <div className={LESSON_BOX}>
+        <div className="text-xs tabular-nums text-muted-foreground">{spanLabel(segment)}</div>
+        <div className="text-xs font-medium">{lessonLabel(segment.entry.lesson)}</div>
+      </div>
+    );
+  }
+
+  return <LeaveBox leave={segment.entry.leave} label={spanLabel(segment)} />;
+}
+
+/** Відпустка: тип і статус — завжди текстом, колір лише на додачу (…spec#14). */
+function LeaveBox({ leave, label }: { leave: ScheduleLeave; label: string }) {
+  return (
+    <div
+      className={`rounded-sm px-1.5 py-1 ring-1 ring-border ${
+        STATUS_TONE[leave.status] ?? "bg-muted text-muted-foreground"
+      }`}
+    >
+      <div className="text-xs tabular-nums">{label}</div>
+      <div className="text-xs font-medium">{leaveTypeLabel(leave.leave_type)}</div>
+      <div className="text-xs">{statusLabel(leave.status)}</div>
     </div>
   );
 }
