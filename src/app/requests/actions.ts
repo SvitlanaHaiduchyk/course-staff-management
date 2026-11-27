@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import {
   type PositionSchedule,
   isLeaveType,
+  longPersonalLeaveReminder,
   overBalanceWarning,
   schoolYearOf,
   sharesForDate,
@@ -163,8 +164,19 @@ export async function submitLeaveRequest(formData: FormData) {
   // AC-BALANCE-08, AC-BALANCE-15, AC-BALANCE-17: ОДНЕ попередження на всю
   // заявку, за її сумарною часткою й залишком на момент подання. Заявку воно
   // не зупиняє — тому показуємо як notice, а не error.
-  const warning = await overBalanceNotice(supabase, claims.sub, leaveType, built.records);
+  const { warning, requested } = await overBalanceNotice(
+    supabase,
+    claims.sub,
+    leaveType,
+    built.records,
+  );
   if (warning) notices.push(warning);
+
+  // AC-LEAVE-23, AC-LEAVE-24: нагадування про «Personal leave» від двох днів.
+  // Та сама природа, що й попередження вище: заявку не зупиняє, показується
+  // поруч із нею і за тією самою сумарною часткою заявки.
+  const reminder = longPersonalLeaveReminder(leaveType, requested);
+  if (reminder) notices.push(reminder);
 
   const notice = notices.join("; ");
   redirect(notice ? "/requests?notice=" + encodeURIComponent(notice) : "/requests");
@@ -186,11 +198,15 @@ async function overBalanceNotice(
   employeeId: string,
   leaveType: string,
   records: readonly { positionId: string; date: string; startsAt: string; endsAt: string }[],
-): Promise<string | null> {
-  if (records.length === 0) return null;
+): Promise<{ warning: string | null; requested: number }> {
+  if (records.length === 0) return { warning: null, requested: 0 };
 
-  // Типи без ліміту не перевищуються ніколи.
-  if (leaveType !== "sick" && leaveType !== "personal") return null;
+  // Типи без ліміту не перевищуються ніколи. Нагадування про довгу
+  // «Personal leave» (AC-LEAVE-23) їх теж не стосується, тож рахувати частку
+  // тут ні для чого.
+  if (leaveType !== "sick" && leaveType !== "personal") {
+    return { warning: null, requested: 0 };
+  }
 
   // RLS: працівник бачить усі власні посади та їхні розклади.
   const { data: rows } = await supabase
@@ -234,9 +250,13 @@ async function overBalanceNotice(
   const row = (balance ?? []).find((b) => b.leave_type === leaveType);
   const remaining = Math.round((18 + Number(row?.carried_over ?? 0) - Number(row?.used ?? 0)) * 100);
 
-  return requested > remaining
-    ? overBalanceWarning(leaveType, Math.max(remaining, 0), requested)
-    : null;
+  return {
+    warning:
+      requested > remaining
+        ? overBalanceWarning(leaveType, Math.max(remaining, 0), requested)
+        : null,
+    requested,
+  };
 }
 
 /**

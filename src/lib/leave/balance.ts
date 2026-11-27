@@ -269,6 +269,35 @@ export function overBalanceWarning(
   );
 }
 
+/**
+ * Поріг нагадування про довгу «Personal leave» — 2.00 дня, межа **нестрога**
+ * (`AC-LEAVE-23`: «2 days or more»).
+ *
+ * Обидва боки межі задає сам PM: 2.00 дня нагадування дає (`AC-LEAVE-23`),
+ * 1.50 — ні (`AC-LEAVE-24`). Тому тут `>=`, а не `>`.
+ */
+export const LONG_PERSONAL_LEAVE_MIN: Hundredths = 200;
+
+/** `AC-LEAVE-23`: текст нагадування, дослівно з AC PM. */
+export const LONG_PERSONAL_LEAVE_REMINDER =
+  "Personal leave of 2 days or more: please talk to the administrator before you go";
+
+/**
+ * `AC-LEAVE-23`, `AC-LEAVE-24`: нагадування поговорити з адміністратором —
+ * або `null`, якщо заявка коротша чи іншого типу.
+ *
+ * Це **нагадування, а не помилка**: заявку воно не зупиняє (припущення PM до
+ * `AC-LEAVE-23`), тож показуємо його так само, як попередження про залишок —
+ * `Alert` варіанта `default` (DESIGN.md, розділ 6).
+ */
+export function longPersonalLeaveReminder(
+  type: LeaveType,
+  requested: Hundredths,
+): string | null {
+  if (type !== "personal") return null;
+  return requested >= LONG_PERSONAL_LEAVE_MIN ? LONG_PERSONAL_LEAVE_REMINDER : null;
+}
+
 /** `AC-BALANCE-09`, `AC-BALANCE-14`: попередження менеджерові з підказаним поділом. */
 export function managerSplitWarning(
   type: LeaveType,
