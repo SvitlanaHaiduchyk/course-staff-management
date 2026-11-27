@@ -1,0 +1,21 @@
+{
+  "comment": "Синтетичні списки можливих замін для демопрацівників із supabase/demo-positions.json. Список належить працівникові, а не посаді (припущення PM, requirements/06-substitutes.md), тож рядок тут — пара «працівник → можлива заміна». Застосовує scripts/create-demo-substitutes.mjs (npm run substitutes:demo) ПІСЛЯ npm run positions:demo. Пари підібрані під приклади PM: assistant1 підміняє teacher1, і на такому записі з'являється позначка «With upgrade» (AC-SUBST-08); teacher2 підміняє того самого teacher1 без підвищення (AC-SUBST-09). Дані вигадані; жодної справжньої назви чи імені тут бути не може.",
+  "lists": [
+    {
+      "employee": "teacher1@example.test",
+      "substitutes": ["assistant1@example.test", "teacher2@example.test"]
+    },
+    {
+      "employee": "teacher2@example.test",
+      "substitutes": ["assistant1@example.test", "teacher3@example.test"]
+    },
+    {
+      "employee": "teacher3@example.test",
+      "substitutes": ["teacher2@example.test"]
+    },
+    {
+      "employee": "assistant1@example.test",
+      "substitutes": ["teacher2@example.test"]
+    }
+  ]
+}

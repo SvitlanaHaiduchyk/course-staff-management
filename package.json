@@ -18,6 +18,7 @@
     "positions:demo": "node --env-file=.env.local scripts/create-demo-positions.mjs",
     "closures:demo": "node --env-file=.env.local scripts/create-demo-closures.mjs",
     "lessons:demo": "node --env-file=.env.local scripts/create-demo-lessons.mjs",
+    "substitutes:demo": "node --env-file=.env.local scripts/create-demo-substitutes.mjs",
     "check:design": "node scripts/check-design-tokens.mjs",
     "check:boundary": "node scripts/check-server-boundary.mjs",
     "carryover:demo": "node --env-file=.env.local scripts/create-demo-carryover.mjs",
