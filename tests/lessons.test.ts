@@ -9,6 +9,8 @@ import {
   lessonLabel,
   lessonsOn,
   parseLessonInput,
+  positionLabel,
+  positionLabels,
   type LessonFields,
   type LessonRow,
 } from "../src/lib/leave/lessons";
@@ -60,6 +62,32 @@ describe("lessonLabel", () => {
   it("заняття без класу — лише назва", () => {
     expect(lessonLabel({ subject: "Нарада кафедри", form: null })).toBe("Нарада кафедри");
     expect(lessonLabel({ subject: "Нарада кафедри", form: "  " })).toBe("Нарада кафедри");
+  });
+});
+
+describe("positionLabel", () => {
+  it("підрозділ перший, посада друга", () => {
+    expect(
+      positionLabel({ id: "p", job_title: "Teacher", divisions: { name: "Elementary school" } }),
+    ).toBe("Elementary school / Teacher");
+  });
+
+  it("без підрозділу лишається сама посада, а не «— · Teacher»", () => {
+    expect(positionLabel({ id: "p", job_title: "Teacher", divisions: null })).toBe("Teacher");
+    expect(positionLabel({ id: "p", job_title: "Teacher" })).toBe("Teacher");
+    expect(positionLabel({ id: "p", job_title: "Teacher", divisions: { name: " " } })).toBe(
+      "Teacher",
+    );
+  });
+
+  it("мапа підписів — за id посади, бо заняття знає лише position_id", () => {
+    const labels = positionLabels([
+      { id: "p-main", job_title: "Teacher", divisions: { name: "Elementary school" } },
+      { id: "p-extra", job_title: "Math teacher", divisions: { name: "High school" } },
+    ]);
+
+    expect(labels.get("p-extra")).toBe("High school / Math teacher");
+    expect(labels.get("p-none")).toBeUndefined();
   });
 });
 

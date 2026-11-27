@@ -18,7 +18,12 @@ import {
   type TimedPosition,
 } from "@/lib/leave/calendar-overlay";
 import { statusLabel } from "@/lib/leave/decision";
-import { lessonLabel, lessonsOn, type LessonRow } from "@/lib/leave/lessons";
+import {
+  lessonLabel,
+  lessonsOn,
+  positionLabels,
+  type LessonRow,
+} from "@/lib/leave/lessons";
 import { leaveTypeLabel } from "@/lib/leave/format";
 import { hhmm } from "@/lib/leave/week";
 
@@ -74,6 +79,8 @@ export function CalendarYearGrid({
   // відповідь «цього місяця нічого не закрито», а не підозра на поломку.
   const months = monthsOfSchoolYear(year);
   const weekdays = weekdayLabels(locale);
+  // Підписи посад для занять: підрозділ і назва, як у тижневій сітці.
+  const labels = positionLabels(positions);
 
   return (
     <div className="flex flex-col gap-4">
@@ -89,6 +96,7 @@ export function CalendarYearGrid({
             positions={positions}
             leaves={leaves}
             lessons={lessons}
+            labels={labels}
             m={m}
           />
         ))}
@@ -189,6 +197,7 @@ function MonthCard({
   positions,
   leaves,
   lessons,
+  labels,
   m,
 }: {
   monthKey: MonthKey;
@@ -199,6 +208,7 @@ function MonthCard({
   positions: readonly TimedPosition[];
   leaves: ReadonlyMap<string, readonly LeaveMark[]>;
   lessons: readonly LessonRow[];
+  labels: ReadonlyMap<string, string>;
   m: (key: MessageKey) => string;
 }) {
   return (
@@ -226,6 +236,7 @@ function MonthCard({
             dayLeaves={leaves.get(date) ?? []}
             blocks={blocksOn(positions, date)}
             dayLessons={lessonsOn(lessons, date)}
+            labels={labels}
             locale={locale}
             isToday={date === today}
             m={m}
@@ -244,6 +255,8 @@ type DayProps = {
   blocks: readonly DayBlock[];
   /** Заняття цього дня: уроки й наради всередині робочих годин. */
   dayLessons: readonly LessonRow[];
+  /** Підпис посади за її id: «Elementary school / Teacher». */
+  labels: ReadonlyMap<string, string>;
   locale: string;
   isToday: boolean;
   m: (key: MessageKey) => string;
@@ -258,7 +271,7 @@ type DayProps = {
  * і закриття, і відпустка, і години розкладу — видно всі три рядки.
  */
 function DayCell(props: DayProps) {
-  const { closure, dayLeaves, blocks, dayLessons, isToday, locale, m } = props;
+  const { closure, dayLeaves, blocks, dayLessons, labels, isToday, locale, m } = props;
   const wholeDay = closure !== null && closure.closes_at === null;
   const open = openBlocks(blocks, closure);
 
@@ -283,7 +296,7 @@ function DayCell(props: DayProps) {
       {closure ? <ClosureLines closure={closure} wholeDay={wholeDay} m={m} /> : null}
       <LeaveLines dayLeaves={dayLeaves} />
       <ScheduleLines blocks={blocks} open={open} closed={closure !== null} m={m} />
-      <LessonLines dayLessons={dayLessons} m={m} />
+      <LessonLines dayLessons={dayLessons} labels={labels} m={m} />
     </MarkedDay>
   );
 }
@@ -490,9 +503,11 @@ function noHoursKey(blocks: readonly DayBlock[], closed: boolean): MessageKey {
  */
 function LessonLines({
   dayLessons,
+  labels,
   m,
 }: {
   dayLessons: readonly LessonRow[];
+  labels: ReadonlyMap<string, string>;
   m: (key: MessageKey) => string;
 }) {
   return (
@@ -508,6 +523,9 @@ function LessonLines({
               {hhmm(lesson.starts_at)}–{hhmm(lesson.ends_at)}
             </span>
             <span className="font-medium">{lessonLabel(lesson)}</span>
+            <span className="text-muted-foreground">
+              {labels.get(lesson.position_id) ?? ""}
+            </span>
           </span>
         ))
       )}

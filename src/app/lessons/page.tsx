@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DICT, weekdayNames, type MessageKey } from "@/lib/i18n/dict";
 import { getMessages } from "@/lib/i18n/server";
+import { positionLabel, positionLabels } from "@/lib/leave/lessons";
 import { loadMyLessons } from "@/lib/supabase/my-lessons";
 import { loadMyPositions } from "@/lib/supabase/my-positions";
 import { requirePageSession } from "@/lib/supabase/page-session";
@@ -38,7 +39,9 @@ export default async function LessonsPage({ searchParams }: PageProps<"/lessons"
   );
 
   const dayNames = weekdayNames(lang);
-  const positionTitles = new Map(positions.map((p) => [p.id, p.job_title]));
+  const positionTitles = positionLabels(positions);
+  // У виборі посади — той самий підпис, що й на смузі заняття.
+  const choices = positions.map((p) => ({ id: p.id, job_title: positionLabel(p) }));
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-12">
@@ -69,7 +72,7 @@ export default async function LessonsPage({ searchParams }: PageProps<"/lessons"
             <CardContent>
               <LessonForm
                 action={addLesson}
-                positions={positions}
+                positions={choices}
                 dayNames={dayNames}
                 m={m}
               />

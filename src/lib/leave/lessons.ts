@@ -46,6 +46,41 @@ export function lessonLabel(lesson: Pick<LessonRow, "subject" | "form">): string
   return form ? `${lesson.subject}, ${form}` : lesson.subject;
 }
 
+/** Посада так, як її віддає `loadMyPositions`: назва й підрозділ. */
+export type LabelledPosition = {
+  readonly id: string;
+  readonly job_title: string;
+  readonly divisions?: { readonly name: string } | null;
+};
+
+/**
+ * Підпис посади: «Elementary school / Teacher».
+ *
+ * Запис саме через « / » і саме в такому порядку — так посаду пише сам PM в
+ * AC-LEAVE-01 і AC-LEAVE-02 («main position "Elementary school / Teacher"»),
+ * і так її вже показує форма заявки. Свій роздільник тут означав би, що та
+ * сама посада в порталі виглядає двома різними способами.
+ *
+ * Підрозділ ПЕРШИМ: людина з двома посадами питає насамперед «де я зараз»,
+ * а вже потім «ким». У глосарії PM це Division — «the part of the school a
+ * position belongs to»; словом «school» PM називає всю установу, тож
+ * підрозділ школою не називаємо (`requirements/product.md`, глосарій).
+ *
+ * Підрозділу може не бути лише в даних, яких ми не бачили: `division_id` у
+ * базі `not null`. Тоді лишається сама назва посади — краще, ніж «— · Teacher».
+ */
+export function positionLabel(position: LabelledPosition): string {
+  const division = position.divisions?.name?.trim();
+  return division ? `${division} / ${position.job_title}` : position.job_title;
+}
+
+/** Ті самі підписи мапою: заняття знає лише `position_id`. */
+export function positionLabels(
+  positions: readonly LabelledPosition[],
+): ReadonlyMap<string, string> {
+  return new Map(positions.map((position) => [position.id, positionLabel(position)]));
+}
+
 /** Поля форми заняття, як їх віддає `FormData`. */
 export type LessonFields = {
   readonly positionId: string;

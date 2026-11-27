@@ -1,6 +1,11 @@
 import { messages, weekdayNames, type Lang } from "@/lib/i18n/dict";
 import { blocksOn } from "@/lib/leave/calendar-overlay";
-import { lessonLabel, lessonsOn, type LessonRow } from "@/lib/leave/lessons";
+import {
+  lessonLabel,
+  lessonsOn,
+  positionLabels,
+  type LessonRow,
+} from "@/lib/leave/lessons";
 import { statusLabel } from "@/lib/leave/decision";
 import { leaveTypeLabel } from "@/lib/leave/format";
 import {
@@ -38,6 +43,8 @@ import {
 export type SchedulePosition = {
   readonly id: string;
   readonly job_title: string;
+  /** Підрозділ посади — його видно на смузі заняття. */
+  readonly divisions?: { readonly name: string } | null;
   readonly schedule_blocks?: readonly {
     readonly weekday: number;
     readonly starts_at: string;
@@ -65,8 +72,15 @@ const STATUS_TONE: Record<string, string> = {
   cancelled: "bg-status-cancelled text-status-cancelled-foreground",
 };
 
-/** Висота однієї години сітки. Доба цілком у картку не влізе й не потрібна. */
-const HOUR_HEIGHT_REM = 2.75;
+/**
+ * Висота однієї години сітки.
+ *
+ * Було 2.75rem, стало 4: у смузі заняття три рядки — час, предмет із класом і
+ * підрозділ із посадою, — а в 45 хвилин при 2.75rem влазило два. Сітка стала
+ * вищою, і це свідома плата: вона й існує заради того, щоб ці три рядки було
+ * видно, а не щоб уміститися в екран без прокручування.
+ */
+const HOUR_HEIGHT_REM = 4;
 
 export function ScheduleWeek({
   positions,
@@ -87,6 +101,8 @@ export function ScheduleWeek({
   const m = messages(lang);
   const dayNames = weekdayNames(lang);
   const dates = weekDates(mondayIso);
+  // Заняття знає лише `position_id`, а показати треба підрозділ і посаду.
+  const labels = positionLabels(positions);
 
   // Вікно сітки рахуємо і за розкладом, і за відпустками тижня: відпустка на
   // частину дня може починатися раніше за будь-який блок (погоджена зміна годин).
@@ -211,6 +227,14 @@ export function ScheduleWeek({
                         {hhmm(lesson.starts_at)}–{hhmm(lesson.ends_at)}
                       </div>
                       <div className="truncate text-xs font-medium">{label}</div>
+                      {/*
+                        Третій рядок — де саме: підрозділ і посада. Для людини
+                        з двома посадами це половина відповіді на питання
+                        «куди мені зараз іти».
+                      */}
+                      <div className="truncate text-xs">
+                        {labels.get(lesson.position_id) ?? ""}
+                      </div>
                     </div>
                   );
                 })}

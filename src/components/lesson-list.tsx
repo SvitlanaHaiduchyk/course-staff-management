@@ -20,7 +20,7 @@ export function LessonList({
   m,
 }: {
   lessons: readonly LessonRow[];
-  /** Назва посади за її id — заняття показуємо разом із посадою. */
+  /** Підпис посади за її id: «Elementary school / Teacher». */
   positionTitles: ReadonlyMap<string, string>;
   dayNames: readonly string[];
   action: (formData: FormData) => void | Promise<void>;
