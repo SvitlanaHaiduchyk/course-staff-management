@@ -367,7 +367,7 @@ grant execute on function public.cancel_record_with_note(uuid, text) to authenti
 -- поставити decision = 'confirmed' ПРЯМИМ запитом, повз
 -- public.decide_record_cancellation. Тоді запит виглядав би вирішеним, а запис
 -- лишався б «Approved» — і дні не повернулися б (знайшло рев'ю CodeRabbit
--- на PR #112).
+-- на PR 112).
 --
 -- Відкладений constraint trigger спрацьовує на commit, тобто вже після того,
 -- як функція скасувала запис, і валить транзакцію, якщо цього не сталося.
