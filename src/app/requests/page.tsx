@@ -4,6 +4,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RecordSubstitute } from "@/components/record-substitute";
 import { DateField } from "@/components/ui/date-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +29,7 @@ import {
 } from "@/lib/leave/cancel";
 import { canCancel, canEditHours, canResubmit } from "@/lib/leave/record-edit";
 import { todayInKyiv } from "@/lib/leave/today";
+import { emptyListHint } from "@/lib/leave/substitutes";
 import { createClient } from "@/lib/supabase/server";
 
 import {
@@ -79,7 +81,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
   const { data: records } = await supabase
     .from("leave_records")
     .select(
-      "id, on_date, starts_at, ends_at, status, days_on_type, days_unpaid, positions(job_title), leave_requests(leave_type, comment)",
+      "id, on_date, starts_at, ends_at, status, days_on_type, days_unpaid, substitute_id, positions(job_title), leave_requests(leave_type, comment)",
     )
     .order("on_date", { ascending: false });
 
@@ -118,6 +120,41 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
 
   // Київська дата — та сама межа «сьогодні або пізніше», що й у базі (AC-CANCEL-05).
   const today = todayInKyiv();
+
+  // AC-SUBST-04: вибір заміни пропонує рівно тих, хто є у СВОЄМУ списку.
+  // Політика substitutes_select_own_managed_or_admin віддає лише його.
+  const { data: myList } = await supabase
+    .from("substitutes")
+    .select("substitute_id")
+    .eq("employee_id", claims.sub);
+
+  const substituteIds = (myList ?? []).map((row) => row.substitute_id);
+
+  // Адреси: і для вибору, і для вже створених записів (AC-SUBST-02).
+  const recordSubstituteIds = (records ?? [])
+    .map((r) => r.substitute_id)
+    .filter((id): id is string => Boolean(id));
+  const neededIds = [...new Set([...substituteIds, ...recordSubstituteIds])];
+
+  const { data: substituteProfiles } = neededIds.length
+    ? await supabase.from("profiles").select("id, email").in("id", neededIds)
+    : { data: [] };
+
+  const emailById = new Map((substituteProfiles ?? []).map((p) => [p.id, p.email ?? ""]));
+
+  // Основні посади замін: від їхньої назви залежить позначка підвищення
+  // (AC-SUBST-08) — «Assistant» замість «Teacher».
+  const { data: substitutePositions } = neededIds.length
+    ? await supabase
+        .from("positions")
+        .select("employee_id, job_title, kind")
+        .in("employee_id", neededIds)
+        .eq("kind", "main")
+    : { data: [] };
+
+  const substituteJobTitleById = new Map(
+    (substitutePositions ?? []).map((p) => [p.employee_id, p.job_title]),
+  );
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-12">
@@ -210,6 +247,35 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
                 locale={INTL_LOCALE[lang]}
               />
 
+              {/*
+                AC-SUBST-02, AC-SUBST-03, AC-SUBST-04, AC-SUBST-11: заміна —
+                необов'язкова й лише зі свого списку. Порожній список не
+                заважає подати заявку: замість вибору — рядок PM.
+              */}
+              {emptyListHint(substituteIds.length) ? (
+                <p data-testid="no-substitutes" className="text-sm text-muted-foreground">
+                  {emptyListHint(substituteIds.length)}
+                </p>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor="substitute">{m("requests.substitute")}</Label>
+                  {/* Нативний select: форма серверна й має працювати без JavaScript. */}
+                  <select
+                    id="substitute"
+                    name="substitute"
+                    defaultValue=""
+                    className="h-9 w-full rounded-md border border-input bg-card px-2 text-sm"
+                  >
+                    <option value="">{m("requests.substituteNone")}</option>
+                    {substituteIds.map((id) => (
+                      <option key={id} value={id}>
+                        {emailById.get(id) ?? id}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div className="flex flex-col gap-2">
                 {/*
                   Вкладки-пігулки замість select: чотири типи відпустки видно
@@ -284,7 +350,18 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
                     <TableCell className="tabular-nums">
                       {r.starts_at.slice(0, 5)}–{r.ends_at.slice(0, 5)}
                     </TableCell>
-                    <TableCell>{r.positions?.job_title ?? "—"}</TableCell>
+                    <TableCell>
+                      {r.positions?.job_title ?? "—"}
+                      <RecordSubstitute
+                        email={r.substitute_id ? emailById.get(r.substitute_id) : null}
+                        absentJobTitle={r.positions?.job_title}
+                        substituteJobTitle={
+                          r.substitute_id ? substituteJobTitleById.get(r.substitute_id) : null
+                        }
+                        startsAt={r.starts_at}
+                        endsAt={r.ends_at}
+                      />
+                    </TableCell>
                     <TableCell>
                       {leaveTypeLabel(r.leave_requests?.leave_type)}
                     </TableCell>

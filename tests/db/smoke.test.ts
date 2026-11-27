@@ -18,10 +18,12 @@ describe("тестова база", () => {
 
     expect(rows.map((r) => r.email)).toEqual([
       "admin@example.test",
+      "assistant1@example.test",
       "manager1@example.test",
       "manager2@example.test",
       "teacher1@example.test",
       "teacher2@example.test",
+      "teacher3@example.test",
     ]);
     expect(rows.find((r) => r.email === "teacher1@example.test")?.role).toBe("employee");
     expect(rows.find((r) => r.email === "admin@example.test")?.role).toBe("admin");
@@ -35,7 +37,9 @@ describe("тестова база", () => {
       "select count(*)::text as count from public.schedule_blocks",
     );
 
-    expect(Number(count)).toBe(4);
+    // Зріс із 4 до 6 у зрізі WS8: демо-дані отримали Assistant і третього
+    // вчителя, яких називають AC-SUBST-08 і AC-SUBST-13.
+    expect(Number(count)).toBe(6);
     expect(Number(blocks[0].count)).toBeGreaterThan(0);
   });
 });

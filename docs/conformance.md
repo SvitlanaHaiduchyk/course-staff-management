@@ -134,21 +134,21 @@
 | AC-ASSIST-09 | Недоступний помічник не заважає ручному додаванню | `src/lib/ai/suggest.ts` (classifyError) · `src/lib/ai/openrouter.ts` · `src/app/calendar/assistant/actions.ts` | `tests/ai-suggest.test.ts` · `tests/e2e/assistant.spec.ts` | реалізовано |
 | AC-ASSIST-10 | Текст на 2001 символ до помічника не доходить | `src/lib/ai/suggest.ts` (checkTextLength) · `src/app/calendar/assistant/actions.ts` | `tests/ai-suggest.test.ts` | реалізовано |
 | AC-ASSIST-11 | Працівник помічника не відкриє | `src/app/calendar/assistant/page.tsx` · `src/app/calendar/assistant/actions.ts` · `src/lib/leave/calendar.ts` (ONLY_ADMIN) | `tests/e2e/assistant.spec.ts` | реалізовано |
-| AC-SUBST-01 | Менеджер додає двох людей до порожнього списку замін | — | — | відкладено (чекає реалізації) |
-| AC-SUBST-02 | Запис створено із заміною, менеджер її бачить | — | — | відкладено (чекає реалізації) |
-| AC-SUBST-04 | Вибір пропонує лише людей зі списку | — | — | відкладено (чекає реалізації) |
-| AC-SUBST-03 | Запис без заміни показує «No substitute» | — | — | відкладено (чекає реалізації) |
-| AC-SUBST-05 | Заміна має власний запис у цей час | — | — | відкладено (чекає реалізації) |
-| AC-SUBST-06 | Заміна вже підміняє іншого працівника в цей час | — | — | відкладено (чекає реалізації) |
-| AC-SUBST-07 | Відхилений запис заміни не заважає | — | — | відкладено (чекає реалізації) |
-| AC-SUBST-08 | Асистент підміняє вчителя — позначка з хвилинами | — | — | відкладено (чекає реалізації) |
-| AC-SUBST-09 | Вчитель підміняє вчителя — позначки немає | — | — | відкладено (чекає реалізації) |
-| AC-SUBST-10 | Один рядок у «Моїх замінах» | — | — | відкладено (чекає реалізації) |
-| AC-SUBST-15 | Порожні «Мої заміни» | — | — | відкладено (чекає реалізації) |
-| AC-SUBST-11 | Заявка з порожнім списком замін | — | — | відкладено (чекає реалізації) |
-| AC-SUBST-12 | Працівник за прямим посиланням списку не змінить | — | — | відкладено (чекає реалізації) |
-| AC-SUBST-13 | Менеджер чужих позицій повз сторінки порталу | — | — | відкладено (чекає реалізації) |
-| AC-SUBST-14 | Неавторизований «Моїх замін» не бачить | — | — | відкладено (чекає реалізації) |
+| AC-SUBST-01 | Менеджер додає двох людей до порожнього списку замін| `supabase/migrations/20261127141415_substitutes.sql` (substitutes, substitutes_insert_manager_or_admin) · `src/app/substitutes/` | `tests/db/substitutes.test.ts` | реалізовано |
+| AC-SUBST-02 | Запис створено із заміною, менеджер її бачить| `supabase/migrations/20261127141415_substitutes.sql` (submit_leave_request) · `src/app/requests/` | `tests/db/substitutes.test.ts` | реалізовано |
+| AC-SUBST-04 | Вибір пропонує лише людей зі списку| `supabase/migrations/20261127141415_substitutes.sql` (submit_leave_request, substitutes_select_own_managed_or_admin) · `src/app/requests/page.tsx` | `tests/db/substitutes.test.ts` | реалізовано |
+| AC-SUBST-03 | Запис без заміни показує «No substitute»| `src/lib/leave/substitutes.ts` (substituteLabel) · `src/app/requests/page.tsx` | `tests/db/substitutes.test.ts` · `tests/leave-substitutes.test.ts` | реалізовано |
+| AC-SUBST-05 | Заміна має власний запис у цей час| `supabase/migrations/20261127141415_substitutes.sql` (private.substitute_busy_at) | `tests/db/substitutes.test.ts` | реалізовано |
+| AC-SUBST-06 | Заміна вже підміняє іншого працівника в цей час| `supabase/migrations/20261127141415_substitutes.sql` (private.substitute_busy_at) | `tests/db/substitutes.test.ts` | реалізовано |
+| AC-SUBST-07 | Відхилений запис заміни не заважає| `supabase/migrations/20261127141415_substitutes.sql` (private.substitute_busy_at) | `tests/db/substitutes.test.ts` | реалізовано |
+| AC-SUBST-08 | Асистент підміняє вчителя — позначка з хвилинами| `src/lib/leave/substitutes.ts` (upgradeMark) · `src/app/substitutions/page.tsx` | `tests/leave-substitutes.test.ts` | реалізовано |
+| AC-SUBST-09 | Вчитель підміняє вчителя — позначки немає| `src/lib/leave/substitutes.ts` (upgradeMark, isTeacherTitle) | `tests/leave-substitutes.test.ts` | реалізовано |
+| AC-SUBST-10 | Один рядок у «Моїх замінах»| `supabase/migrations/20261127141415_substitutes.sql` (leave_records_select_substitute) · `src/app/substitutions/page.tsx` | `tests/db/substitutes.test.ts` | реалізовано |
+| AC-SUBST-15 | Порожні «Мої заміни»| `src/lib/leave/substitutes.ts` (NOT_COVERING_ANYONE) · `src/app/substitutions/page.tsx` | `tests/db/substitutes.test.ts` | реалізовано |
+| AC-SUBST-11 | Заявка з порожнім списком замін| `src/lib/leave/substitutes.ts` (emptyListHint) · `src/app/requests/page.tsx` | `tests/leave-substitutes.test.ts` | реалізовано |
+| AC-SUBST-12 | Працівник за прямим посиланням списку не змінить| `supabase/migrations/20261127141415_substitutes.sql` (substitutes_insert_manager_or_admin) · `src/app/substitutes/page.tsx` | `tests/db/substitutes.test.ts` | реалізовано |
+| AC-SUBST-13 | Менеджер чужих позицій повз сторінки порталу| `supabase/migrations/20261127141415_substitutes.sql` (private.manages_employee) | `tests/db/substitutes.test.ts` | реалізовано |
+| AC-SUBST-14 | Неавторизований «Моїх замін» не бачить| `src/proxy.ts` · `supabase/migrations/20261127141415_substitutes.sql` (revoke all from anon) | `tests/db/substitutes.test.ts` | реалізовано |
 | AC-CANCEL-01 | Запит на скасування майбутнього запису | `supabase/migrations/20261127103118_cancel_approved.sql` (request_record_cancellation) · `src/app/requests/actions.ts` (requestCancellation) | `tests/db/cancel.test.ts` · `tests/leave-cancel.test.ts` | реалізовано |
 | AC-CANCEL-02 | Дні повертаються в залишок | `supabase/migrations/20261127103118_cancel_approved.sql` (decide_record_cancellation, private.set_record_cancelled) | `tests/db/cancel.test.ts` | реалізовано |
 | AC-CANCEL-07 | Розділений запис повертає обидві частини | `supabase/migrations/20261127103118_cancel_approved.sql` (decide_record_cancellation) | `tests/db/cancel.test.ts` | реалізовано |

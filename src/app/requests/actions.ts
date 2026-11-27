@@ -94,6 +94,9 @@ export async function submitLeaveRequest(formData: FormData) {
   // і обмеження бази `leave_requests_relationship_check`.
   const relationship = relationshipFor(leaveType, String(formData.get("relationship") ?? ""));
   const comment = String(formData.get("comment") ?? "").trim() || null;
+  // AC-SUBST-02, AC-SUBST-03: заміна необов'язкова. Вибір один на заявку —
+  // PM дозволяє різні заміни на різні записи, але не вимагає цього.
+  const substituteId = String(formData.get("substitute") ?? "").trim() || null;
 
   // RLS: працівник бачить лише власні посади та їхні розклади.
   const { data: rows, error: readError } = await supabase
@@ -146,6 +149,9 @@ export async function submitLeaveRequest(formData: FormData) {
       on_date: r.date,
       starts_at: r.startsAt,
       ends_at: r.endsAt,
+      // Зайнятість заміни (AC-SUBST-05, AC-SUBST-06) і її наявність у списку
+      // (AC-SUBST-04) перевіряє сама функція: сторінка лише пропонує вибір.
+      substitute_id: substituteId,
     })),
   });
 
