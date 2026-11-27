@@ -80,10 +80,14 @@ function navItems(role: string | undefined, m: (key: MessageKey) => string): Nav
     ...(role === "admin" ? [{ href: "/lessons", label: m("lessons.nav") }] : []),
     { href: "/requests", label: m("nav.requests") },
     { href: "/balances", label: m("nav.balances") },
+    // «Мої заміни» бачить кожен: підміняти можуть будь-кого (AC-SUBST-10).
+    { href: "/substitutions", label: m("substitutions.title") },
     // Шкільний календар бачить КОЖЕН авторизований — на відміну від
     // «Awaiting decision» нижче, який лише менеджер і адміністратор
     // (план зрізу, розділ «Навігація»).
     { href: "/calendar", label: m("nav.calendar") },
     ...(canDecide ? [{ href: "/decisions", label: m("decisions.awaiting") }] : []),
+    // Списки замін веде менеджер і адміністратор (AC-SUBST-01, AC-SUBST-12).
+    ...(canDecide ? [{ href: "/substitutes", label: m("substitutes.title") }] : []),
   ];
 }

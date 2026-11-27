@@ -94,6 +94,9 @@ export async function submitLeaveRequest(formData: FormData) {
   // і обмеження бази `leave_requests_relationship_check`.
   const relationship = relationshipFor(leaveType, String(formData.get("relationship") ?? ""));
   const comment = String(formData.get("comment") ?? "").trim() || null;
+  // AC-SUBST-02, AC-SUBST-03: заміна необов'язкова. Вибір один на заявку —
+  // PM дозволяє різні заміни на різні записи, але не вимагає цього.
+  const substituteId = String(formData.get("substitute") ?? "").trim() || null;
 
   // RLS: працівник бачить лише власні посади та їхні розклади.
   const { data: rows, error: readError } = await supabase
@@ -146,6 +149,9 @@ export async function submitLeaveRequest(formData: FormData) {
       on_date: r.date,
       starts_at: r.startsAt,
       ends_at: r.endsAt,
+      // Зайнятість заміни (AC-SUBST-05, AC-SUBST-06) і її наявність у списку
+      // (AC-SUBST-04) перевіряє сама функція: сторінка лише пропонує вибір.
+      substitute_id: substituteId,
     })),
   });
 
@@ -158,6 +164,22 @@ export async function submitLeaveRequest(formData: FormData) {
   revalidatePath("/requests");
   revalidatePath("/balances");
 
+  const notice = await submitNotices(supabase, claims.sub, leaveType, built);
+  redirect(notice ? "/requests?notice=" + encodeURIComponent(notice) : "/requests");
+}
+
+/**
+ * Повідомлення після успішного подання — одним рядком через «; ».
+ *
+ * Жодне з них заявку не зупиняє, тому всі йдуть як `notice`, а не `error`
+ * (DESIGN.md, розділ 6).
+ */
+async function submitNotices(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  employeeId: string,
+  leaveType: string,
+  built: { skipped: readonly { date: string; message: string }[]; records: readonly DraftRecordLike[] },
+): Promise<string> {
   const notices: string[] = [];
 
   // AC-LEAVE-21: дати без робочих годин лише відпали — повідомлення на кожну.
@@ -166,14 +188,20 @@ export async function submitLeaveRequest(formData: FormData) {
   }
 
   // AC-BALANCE-08, AC-BALANCE-15, AC-BALANCE-17: ОДНЕ попередження на всю
-  // заявку, за її сумарною часткою й залишком на момент подання. Заявку воно
-  // не зупиняє — тому показуємо як notice, а не error.
-  const warning = await overBalanceNotice(supabase, claims.sub, leaveType, built.records);
+  // заявку, за її сумарною часткою й залишком на момент подання.
+  const warning = await overBalanceNotice(supabase, employeeId, leaveType, built.records);
   if (warning) notices.push(warning);
 
-  const notice = notices.join("; ");
-  redirect(notice ? "/requests?notice=" + encodeURIComponent(notice) : "/requests");
+  return notices.join("; ");
 }
+
+/** Запис заявки так, як його повертає `buildRecords`. */
+type DraftRecordLike = {
+  positionId: string;
+  date: string;
+  startsAt: string;
+  endsAt: string;
+};
 
 /**
  * Попередження про перевищення залишку — або `null`, якщо заявка в межах.

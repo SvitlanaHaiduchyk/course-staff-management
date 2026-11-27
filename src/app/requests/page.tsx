@@ -22,10 +22,15 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
     redirect("/login");
   }
 
-  const { positions, records, lastDecision, lastCancellation } = await loadMyRequests(
-    supabase,
-    claims.sub,
-  );
+  const {
+    positions,
+    records,
+    lastDecision,
+    lastCancellation,
+    substituteIds,
+    emailById,
+    substituteJobTitleById,
+  } = await loadMyRequests(supabase, claims.sub);
 
   // Київська дата — та сама межа «сьогодні або пізніше», що й у базі (AC-CANCEL-05).
   const today = todayInKyiv();
@@ -56,7 +61,12 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
           <CardTitle as="h2" className="text-lg">{m("requests.new")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <RequestForm positions={positions} lang={lang} />
+          <RequestForm
+            positions={positions}
+            lang={lang}
+            substituteIds={substituteIds}
+            emailById={emailById}
+          />
         </CardContent>
       </Card>
 
@@ -70,6 +80,8 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
             lastDecision={lastDecision}
             lastCancellation={lastCancellation}
             today={today}
+            emailById={emailById}
+            substituteJobTitleById={substituteJobTitleById}
           />
         </CardContent>
       </Card>

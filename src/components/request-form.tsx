@@ -9,6 +9,7 @@ import { INTL_LOCALE, positionKindKey, weekdayNames, type Lang } from "@/lib/i18
 import { getMessages } from "@/lib/i18n/server";
 import { LEAVE_TYPE_LABELS } from "@/lib/leave/balance";
 import { scheduleSummary } from "@/lib/leave/format";
+import { emptyListHint } from "@/lib/leave/substitutes";
 
 /** Посада працівника так, як її віддає сторінка заявки. */
 export type RequestPosition = {
@@ -29,9 +30,13 @@ export type RequestPosition = {
 export async function RequestForm({
   positions,
   lang,
+  substituteIds,
+  emailById,
 }: {
   positions: readonly RequestPosition[];
   lang: Lang;
+  substituteIds: readonly string[];
+  emailById: Map<string, string>;
 }) {
   const { m } = await getMessages();
   const dayNames = weekdayNames(lang);
@@ -102,6 +107,35 @@ export async function RequestForm({
             nextMonthLabel={m("requests.nextMonth")}
             locale={INTL_LOCALE[lang]}
           />
+
+          {/*
+            AC-SUBST-02, AC-SUBST-03, AC-SUBST-04, AC-SUBST-11: заміна —
+            необов'язкова й лише зі свого списку. Порожній список не заважає
+            подати заявку: замість вибору — рядок PM.
+          */}
+          {emptyListHint(substituteIds.length) ? (
+            <p data-testid="no-substitutes" className="text-sm text-muted-foreground">
+              {emptyListHint(substituteIds.length)}
+            </p>
+          ) : (
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="substitute">{m("requests.substitute")}</Label>
+              {/* Нативний select: форма серверна й має працювати без JavaScript. */}
+              <select
+                id="substitute"
+                name="substitute"
+                defaultValue=""
+                className="h-9 w-full rounded-md border border-input bg-card px-2 text-sm"
+              >
+                <option value="">{m("requests.substituteNone")}</option>
+                {substituteIds.map((id) => (
+                  <option key={id} value={id}>
+                    {emailById.get(id) ?? id}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="flex flex-col gap-2">
             {/*
