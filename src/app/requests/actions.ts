@@ -74,6 +74,32 @@ async function readClosures(
   }));
 }
 
+/**
+ * Поля форми заявки — одним місцем.
+ *
+ * Винесено з дії: разом із перевірками заявки вони зробили
+ * `submitLeaveRequest` критичною за складністю (ворота `fallow`).
+ */
+function readRequestForm(formData: FormData) {
+  const leaveType = String(formData.get("leaveType") ?? "");
+  if (!isLeaveType(leaveType)) {
+    redirect("/requests?error=" + encodeURIComponent("Choose a leave type"));
+  }
+
+  return {
+    leaveType,
+    dates: formData.getAll("date").map(String).filter(Boolean),
+    positionIds: formData.getAll("position").map(String).filter(Boolean),
+    // Спорідненість стосується лише Family celebration — так каже і підпис
+    // поля, і обмеження бази `leave_requests_relationship_check`.
+    relationship: relationshipFor(leaveType, String(formData.get("relationship") ?? "")),
+    comment: String(formData.get("comment") ?? "").trim() || null,
+    // AC-SUBST-02, AC-SUBST-03: заміна необов'язкова. Вибір один на заявку —
+    // PM дозволяє різні заміни на різні записи, але не вимагає цього.
+    substituteId: String(formData.get("substitute") ?? "").trim() || null,
+  };
+}
+
 export async function submitLeaveRequest(formData: FormData) {
   const supabase = await createClient();
 
@@ -84,17 +110,8 @@ export async function submitLeaveRequest(formData: FormData) {
     redirect("/login");
   }
 
-  const leaveType = String(formData.get("leaveType") ?? "");
-  if (!isLeaveType(leaveType)) {
-    redirect("/requests?error=" + encodeURIComponent("Choose a leave type"));
-  }
-
-  const dates = formData.getAll("date").map(String).filter(Boolean);
-  const positionIds = formData.getAll("position").map(String).filter(Boolean);
-  // Спорідненість стосується лише Family celebration — так каже і підпис поля,
-  // і обмеження бази `leave_requests_relationship_check`.
-  const relationship = relationshipFor(leaveType, String(formData.get("relationship") ?? ""));
-  const comment = String(formData.get("comment") ?? "").trim() || null;
+  const { leaveType, dates, positionIds, relationship, comment, substituteId } =
+    readRequestForm(formData);
 
   // RLS: працівник бачить лише власні посади та їхні розклади.
   const { data: rows, error: readError } = await supabase
@@ -147,6 +164,9 @@ export async function submitLeaveRequest(formData: FormData) {
       on_date: r.date,
       starts_at: r.startsAt,
       ends_at: r.endsAt,
+      // Зайнятість заміни (AC-SUBST-05, AC-SUBST-06) і її наявність у списку
+      // (AC-SUBST-04) перевіряє сама функція: сторінка лише пропонує вибір.
+      substitute_id: substituteId,
     })),
   });
 

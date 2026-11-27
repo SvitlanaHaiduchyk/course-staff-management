@@ -3,7 +3,7 @@
 // й описує міграції 20261012000000_profiles_and_roles.sql, 20261020203434_leave_schema.sql
 // 20261021080359_submit_leave_request.sql і 20261026201058_leave_decisions.sql
 // 20261026202444_record_hours_and_cancel.sql, 20261026211459_decision_permission_fixes.sql
-// 20261102200744_leave_balance.sql і 20261127103118_cancel_approved.sql.
+// 20261102200744_leave_balance.sql і 20261127103118_cancel_approved.sql і 20261127141415_substitutes.sql.
 
 export type Json =
   | string
@@ -252,6 +252,7 @@ export type Database = {
           on_date: string;
           starts_at: string;
           ends_at: string;
+          substitute_id: string | null;
           status: string;
           created_at: string;
           days_on_type: number | null;
@@ -264,6 +265,7 @@ export type Database = {
           on_date: string;
           starts_at: string;
           ends_at: string;
+          substitute_id?: string | null;
           status?: string;
           created_at?: string;
           days_on_type?: number | null;
@@ -276,6 +278,7 @@ export type Database = {
           on_date?: string;
           starts_at?: string;
           ends_at?: string;
+          substitute_id?: string | null;
           status?: string;
           created_at?: string;
           days_on_type?: number | null;
@@ -334,6 +337,40 @@ export type Database = {
           {
             foreignKeyName: "leave_decisions_decided_by_fkey";
             columns: ["decided_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      substitutes: {
+        Row: {
+          employee_id: string;
+          substitute_id: string;
+          added_by: string;
+          created_at: string;
+        };
+        Insert: {
+          employee_id: string;
+          substitute_id: string;
+          added_by: string;
+          created_at?: string;
+        };
+        Update: {
+          employee_id?: string;
+          substitute_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "substitutes_employee_id_fkey";
+            columns: ["employee_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "substitutes_substitute_id_fkey";
+            columns: ["substitute_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
