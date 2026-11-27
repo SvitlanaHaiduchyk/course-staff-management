@@ -1,66 +1,19 @@
 import { redirect } from "next/navigation";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RecordSubstitute } from "@/components/record-substitute";
-import { DateField } from "@/components/ui/date-field";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { PillTabs } from "@/components/ui/pill-tabs";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { INTL_LOCALE, positionKindKey, weekdayNames } from "@/lib/i18n/dict";
+import { RecordsTable } from "@/components/records-table";
+import { RequestForm } from "@/components/request-form";
 import { getMessages } from "@/lib/i18n/server";
-import { leaveTypeLabel, scheduleSummary } from "@/lib/leave/format";
-import { formatDays, LEAVE_TYPE_LABELS, splitLabel } from "@/lib/leave/balance";
-import {
-  canRequestCancellation,
-  cancellationNote,
-  type CancellationRow,
-} from "@/lib/leave/cancel";
-import { canCancel, canEditHours, canResubmit } from "@/lib/leave/record-edit";
 import { todayInKyiv } from "@/lib/leave/today";
-import { emptyListHint } from "@/lib/leave/substitutes";
+import { loadMyRequests } from "@/lib/supabase/my-requests";
 import { createClient } from "@/lib/supabase/server";
 
-import {
-  cancelRecord,
-  changeRecordHours,
-  requestCancellation,
-  submitLeaveRequest,
-} from "./actions";
 
-/** П'ять статусів запису — перелік остаточний (припущення PM). Текст обов'язковий, колір на додачу. */
-const STATUS_LABELS: Record<string, string> = {
-  awaiting: "Awaiting decision",
-  approved: "Approved",
-  rejected: "Rejected",
-  returned: "Returned for revision",
-  cancelled: "Cancelled",
-};
-
-/** Токени статусів із DESIGN.md. Колір ніколи не несе сенсу сам — поруч завжди текст. */
-const STATUS_CLASSES: Record<string, string> = {
-  awaiting: "bg-status-awaiting text-status-awaiting-foreground",
-  approved: "bg-status-approved text-status-approved-foreground",
-  rejected: "bg-status-rejected text-status-rejected-foreground",
-  returned: "bg-status-returned text-status-returned-foreground",
-  cancelled: "bg-status-cancelled text-status-cancelled-foreground",
-};
 
 export default async function RequestsPage({ searchParams }: PageProps<"/requests">) {
   const { error, notice } = await searchParams;
   const { lang, m } = await getMessages();
-  const dayNames = weekdayNames(lang);
   const supabase = await createClient();
 
   const { data: claimsData } = await supabase.auth.getClaims();
@@ -69,92 +22,18 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
     redirect("/login");
   }
 
-  // RLS: працівник бачить лише власні посади (AC-LEAVE-02, AC-LEAVE-03).
-  const { data: positions } = await supabase
-    .from("positions")
-    .select("id, kind, job_title, divisions(name), schedule_blocks(weekday, starts_at, ends_at)")
-    .eq("employee_id", claims.sub)
-    .order("kind", { ascending: false }); // main перед additional
-
-  // AC-LEAVE-14: лише власні записи. Фільтра за працівником тут немає свідомо —
-  // чужі записи відсікає політика leave_records_select_own_managed_or_admin.
-  const { data: records } = await supabase
-    .from("leave_records")
-    .select(
-      "id, on_date, starts_at, ends_at, status, days_on_type, days_unpaid, substitute_id, positions(job_title), leave_requests(leave_type, comment)",
-    )
-    .order("on_date", { ascending: false });
-
-  // AC-DECIDE-03, AC-DECIDE-05, AC-DECIDE-23, AC-DECIDE-24: працівник бачить
-  // коментар менеджера. Показуємо коментар ОСТАННЬОГО рішення по запису.
-  // RLS: політика leave_decisions_select_visible_records віддає лише свої.
-  const { data: decisions } = await supabase
-    .from("leave_decisions")
-    .select("record_id, comment, decision, decided_at")
-    .order("decided_at", { ascending: false });
-
-  const lastDecision = new Map<string, { comment: string | null; decision: string }>();
-  for (const d of decisions ?? []) {
-    if (!lastDecision.has(d.record_id)) {
-      lastDecision.set(d.record_id, { comment: d.comment, decision: d.decision });
-    }
-  }
-
-  // AC-CANCEL-01, AC-CANCEL-03, AC-CANCEL-08: позначка запиту, причина відмови
-  // менеджера й його примітка. RLS: політика leave_cancellations_select_visible_records.
-  const { data: cancellations } = await supabase
-    .from("leave_cancellations")
-    .select("record_id, reason, decision, comment, requested_at")
-    .order("requested_at", { ascending: false });
-
-  const lastCancellation = new Map<string, CancellationRow>();
-  for (const c of cancellations ?? []) {
-    if (!lastCancellation.has(c.record_id)) {
-      lastCancellation.set(c.record_id, {
-        reason: c.reason,
-        decision: c.decision === "confirmed" || c.decision === "declined" ? c.decision : null,
-        comment: c.comment,
-      });
-    }
-  }
+  const {
+    positions,
+    records,
+    lastDecision,
+    lastCancellation,
+    substituteIds,
+    emailById,
+    substituteJobTitleById,
+  } = await loadMyRequests(supabase, claims.sub);
 
   // Київська дата — та сама межа «сьогодні або пізніше», що й у базі (AC-CANCEL-05).
   const today = todayInKyiv();
-
-  // AC-SUBST-04: вибір заміни пропонує рівно тих, хто є у СВОЄМУ списку.
-  // Політика substitutes_select_own_managed_or_admin віддає лише його.
-  const { data: myList } = await supabase
-    .from("substitutes")
-    .select("substitute_id")
-    .eq("employee_id", claims.sub);
-
-  const substituteIds = (myList ?? []).map((row) => row.substitute_id);
-
-  // Адреси: і для вибору, і для вже створених записів (AC-SUBST-02).
-  const recordSubstituteIds = (records ?? [])
-    .map((r) => r.substitute_id)
-    .filter((id): id is string => Boolean(id));
-  const neededIds = [...new Set([...substituteIds, ...recordSubstituteIds])];
-
-  const { data: substituteProfiles } = neededIds.length
-    ? await supabase.from("profiles").select("id, email").in("id", neededIds)
-    : { data: [] };
-
-  const emailById = new Map((substituteProfiles ?? []).map((p) => [p.id, p.email ?? ""]));
-
-  // Основні посади замін: від їхньої назви залежить позначка підвищення
-  // (AC-SUBST-08) — «Assistant» замість «Teacher».
-  const { data: substitutePositions } = neededIds.length
-    ? await supabase
-        .from("positions")
-        .select("employee_id, job_title, kind")
-        .in("employee_id", neededIds)
-        .eq("kind", "main")
-    : { data: [] };
-
-  const substituteJobTitleById = new Map(
-    (substitutePositions ?? []).map((p) => [p.employee_id, p.job_title]),
-  );
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-12">
@@ -182,146 +61,12 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
           <CardTitle as="h2" className="text-lg">{m("requests.new")}</CardTitle>
         </CardHeader>
         <CardContent>
-          {positions && positions.length > 0 ? (
-            <form action={submitLeaveRequest} className="flex flex-col gap-4">
-              <fieldset className="flex flex-col gap-2">
-                <legend className="mb-1 text-sm font-medium">{m("home.positions")}</legend>
-                {positions.map((p) => (
-                  <Label key={p.id} className="flex items-start gap-2 font-normal">
-                    {/*
-                      Нативний checkbox, а не Checkbox з @/components/ui: той побудований на
-                      @base-ui/react, клієнтський, і подає значення через прихований input.
-                      Форма ж серверна (form action), а дія читає formData.getAll("position") —
-                      саме на цьому тримаються AC-LEAVE-02 і AC-LEAVE-03. Заміна потребує
-                      перевірки подання, тож іде окремою задачею.
-                      Колір — семантичний токен, check:design проходить.
-                    */}
-                    <input
-                      type="checkbox"
-                      name="position"
-                      value={p.id}
-                      defaultChecked
-                      className="accent-primary mt-1"
-                    />
-                    <span className="flex flex-col">
-                      <span>
-                        {p.divisions?.name ?? "—"} / {p.job_title}{" "}
-                        <span className="text-muted-foreground">
-                          ({m(positionKindKey(p.kind))})
-                        </span>
-                      </span>
-                      <span data-testid="schedule" className="text-xs text-muted-foreground">
-                        {p.schedule_blocks?.length
-                          ? scheduleSummary(p.schedule_blocks, dayNames)
-                          : m("schedule.none")}
-                      </span>
-                    </span>
-                  </Label>
-                ))}
-              </fieldset>
-
-              {/*
-                Дати: нативне поле лишається справжнім полем форми, а календар
-                `cally` лише пише в нього. Форма серверна, а веб-компонент без
-                JavaScript не існує — див. коментар у `date-field.tsx`.
-              */}
-              <DateField
-                id="date-1"
-                name="date"
-                label={m("requests.date1")}
-                hint={m("requests.dateHint")}
-                calendarLabel={m("requests.calendar")}
-                prevMonthLabel={m("requests.prevMonth")}
-                nextMonthLabel={m("requests.nextMonth")}
-                locale={INTL_LOCALE[lang]}
-                required
-              />
-
-              <DateField
-                id="date-2"
-                name="date"
-                label={m("requests.date2")}
-                calendarLabel={m("requests.calendar")}
-                prevMonthLabel={m("requests.prevMonth")}
-                nextMonthLabel={m("requests.nextMonth")}
-                locale={INTL_LOCALE[lang]}
-              />
-
-              {/*
-                AC-SUBST-02, AC-SUBST-03, AC-SUBST-04, AC-SUBST-11: заміна —
-                необов'язкова й лише зі свого списку. Порожній список не
-                заважає подати заявку: замість вибору — рядок PM.
-              */}
-              {emptyListHint(substituteIds.length) ? (
-                <p data-testid="no-substitutes" className="text-sm text-muted-foreground">
-                  {emptyListHint(substituteIds.length)}
-                </p>
-              ) : (
-                <div className="flex flex-col gap-1">
-                  <Label htmlFor="substitute">{m("requests.substitute")}</Label>
-                  {/* Нативний select: форма серверна й має працювати без JavaScript. */}
-                  <select
-                    id="substitute"
-                    name="substitute"
-                    defaultValue=""
-                    className="h-9 w-full rounded-md border border-input bg-card px-2 text-sm"
-                  >
-                    <option value="">{m("requests.substituteNone")}</option>
-                    {substituteIds.map((id) => (
-                      <option key={id} value={id}>
-                        {emailById.get(id) ?? id}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              <div className="flex flex-col gap-2">
-                {/*
-                  Вкладки-пігулки замість select: чотири типи відпустки видно
-                  одразу, без розкривання. Усередині — звичайні радіокнопки з
-                  name="leaveType", тож серверна форма приймає їх так само, як
-                  приймала select (`@/components/ui/pill-tabs`).
-
-                  Підписи — LEAVE_TYPE_LABELS, тобто дослівні тексти PM: тип
-                  відпустки лишається англійською в обох мовах інтерфейсу.
-                */}
-                <span className="text-sm font-medium">{m("requests.type")}</span>
-                <PillTabs
-                  name="leaveType"
-                  label={m("requests.type")}
-                  defaultValue="sick"
-                  options={Object.entries(LEAVE_TYPE_LABELS).map(([value, label]) => ({
-                    value,
-                    label,
-                  }))}
-                  className="self-start"
-                />
-              </div>
-
-              {/* Видно лише для Family celebration; показ вирішує CSS — див. globals.css. */}
-              <div className="relationship-field flex-col gap-2">
-                <Label htmlFor="relationship">
-                  {m("requests.relation")}
-                </Label>
-                <Input id="relationship" name="relationship" />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="comment">{m("requests.comment")}</Label>
-                <Textarea id="comment" name="comment" maxLength={500} rows={2}
-                />
-              </div>
-
-              <Button type="submit" className="self-start">
-                {m("requests.submit")}
-              </Button>
-            </form>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {m("requests.noPositions")}
-            </p>
-          )}
+          <RequestForm
+            positions={positions}
+            lang={lang}
+            substituteIds={substituteIds}
+            emailById={emailById}
+          />
         </CardContent>
       </Card>
 
@@ -330,186 +75,14 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
           <CardTitle as="h2" className="text-lg">{m("requests.mine")}</CardTitle>
         </CardHeader>
         <CardContent>
-          {records && records.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{m("table.date")}</TableHead>
-                  <TableHead>{m("table.hours")}</TableHead>
-                  <TableHead>{m("table.position")}</TableHead>
-                  <TableHead>{m("table.type")}</TableHead>
-                  <TableHead>{m("table.status")}</TableHead>
-                  <TableHead>{m("table.chargedAndComment")}</TableHead>
-                  <TableHead>{m("table.actions")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody data-testid="records">
-                {records.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell className="tabular-nums">{r.on_date}</TableCell>
-                    <TableCell className="tabular-nums">
-                      {r.starts_at.slice(0, 5)}–{r.ends_at.slice(0, 5)}
-                    </TableCell>
-                    <TableCell>
-                      {r.positions?.job_title ?? "—"}
-                      <RecordSubstitute
-                        email={r.substitute_id ? emailById.get(r.substitute_id) : null}
-                        absentJobTitle={r.positions?.job_title}
-                        substituteJobTitle={
-                          r.substitute_id ? substituteJobTitleById.get(r.substitute_id) : null
-                        }
-                        startsAt={r.starts_at}
-                        endsAt={r.ends_at}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      {leaveTypeLabel(r.leave_requests?.leave_type)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={STATUS_CLASSES[r.status] ?? ""}>
-                        {STATUS_LABELS[r.status] ?? r.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {/*
-                        AC-BALANCE-18: поділений запис лишається ОДНИМ записом
-                        зі своїм типом — поділ показуємо на ньому, а не окремим
-                        рядком. Показуємо лише коли частина справді пішла в
-                        «Unpaid leave».
-                      */}
-                      {r.days_unpaid !== null && Number(r.days_unpaid) > 0 ? (
-                        <div data-testid="split" className="tabular-nums text-foreground">
-                          {splitLabel(
-                            (r.leave_requests?.leave_type ?? "personal") as "personal",
-                            {
-                              onType: Math.round(Number(r.days_on_type ?? 0) * 100),
-                              unpaid: Math.round(Number(r.days_unpaid) * 100),
-                            },
-                          )}
-                        </div>
-                      ) : r.days_on_type !== null ? (
-                        <div className="tabular-nums text-foreground">
-                          {formatDays(Math.round(Number(r.days_on_type) * 100))} дня
-                        </div>
-                      ) : null}
-                      {lastDecision.get(r.id)?.comment ?? "—"}
-                      {/*
-                        AC-CANCEL-01, AC-CANCEL-03, AC-CANCEL-08: позначка про
-                        скасування — завжди ТЕКСТОМ (DESIGN.md, розділ 7).
-                      */}
-                      {cancellationNote(lastCancellation.get(r.id)) ? (
-                        <div data-testid="cancellation" className="text-foreground">
-                          {cancellationNote(lastCancellation.get(r.id))}
-                        </div>
-                      ) : null}
-                    </TableCell>
-                    <TableCell>
-                      {/*
-                        Кнопки показуємо за статусом — це UX. Саму відмову дає дія
-                        й політика leave_records_update_own_pending: запис у статусі
-                        «Approved» не зміниться й прямим запитом (AC-DECIDE-12).
-                      */}
-                      {canEditHours(r.status) ? (
-                        <form
-                          action={changeRecordHours}
-                          className="flex flex-wrap items-end gap-2"
-                        >
-                          <input type="hidden" name="recordId" value={r.id} />
-                          {canResubmit(r.status) ? (
-                            <input type="hidden" name="resubmit" value="1" />
-                          ) : null}
-                          <div className="flex flex-col gap-1">
-                            <Label htmlFor={`from-${r.id}`} className="text-xs">
-                              З
-                            </Label>
-                            <Input
-                              id={`from-${r.id}`}
-                              name="startsAt"
-                              type="time"
-                              required
-                              defaultValue={r.starts_at.slice(0, 5)}
-                              className="w-28"
-                            />
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <Label htmlFor={`to-${r.id}`} className="text-xs">
-                              До
-                            </Label>
-                            <Input
-                              id={`to-${r.id}`}
-                              name="endsAt"
-                              type="time"
-                              required
-                              defaultValue={r.ends_at.slice(0, 5)}
-                              className="w-28"
-                            />
-                          </div>
-                          <Button type="submit" variant="outline" size="sm">
-                            {m(canResubmit(r.status) ? "requests.resubmit" : "requests.saveHours")}
-                          </Button>
-                        </form>
-                      ) : null}
-                      {canCancel(r.status) ? (
-                        <form action={cancelRecord} className="mt-2">
-                          <input type="hidden" name="recordId" value={r.id} />
-                          <Button type="submit" variant="ghost" size="sm">
-                            Скасувати запис
-                          </Button>
-                        </form>
-                      ) : null}
-                      {/*
-                        AC-CANCEL-01: погоджений запис скасовують ЧЕРЕЗ менеджера —
-                        працівник лише просить і називає причину. Межі «погоджений»,
-                        «сьогодні або пізніше» (AC-CANCEL-05) і «запит уже є»
-                        (AC-CANCEL-06) тримає база; тут вони лише ховають кнопку.
-                      */}
-                      {canRequestCancellation({
-                        status: r.status,
-                        onDate: r.on_date,
-                        today,
-                        hasOpenRequest: lastCancellation.get(r.id)?.decision === null,
-                      }) ? (
-                        <form action={requestCancellation} className="mt-2 flex flex-col gap-1">
-                          <input type="hidden" name="recordId" value={r.id} />
-                          <Label htmlFor={`reason-${r.id}`} className="text-xs">
-                            {m("requests.cancelReason")}
-                          </Label>
-                          <Input
-                            id={`reason-${r.id}`}
-                            name="reason"
-                            required
-                            maxLength={500}
-                            className="w-56"
-                            aria-describedby={`reason-hint-${r.id}`}
-                          />
-                          <span id={`reason-hint-${r.id}`} className="text-xs text-muted-foreground">
-                            {m("requests.cancelReasonHint")}
-                          </span>
-                          <Button type="submit" variant="outline" size="sm" className="self-start">
-                            {m("requests.askCancel")}
-                          </Button>
-                        </form>
-                      ) : null}
-                      {!canEditHours(r.status) &&
-                      !canCancel(r.status) &&
-                      !canRequestCancellation({
-                        status: r.status,
-                        onDate: r.on_date,
-                        today,
-                        hasOpenRequest: lastCancellation.get(r.id)?.decision === null,
-                      }) ? (
-                        <span className="text-sm text-muted-foreground">—</span>
-                      ) : null}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <p data-testid="records-empty" className="text-sm text-muted-foreground">
-              {m("requests.empty")}
-            </p>
-          )}
+          <RecordsTable
+            records={records}
+            lastDecision={lastDecision}
+            lastCancellation={lastCancellation}
+            today={today}
+            emailById={emailById}
+            substituteJobTitleById={substituteJobTitleById}
+          />
         </CardContent>
       </Card>
     </main>

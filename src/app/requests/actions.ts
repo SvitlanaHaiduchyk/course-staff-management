@@ -164,6 +164,22 @@ export async function submitLeaveRequest(formData: FormData) {
   revalidatePath("/requests");
   revalidatePath("/balances");
 
+  const notice = await submitNotices(supabase, claims.sub, leaveType, built);
+  redirect(notice ? "/requests?notice=" + encodeURIComponent(notice) : "/requests");
+}
+
+/**
+ * Повідомлення після успішного подання — одним рядком через «; ».
+ *
+ * Жодне з них заявку не зупиняє, тому всі йдуть як `notice`, а не `error`
+ * (DESIGN.md, розділ 6).
+ */
+async function submitNotices(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  employeeId: string,
+  leaveType: string,
+  built: { skipped: readonly { date: string; message: string }[]; records: readonly DraftRecordLike[] },
+): Promise<string> {
   const notices: string[] = [];
 
   // AC-LEAVE-21: дати без робочих годин лише відпали — повідомлення на кожну.
@@ -172,14 +188,20 @@ export async function submitLeaveRequest(formData: FormData) {
   }
 
   // AC-BALANCE-08, AC-BALANCE-15, AC-BALANCE-17: ОДНЕ попередження на всю
-  // заявку, за її сумарною часткою й залишком на момент подання. Заявку воно
-  // не зупиняє — тому показуємо як notice, а не error.
-  const warning = await overBalanceNotice(supabase, claims.sub, leaveType, built.records);
+  // заявку, за її сумарною часткою й залишком на момент подання.
+  const warning = await overBalanceNotice(supabase, employeeId, leaveType, built.records);
   if (warning) notices.push(warning);
 
-  const notice = notices.join("; ");
-  redirect(notice ? "/requests?notice=" + encodeURIComponent(notice) : "/requests");
+  return notices.join("; ");
 }
+
+/** Запис заявки так, як його повертає `buildRecords`. */
+type DraftRecordLike = {
+  positionId: string;
+  date: string;
+  startsAt: string;
+  endsAt: string;
+};
 
 /**
  * Попередження про перевищення залишку — або `null`, якщо заявка в межах.
